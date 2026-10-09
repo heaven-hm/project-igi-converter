@@ -1,0 +1,1406 @@
+[
+  {
+    "font": "loadfontbig1024.fnt",
+    "source_sha256": "99ce4e659d1f0813e49e51697a5e58ab3ccf57a8b3e58a6825014fe6a2afcce5",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig1024.fnt",
+    "source_sha256": "99ce4e659d1f0813e49e51697a5e58ab3ccf57a8b3e58a6825014fe6a2afcce5",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall800.fnt",
+    "source_sha256": "9e2467a02de310d95ab741697cadf1fd4bcba60bdea5f2a7e6a9ba086abce25d",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall800.fnt",
+    "source_sha256": "9e2467a02de310d95ab741697cadf1fd4bcba60bdea5f2a7e6a9ba086abce25d",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall640.fnt",
+    "source_sha256": "82c58c502758e520918147ee16ab6fe05b7e474798e177269df2638bd313c978",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall640.fnt",
+    "source_sha256": "82c58c502758e520918147ee16ab6fe05b7e474798e177269df2638bd313c978",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig1280.fnt",
+    "source_sha256": "0fdfc38145e2117cdbf35fc95e8f3d9c6d175de5dbe87443115473d9659eda95",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig1280.fnt",
+    "source_sha256": "0fdfc38145e2117cdbf35fc95e8f3d9c6d175de5dbe87443115473d9659eda95",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall1280.fnt",
+    "source_sha256": "ff9386b36857474cbad72737fd075e783b1338c2d86b37df054cd48c75cc7d44",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall1280.fnt",
+    "source_sha256": "ff9386b36857474cbad72737fd075e783b1338c2d86b37df054cd48c75cc7d44",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig800.fnt",
+    "source_sha256": "5d9a290798e2b6d1ca695dc8445d47ca7d3ce030da74239c1396731ff0c27377",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig800.fnt",
+    "source_sha256": "5d9a290798e2b6d1ca695dc8445d47ca7d3ce030da74239c1396731ff0c27377",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall1024.fnt",
+    "source_sha256": "bb58b5f8644f428b7a659fb906638f0cc70fbe301c7c970fe14995a7fce957b4",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall1024.fnt",
+    "source_sha256": "bb58b5f8644f428b7a659fb906638f0cc70fbe301c7c970fe14995a7fce957b4",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig640.fnt",
+    "source_sha256": "599a31f98f9c9faa1152ff524a0d2dee11b73324341d0895593d0fb126dd5108",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig640.fnt",
+    "source_sha256": "599a31f98f9c9faa1152ff524a0d2dee11b73324341d0895593d0fb126dd5108",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "editorsm.fnt",
+    "source_sha256": "d4c28321ac875d953556fd0bc561abbfadcb6a8f3d844443d28fe2cfb173506e",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "editorsm.fnt",
+    "source_sha256": "d4c28321ac875d953556fd0bc561abbfadcb6a8f3d844443d28fe2cfb173506e",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "editor.fnt",
+    "source_sha256": "b3251380707b240479955516598f3b5dd374168e26c5685120869492e57de255",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "editor.fnt",
+    "source_sha256": "b3251380707b240479955516598f3b5dd374168e26c5685120869492e57de255",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig1024.fnt",
+    "source_sha256": "ae07841066c9eebe89a6f6a549398e8d06cbefbb32c5ecf4a116f776c0c8243b",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig1024.fnt",
+    "source_sha256": "ae07841066c9eebe89a6f6a549398e8d06cbefbb32c5ecf4a116f776c0c8243b",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall800.fnt",
+    "source_sha256": "5478e7d7321e0426b3bcbb2f893728e3ae0a4202f52eb8267e13c3c8244ce022",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall800.fnt",
+    "source_sha256": "5478e7d7321e0426b3bcbb2f893728e3ae0a4202f52eb8267e13c3c8244ce022",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall640.fnt",
+    "source_sha256": "5c4f577c4db820ed6f78b4d48aac374dc8f833370ca42ec61db9854ddcc38a76",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall640.fnt",
+    "source_sha256": "5c4f577c4db820ed6f78b4d48aac374dc8f833370ca42ec61db9854ddcc38a76",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "00083b90_fonts_hi_font4.fnt",
+    "source_sha256": "5ae5afd2f1ce1064941110d1a2a1de0fc11f2d86464356e56911228a68034b59",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "00083b90_fonts_hi_font4.fnt",
+    "source_sha256": "5ae5afd2f1ce1064941110d1a2a1de0fc11f2d86464356e56911228a68034b59",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig1280.fnt",
+    "source_sha256": "f83cb3e823bdde56e78d4b6cee9eda72776b3dd6440bf9bcc060b25c23bfd408",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig1280.fnt",
+    "source_sha256": "f83cb3e823bdde56e78d4b6cee9eda72776b3dd6440bf9bcc060b25c23bfd408",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "00083b90_fonts_hi_font2.fnt",
+    "source_sha256": "1e02d0f94cf16dd0a963f0e6bed90a1445cfbe7305ac1a18099d82867d03992e",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "00083b90_fonts_hi_font2.fnt",
+    "source_sha256": "1e02d0f94cf16dd0a963f0e6bed90a1445cfbe7305ac1a18099d82867d03992e",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "00083b90_fonts_hi_font3.fnt",
+    "source_sha256": "4b8d7aef21daef41a89867c41aff787c08aa26467eb089572c17d2ad80c7ab75",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "00083b90_fonts_hi_font3.fnt",
+    "source_sha256": "4b8d7aef21daef41a89867c41aff787c08aa26467eb089572c17d2ad80c7ab75",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "00083b90_fonts_hi_fontmp.fnt",
+    "source_sha256": "49d1627ee957c0384653946aa450a800c58b49d763eb3367f82ec5e5f998555b",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "00083b90_fonts_hi_fontmp.fnt",
+    "source_sha256": "49d1627ee957c0384653946aa450a800c58b49d763eb3367f82ec5e5f998555b",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "00083b90_fonts_hi_font1.fnt",
+    "source_sha256": "f51c83424346f6e6c026b9762d154c6217ece7aa7af013034a9594f2889134ad",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "00083b90_fonts_hi_font1.fnt",
+    "source_sha256": "f51c83424346f6e6c026b9762d154c6217ece7aa7af013034a9594f2889134ad",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall1280.fnt",
+    "source_sha256": "fee8ec4a21e6c0487ea5d30d1ca293045a8a4c8954c34923cb6793050ee58bfd",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall1280.fnt",
+    "source_sha256": "fee8ec4a21e6c0487ea5d30d1ca293045a8a4c8954c34923cb6793050ee58bfd",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig800.fnt",
+    "source_sha256": "2c1c2f4ad62cc14f6d07c0b937bce540881a9bee8fc60a45505fccb37aee3c96",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig800.fnt",
+    "source_sha256": "2c1c2f4ad62cc14f6d07c0b937bce540881a9bee8fc60a45505fccb37aee3c96",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall1024.fnt",
+    "source_sha256": "a099e259feb93fb224493e9b88d709995aa60020f8f7a752d32f20482c310750",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontsmall1024.fnt",
+    "source_sha256": "a099e259feb93fb224493e9b88d709995aa60020f8f7a752d32f20482c310750",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "00083c68_fonts_lo_fontmp.fnt",
+    "source_sha256": "2f8c8234d175bce2f8653f0fbc6be864bc2e15655d1df12f7351d382f7da6fc1",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "00083c68_fonts_lo_fontmp.fnt",
+    "source_sha256": "2f8c8234d175bce2f8653f0fbc6be864bc2e15655d1df12f7351d382f7da6fc1",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig640.fnt",
+    "source_sha256": "60c0069bd81ab477d0d9a4b45ca52a44a2037637ab0b714799077af894e01d78",
+    "format": "png",
+    "byte_identical": true
+  },
+  {
+    "font": "loadfontbig640.fnt",
+    "source_sha256": "60c0069bd81ab477d0d9a4b45ca52a44a2037637ab0b714799077af894e01d78",
+    "format": "tga",
+    "byte_identical": true
+  },
+  {
+    "texture": "activetool.spr",
+    "source_sha256": "4fee62c3a2834d1fb4038c56766fcc3b87d0a86bb44a2eeaf9880fe05c9efb94",
+    "byte_identical": true
+  },
+  {
+    "texture": "TerrainEditIcon_FlattenLine.spr",
+    "source_sha256": "611033e647d4995b50ab1fbd8dc3f8fb2fe4d93d040b5d1ad45999762ce65df6",
+    "byte_identical": true
+  },
+  {
+    "texture": "testtool.spr",
+    "source_sha256": "6d0364b70941a0b936ce6c8fbf630c06ce8cb46c1f3ef2913e4a14b836dc805e",
+    "byte_identical": true
+  },
+  {
+    "texture": "TerrainEditIcon_Pointer.spr",
+    "source_sha256": "1f76a6868314a95dcc1e8f08a7e11b76eb9ff523b7bf631061f40323bd32afdb",
+    "byte_identical": true
+  },
+  {
+    "texture": "TerrainEditIcon_Drop.spr",
+    "source_sha256": "819d7d204ecb4183ed7a6b615e27bab47d73d3044e539c69d406285d52499fa5",
+    "byte_identical": true
+  },
+  {
+    "texture": "TerrainEditIcon_Lower.spr",
+    "source_sha256": "78716e56929fd893054d191d2ec14dcb7e9db06ee98ea0980dfcae2e452d24e1",
+    "byte_identical": true
+  },
+  {
+    "texture": "TerrainEditIcon_Soften.spr",
+    "source_sha256": "768bc412e38d03e68571e249a4221afa846dd9d209a41ff59620bea1080083b0",
+    "byte_identical": true
+  },
+  {
+    "texture": "TerrainEditIcon_Flatten.spr",
+    "source_sha256": "e3ba533ea34263a8189d5213236dd3d937d62aa710f7178f326c3b1d001279c6",
+    "byte_identical": true
+  },
+  {
+    "texture": "inactivetool.spr",
+    "source_sha256": "e2a216631cc99b02a1b429ac1e92ba246aeb0b53f0597d3a88e9542f6b0f5db5",
+    "byte_identical": true
+  },
+  {
+    "texture": "TerrainEditIcon_Lift.spr",
+    "source_sha256": "7e941e1e1df52e1a27b682d43e029224432c475ba89bd8e8b3f7a55290fc4542",
+    "byte_identical": true
+  },
+  {
+    "texture": "highlighttool.spr",
+    "source_sha256": "c12095e4b23afdd0d8f00187b8c8453baa214be26c949994f7df140a4f342e54",
+    "byte_identical": true
+  },
+  {
+    "texture": "alarmlight.spr",
+    "source_sha256": "4c1db2572a1507062e102b65fb04ee4ebd39fa4f41bceba841f9972b4f67a1da",
+    "byte_identical": true
+  },
+  {
+    "texture": "smoke1.spr",
+    "source_sha256": "530fc1f3abc4198fd46063f6e115fcb99df9026dd6e6dbbd2b883da4bb137474",
+    "byte_identical": true
+  },
+  {
+    "texture": "fireball.spr",
+    "source_sha256": "225e74792984042d4f455542e4046b507b652c2d6bb6249c7cae24ec2adfe58a",
+    "byte_identical": true
+  },
+  {
+    "texture": "smoke2.spr",
+    "source_sha256": "551339dadf9f0dd1d7f6f4f4ba7162ecaedd483b636dbfc43a4b3379eaa9880b",
+    "byte_identical": true
+  },
+  {
+    "texture": "dragunovAIM.spr",
+    "source_sha256": "3522d13a046fcc8aa80da58201921ac4a68572e58e1590b2abb4d99c588750aa",
+    "byte_identical": true
+  },
+  {
+    "texture": "snipersight_y.spr",
+    "source_sha256": "6de9b94736f5dedcee4228c0c753a8e26c25ee8b7e1b8960cf1e48e95f39612d",
+    "byte_identical": true
+  },
+  {
+    "texture": "snipersight.spr",
+    "source_sha256": "21683ca1e49d2873da85345d3488f555d56007d1d253394a769d69e6550773be",
+    "byte_identical": true
+  },
+  {
+    "texture": "snipersight_x.spr",
+    "source_sha256": "8f439227d7554d3d025de3a999b4a79bd457048213aee3a27e93d2f801c4f7f5",
+    "byte_identical": true
+  },
+  {
+    "texture": "diamond.spr",
+    "source_sha256": "2d0713725d470815c1f04664f7e28df27c480db0d44b7e25e419a14e6f07e1ed",
+    "byte_identical": true
+  },
+  {
+    "texture": "infravision.spr",
+    "source_sha256": "f0ba85d390b9562b39f61b79ccacd0617a58b86998a5430296f9459d838aa6f7",
+    "byte_identical": true
+  },
+  {
+    "texture": "exclamation.spr",
+    "source_sha256": "f0da3ec7f5eed23659cd8da2f585784c833ae832d5f85023d72ece1b6dd0d0c4",
+    "byte_identical": true
+  },
+  {
+    "texture": "g11sight.spr",
+    "source_sha256": "ace5e0e0f4b33362b0eea03f21f25c43ae6ebb70ce87b98e76394d95096fc872",
+    "byte_identical": true
+  },
+  {
+    "texture": "binoculars.spr",
+    "source_sha256": "afe41c374eb58dee18493549812ecbd25293cccfa2635b381376b9f1d0deace5",
+    "byte_identical": true
+  },
+  {
+    "texture": "g36range.spr",
+    "source_sha256": "1a495925bdd156cd3449da9a1e0ccb669bb72807a81dec51d2e4179e6c89f49f",
+    "byte_identical": true
+  },
+  {
+    "texture": "concrete1.spr",
+    "source_sha256": "1a10e59c8a3e02ed7d0db292b406c5e1e8c7c32ee9cf52be02ae9c15b0c17f3c",
+    "byte_identical": true
+  },
+  {
+    "texture": "triangle.spr",
+    "source_sha256": "3ef260a47c918e1a765c77a8fbd6535ab29b980fce6bfc058f229ef12657174f",
+    "byte_identical": true
+  },
+  {
+    "texture": "concrete2.spr",
+    "source_sha256": "1a10e59c8a3e02ed7d0db292b406c5e1e8c7c32ee9cf52be02ae9c15b0c17f3c",
+    "byte_identical": true
+  },
+  {
+    "texture": "sniperaim.spr",
+    "source_sha256": "0dae1df18e5bfbba6afea61a66a77d548885a30c83fb81884f370e504a4a7ce7",
+    "byte_identical": true
+  },
+  {
+    "texture": "filter_linje.spr",
+    "source_sha256": "204fe520b10d8f5973e08b955437199ee9ae1042af7731154f870523b91f40c9",
+    "byte_identical": true
+  },
+  {
+    "texture": "question.spr",
+    "source_sha256": "7f65cdd03f81ce89dac633aaad0804ec1c4f72bc7c2c35391a5d326df70119f3",
+    "byte_identical": true
+  },
+  {
+    "texture": "snipersight2.spr",
+    "source_sha256": "07a1b34679cd5a0ba23f613b2c64ceed5e075f903435bb4338cc89b567a1a00d",
+    "byte_identical": true
+  },
+  {
+    "texture": "psg1dot.spr",
+    "source_sha256": "6504736fb26c18de9e06aaf675a3b563e28274ec60a020fd83df98473446abd4",
+    "byte_identical": true
+  },
+  {
+    "texture": "blood1.spr",
+    "source_sha256": "6f82860cfc5a2bfaa70557f4340052f702d00e333045a20e7cae944d221524a9",
+    "byte_identical": true
+  },
+  {
+    "texture": "battery.spr",
+    "source_sha256": "d08e8fc5aa733738c123094a1375392c6816b5a8360e5063ed159d0a1749ac86",
+    "byte_identical": true
+  },
+  {
+    "texture": "blood2.spr",
+    "source_sha256": "0f68922d9a0d32b0597935c1ae7bc500e953dc01bc4982fdd5e310fb6f9d4e8c",
+    "byte_identical": true
+  },
+  {
+    "texture": "slidevert_3.spr",
+    "source_sha256": "b2e2febcfed0d4b89e77d3bd7646cff18fba939801b5cb6dae9ffb09d059b676",
+    "byte_identical": true
+  },
+  {
+    "texture": "slidevert_2.spr",
+    "source_sha256": "40e79f4857610a39bdced391e8766d1ac6f30ade8d9400253e17c3522eb560bc",
+    "byte_identical": true
+  },
+  {
+    "texture": "slidevert_1.spr",
+    "source_sha256": "210c112b356fb4aed1f82eb4a3e1e819d43c3713f1a2425f121cc1a77f385645",
+    "byte_identical": true
+  },
+  {
+    "texture": "us_logo.pic",
+    "source_sha256": "fb308be9130486deeab19875318e44d7a0a1bf726a017808f45193db37b63c98",
+    "byte_identical": true
+  },
+  {
+    "texture": "slide_1.spr",
+    "source_sha256": "67c2a3c50bb34f210e18941677d5202077e90fb2c4a99ca9513e48d40ea35c7a",
+    "byte_identical": true
+  },
+  {
+    "texture": "logo.pic",
+    "source_sha256": "6e9db53a23b3ab95a4d5d58ef72119f81996b4c2e5b9ccb25ea1d2911ec28daf",
+    "byte_identical": true
+  },
+  {
+    "texture": "slide_3.spr",
+    "source_sha256": "302bba1f0f34a8767900c81718228533ef3128991b51a001b768fe01b68e3663",
+    "byte_identical": true
+  },
+  {
+    "texture": "gamespylogo.pic",
+    "source_sha256": "64feeab34e6146ffbb249eefd1ef700a2a24c881146a4f970562feee886969b7",
+    "byte_identical": true
+  },
+  {
+    "texture": "slide_2.spr",
+    "source_sha256": "04057d7348cedf974fba322faadca4761d1e9cd097355b889f629924088bb602",
+    "byte_identical": true
+  },
+  {
+    "texture": "pointer.spr",
+    "source_sha256": "be135d46a8ce27696e86cfdc0005fee43f0654cbad6bcb58785804a7ac29b028",
+    "byte_identical": true
+  },
+  {
+    "texture": "glow.spr",
+    "source_sha256": "81a4c902922698a49c148d59c5d5cf825b2a9a6a8ddc5580cc9b013c586ad059",
+    "byte_identical": true
+  },
+  {
+    "texture": "slidevert_3.spr",
+    "source_sha256": "b2e2febcfed0d4b89e77d3bd7646cff18fba939801b5cb6dae9ffb09d059b676",
+    "byte_identical": true
+  },
+  {
+    "texture": "slidevert_2.spr",
+    "source_sha256": "40e79f4857610a39bdced391e8766d1ac6f30ade8d9400253e17c3522eb560bc",
+    "byte_identical": true
+  },
+  {
+    "texture": "slidevert_1.spr",
+    "source_sha256": "210c112b356fb4aed1f82eb4a3e1e819d43c3713f1a2425f121cc1a77f385645",
+    "byte_identical": true
+  },
+  {
+    "texture": "us_logo.pic",
+    "source_sha256": "fb308be9130486deeab19875318e44d7a0a1bf726a017808f45193db37b63c98",
+    "byte_identical": true
+  },
+  {
+    "texture": "slide_1.spr",
+    "source_sha256": "67c2a3c50bb34f210e18941677d5202077e90fb2c4a99ca9513e48d40ea35c7a",
+    "byte_identical": true
+  },
+  {
+    "texture": "logo.pic",
+    "source_sha256": "cb3fea12b326317990b4bc00d3ecc5432b00576dd6acd04b949dbb22f45bd363",
+    "byte_identical": true
+  },
+  {
+    "texture": "slide_3.spr",
+    "source_sha256": "302bba1f0f34a8767900c81718228533ef3128991b51a001b768fe01b68e3663",
+    "byte_identical": true
+  },
+  {
+    "texture": "gamespylogo.pic",
+    "source_sha256": "cfb0931160aed35ce840cc46165d2b067370e192602ed7e062f46ab213cfcc6a",
+    "byte_identical": true
+  },
+  {
+    "texture": "slide_2.spr",
+    "source_sha256": "04057d7348cedf974fba322faadca4761d1e9cd097355b889f629924088bb602",
+    "byte_identical": true
+  },
+  {
+    "texture": "pointer.spr",
+    "source_sha256": "be135d46a8ce27696e86cfdc0005fee43f0654cbad6bcb58785804a7ac29b028",
+    "byte_identical": true
+  },
+  {
+    "texture": "glow.spr",
+    "source_sha256": "81a4c902922698a49c148d59c5d5cf825b2a9a6a8ddc5580cc9b013c586ad059",
+    "byte_identical": true
+  },
+  {
+    "texture": "sky23.tex",
+    "source_sha256": "298a4356c834bc6be01a4b697423a03078d89d37a83c5b081fb337cee86985e8",
+    "byte_identical": true
+  },
+  {
+    "texture": "sea.tex",
+    "source_sha256": "7a8f572b734b86242922e51c643bd18fae2df7b35d8655030bbf4a6f32911352",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_0000789c_slide_2.spr",
+    "source_sha256": "a613af6a502954bd0e192121f09ec491b947e2f4145b208451c972e1f7b41512",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00008210_jones1_1body.spr",
+    "source_sha256": "d6953fc302a0c45553d4adae6c6f7e2d8b55233263b665028486a378d6e04e01",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00189058_les1_1face03.spr",
+    "source_sha256": "fb6810831f6d59a9d9dbfeca1a8706855983fc7157beff43356c33525dc6afdb",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_0000a680_mission12.spr",
+    "source_sha256": "79a9504dd4f2088bc89d91bb75bdc2410afb120b9a81c53266c9c862819d103e",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00038390_jones1_1face02.spr",
+    "source_sha256": "ddfcc827a9e218c6ba1b7bc0c2f63186159c52cd1a6747702875e24a81393b65",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_000076d8_slide_1.spr",
+    "source_sha256": "a0176d91cc03791d056b992cd150be001f3969b6c97e1a7716ec61631912601b",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00178f98_les1_1face02.spr",
+    "source_sha256": "4c2a6be5e5454857458e19881fd20041e64f02755f7558fde66f3386e10ed24e",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000956a0_snipersight_y.spr",
+    "source_sha256": "6de9b94736f5dedcee4228c0c753a8e26c25ee8b7e1b8960cf1e48e95f39612d",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000cff40_g11sight.spr",
+    "source_sha256": "ace5e0e0f4b33362b0eea03f21f25c43ae6ebb70ce87b98e76394d95096fc872",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_001e9410_crosshair.spr",
+    "source_sha256": "deb6474137793c77f1fc862527e896b1047880d91cdd78f5a66ed1c6ce040241",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_001c9294_chn1_1face02.spr",
+    "source_sha256": "23335edce85b964f303a92254ab55e45828ada7edf9975d4342371ea59d6196b",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000a2424_sniperaim.spr",
+    "source_sha256": "0dae1df18e5bfbba6afea61a66a77d548885a30c83fb81884f370e504a4a7ce7",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_0000110c_question.spr",
+    "source_sha256": "7f65cdd03f81ce89dac633aaad0804ec1c4f72bc7c2c35391a5d326df70119f3",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_000f8b1c_resg1_1body.spr",
+    "source_sha256": "24471d6bf823dbf0c7a783a644fc1db57be55679248bfe7a5a6357c9e2cb2c70",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_000521f4_mission22.spr",
+    "source_sha256": "51c43b548212a8874dfc3a6db0938e64625dfef8baeb500b3daf79070c7e5919",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_000adef8_mission35.spr",
+    "source_sha256": "746c9f2ddb6ef4ed6e211eb0f2e8b1d577e7a22c1defa3646791bc244a34f889",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_001ef8d0_crosshair-t.spr",
+    "source_sha256": "fefd48a4394a29d9e9bb7415c68813b93e54d26d8b51536204bdaab0171dbf70",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000a2b00_dragunovAIM.spr",
+    "source_sha256": "3522d13a046fcc8aa80da58201921ac4a68572e58e1590b2abb4d99c588750aa",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_000a881c_csf1_1body.spr",
+    "source_sha256": "ae284b0664a777c547f21b15310f2847f65bba7bb15a6cafebbadedcd7b8c093",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_00084518_snipersight.spr",
+    "source_sha256": "21683ca1e49d2873da85345d3488f555d56007d1d253394a769d69e6550773be",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000021cc_binoculars.spr",
+    "source_sha256": "afe41c374eb58dee18493549812ecbd25293cccfa2635b381376b9f1d0deace5",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_0008f454_mission32.spr",
+    "source_sha256": "6150c40eaeab21eb0e8b431d9c34cb138eb9e387cc581fc521a37e8baba567bc",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_001b91d4_chn1_1face01.spr",
+    "source_sha256": "10afc0884a082ff1f9ce030715f225cc760291d92d2815d154b762441967e1a5",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_00029124_mission15.spr",
+    "source_sha256": "58a35496751bfa1a1a8a12ddca500a44e1bcc79dd916f4a5e04b2c4db6775a48",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00007d78_slidevert_2.spr",
+    "source_sha256": "891f6936b06c5cfa52772d53adc0cd9849e45f277dc4ae698a2bb10af5209aae",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00199114_chn1_1body.spr",
+    "source_sha256": "971f0b2378810d3d9825ab38cd6deac5154afa38dca6268d2c8b4dd76d40830b",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00148e18_les1_1body.spr",
+    "source_sha256": "d1ba3105b76842a63e48b4602ef8ec188d9e4e493aba3ebe3e28bfd344ce8249",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_000334b0_mission16.spr",
+    "source_sha256": "4de3e8c1573075337280740930ac9373d9bb8d366165cdcf20da446b7e203a0a",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_00082350_battery.spr",
+    "source_sha256": "d08e8fc5aa733738c123094a1375392c6816b5a8360e5063ed159d0a1749ac86",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_0006690c_mission24.spr",
+    "source_sha256": "41d45f0f9cfa120b6ce5e77872e89972b4ab5c2eb3f0c33105bf3503783fa79b",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_001320d0_diamond.spr",
+    "source_sha256": "2d0713725d470815c1f04664f7e28df27c480db0d44b7e25e419a14e6f07e1ed",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00000044_pointer.spr",
+    "source_sha256": "53c6e11e51ff2514e90685975f68d1f29966e5e4c5ff6c54fcfcec5808b74488",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00058514_igiagent1_1body.spr",
+    "source_sha256": "1859ceffd0f8f1511db1b894acfc65d3d675fc1dda19ef469d772a3b2b4dcda6",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00168ed8_les1_1face01.spr",
+    "source_sha256": "415d3a96f2dded853969c137249196c3daa47dcb3692953a01fe9f3bc4a11836",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_0007b024_mission26.spr",
+    "source_sha256": "946c179693537233b348368e45d777a907e8348737fcb4cdac7c537c9229ab00",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_00096364_snipersight2.spr",
+    "source_sha256": "07a1b34679cd5a0ba23f613b2c64ceed5e075f903435bb4338cc89b567a1a00d",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00098760_igiagent1_1face03.spr",
+    "source_sha256": "1b47d3436830632e709eac1e13c40fb2f08f7b77a84c20abd56c236bae1ea3e4",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_000785d8_igiagent1_1face01.spr",
+    "source_sha256": "83b09d532689721729de02dc098c4ab3a80e5bafaf6fe1d3dbbb47fccde6175f",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_001d9354_chn1_1face03.spr",
+    "source_sha256": "cd55bf35c81cec8ac59118b41d39fafc0f327e91b0e7540708b9ca543c60549b",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_0003d83c_mission17.spr",
+    "source_sha256": "e725d2dd3ec46a81b9fa97485ea01ab41281e9255a94deea12716965cfbc8bbc",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00118bdc_resg1_1face01.spr",
+    "source_sha256": "adfa087be9f270a8454c5778597adfa8b01570c6044eed09a83ddeb980b2165e",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000cee80_psg1dot.spr",
+    "source_sha256": "6504736fb26c18de9e06aaf675a3b563e28274ec60a020fd83df98473446abd4",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_000c88dc_csf1_1face01.spr",
+    "source_sha256": "4386e6f7a1ae6dbf9abe510e4f20efdbf5c4d3d5b45f090f92c992bffa48f55c",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_00014a0c_mission13.spr",
+    "source_sha256": "d0cd23f4c8f7ee0e8e1aaf6757ba95977fee452bb13c6605a238db49664276dc",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000d1a00_concrete1.spr",
+    "source_sha256": "1a10e59c8a3e02ed7d0db292b406c5e1e8c7c32ee9cf52be02ae9c15b0c17f3c",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_000850c8_mission31.spr",
+    "source_sha256": "a863a10601d3f83f88712e3091f872ad19677706e37d5f308b92d3c684c45560",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_000282d0_jones1_1face01.spr",
+    "source_sha256": "0c6891a0d17d8ae52b29ec327b1be6f4955a520191193cf2a371383ebf3db3ab",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000e9a90_smoke2.spr",
+    "source_sha256": "551339dadf9f0dd1d7f6f4f4ba7162ecaedd483b636dbfc43a4b3379eaa9880b",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000f2010_triangle.spr",
+    "source_sha256": "3ef260a47c918e1a765c77a8fbd6535ab29b980fce6bfc058f229ef12657174f",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00128c9c_resg1_1face02.spr",
+    "source_sha256": "d847442c06f4422c73d95efe905541574a73eea4f1155eac81796af60fb1afed",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000945dc_snipersight_x.spr",
+    "source_sha256": "8f439227d7554d3d025de3a999b4a79bd457048213aee3a27e93d2f801c4f7f5",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_000007dc_glow.spr",
+    "source_sha256": "771545728f9fa632aed5c7a2bc307ddc1c7950695507e6a0b455300546890902",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000f1b50_alarmlight.spr",
+    "source_sha256": "4c1db2572a1507062e102b65fb04ee4ebd39fa4f41bceba841f9972b4f67a1da",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_000e8a5c_csf1_1face03.spr",
+    "source_sha256": "515d5dd2ff464f8a1c5ec620364d6194b7f1ad6fe0b4d7dff18e7d030255d453",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_0000004c_exclamation.spr",
+    "source_sha256": "f0da3ec7f5eed23659cd8da2f585784c833ae832d5f85023d72ece1b6dd0d0c4",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_0001ed98_mission14.spr",
+    "source_sha256": "f75103f176283b98b8a15aa27711832acba622484ba28a1c13233527bceee4bf",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000d8f58_blood2.spr",
+    "source_sha256": "0f68922d9a0d32b0597935c1ae7bc500e953dc01bc4982fdd5e310fb6f9d4e8c",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00007a60_slide_3.spr",
+    "source_sha256": "9114765ca843ca2a4dc8377bcf68723302ae5f25434e4fac6f465e93944ea9f1",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_00084414_filter_linje.spr",
+    "source_sha256": "204fe520b10d8f5973e08b955437199ee9ae1042af7731154f870523b91f40c9",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_000b8284_mission36.spr",
+    "source_sha256": "4994bb433891523d1c9adc16e8f99d863e75c1383383d414ae265031bef622a5",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_000a3b6c_mission34.spr",
+    "source_sha256": "acfacadacdd4442e7924968d9ae6611d56c83abded28caeaeaf807ead1a55241",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00007bb0_slidevert_1.spr",
+    "source_sha256": "8e3ca39468caa6e0e797c93bb7fde4d268318417c5a236d073892aa6427f43ce",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000d9114_smoke1.spr",
+    "source_sha256": "530fc1f3abc4198fd46063f6e115fcb99df9026dd6e6dbbd2b883da4bb137474",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_0005c580_mission23.spr",
+    "source_sha256": "445d99b772b933139414d21bdd0364d74f0e2d67f790c75f54c49312d4c65f0c",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_0008869c_igiagent1_1face02.spr",
+    "source_sha256": "7f94431094bbc2be902dda275f71ab9e32eaf2888b93dd225421ad38c22b84d0",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000c1bc0_g36range.spr",
+    "source_sha256": "1a495925bdd156cd3449da9a1e0ccb669bb72807a81dec51d2e4179e6c89f49f",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_00000054_mission11.spr",
+    "source_sha256": "4a9b8ffcaef5446e2723dc22b92b08395440672cf3f651a210103978cc9b8bbf",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_000d899c_csf1_1face02.spr",
+    "source_sha256": "ec4941c582fe6e65d5e9f8e1c236ddecf51c6ecdbad9a84fe434e1bc7955a77f",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_00070c98_mission25.spr",
+    "source_sha256": "235b592e5022fd74029c1d90db21b07ed1c5804ce260f0255892f5c8000dc872",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_00047bc8_mission21.spr",
+    "source_sha256": "780e852d4effc1b550ece9593c7c9797c47cb33b8bab4180cbd9a575dbd8add5",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00048450_jones1_1face03.spr",
+    "source_sha256": "33b9a32a0353b7e75ca77f832a29d6cee61fcb3a479a881f63c033003bfa4e8a",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_00042290_infravision.spr",
+    "source_sha256": "f0ba85d390b9562b39f61b79ccacd0617a58b86998a5430296f9459d838aa6f7",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00138d5c_resg1_1face03.spr",
+    "source_sha256": "603833c646514c36401be6ae8cef303c261a90b0f3dea04747e88ad63c4efde0",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089403_ingamemenu_00007f40_slidevert_3.spr",
+    "source_sha256": "ae8a4af657119d423c3f53dba684838cf7a3cacdf6142fb503a7dd82d65ea837",
+    "byte_identical": true
+  },
+  {
+    "texture": "00089920_missionsprites_000997e0_mission33.spr",
+    "source_sha256": "b3233d74a583d6c4489b9ad3def1f03c306c1769a5b4abfdb76e92d436ecde3f",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000d1d7c_blood1.spr",
+    "source_sha256": "6f82860cfc5a2bfaa70557f4340052f702d00e333045a20e7cae944d221524a9",
+    "byte_identical": true
+  },
+  {
+    "texture": "00084fc4_sprites_000e91d4_fireball.spr",
+    "source_sha256": "225e74792984042d4f455542e4046b507b652c2d6bb6249c7cae24ec2adfe58a",
+    "byte_identical": true
+  },
+  {
+    "resource": "sprites.res",
+    "source_sha256": "b1f1b3a2842e65b6a4d761c50926302789d1befe979f151f0d01ac04437d1a3e",
+    "files": 25,
+    "payloads_identical": true
+  },
+  {
+    "resource": "menusystem.res",
+    "source_sha256": "726d18ed034048dbad1e53d1b15103cc497dd00db32a12faa0e8e32f19167511",
+    "files": 12,
+    "payloads_identical": true
+  },
+  {
+    "resource": "menusystem (1).res",
+    "source_sha256": "da18c29718503192542c165c80347c018e988b370b807494561a538bc82932ce",
+    "files": 12,
+    "payloads_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3798.qvm/3798.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_550.qvm/550.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_544.qvm/544.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_545.qvm/545.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_551.qvm/551.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_547.qvm/547.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_553.qvm/553.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_552.qvm/552.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_546.qvm/546.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3761.qvm/3761.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_542.qvm/542.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_556.qvm/556.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3827.qvm/3827.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_557.qvm/557.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_543.qvm/543.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3762.qvm/3762.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_555.qvm/555.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_541.qvm/541.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_554.qvm/554.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_702.qvm/Squad_702.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3738.qvm/3738.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_533.qvm/533.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3843.qvm/3843.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_532.qvm/532.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3936.qvm/3936.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_703.qvm/Squad_703.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_701.qvm/Squad_701.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3908.qvm/3908.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3934.qvm/3934.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_530.qvm/530.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_518.qvm/518.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_519.qvm/519.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_531.qvm/531.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_3744.qvm/Squad_3744.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_700.qvm/Squad_700.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_704.qvm/Squad_704.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_509.qvm/509.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_521.qvm/521.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_535.qvm/535.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_534.qvm/534.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_520.qvm/520.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_508.qvm/508.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_705.qvm/Squad_705.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_707.qvm/Squad_707.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/mission.qvm/mission.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_536.qvm/536.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_522.qvm/522.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3847.qvm/3847.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3933.qvm/3933.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_712.qvm/Squad_712.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3728.qvm/3728.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_706.qvm/Squad_706.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_3798.qvm/Squad_3798.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_512.qvm/512.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_506.qvm/506.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_507.qvm/507.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_513.qvm/513.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_722.qvm/Squad_722.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3730.qvm/3730.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3732.qvm/3732.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_708.qvm/Squad_708.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_720.qvm/Squad_720.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_505.qvm/505.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_511.qvm/511.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/sounds_sounds.qvm/sounds.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3849.qvm/3849.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_510.qvm/510.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_504.qvm/504.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_721.qvm/Squad_721.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_709.qvm/Squad_709.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_731.qvm/Squad_731.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3737.qvm/3737.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_500.qvm/500.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_514.qvm/514.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_515.qvm/515.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_501.qvm/501.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_730.qvm/Squad_730.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_732.qvm/Squad_732.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_517.qvm/517.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_503.qvm/503.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3867.qvm/3867.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_502.qvm/502.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_516.qvm/516.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_733.qvm/Squad_733.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_740.qvm/Squad_740.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_565.qvm/565.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_559.qvm/559.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3829.qvm/3829.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_558.qvm/558.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_564.qvm/564.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_741.qvm/Squad_741.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_743.qvm/Squad_743.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_742.qvm/Squad_742.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_563.qvm/563.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/objects.qvm/objects.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_562.qvm/562.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_3796.qvm/3796.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_548.qvm/548.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_560.qvm/560.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_561.qvm/561.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_Squad_3674.qvm/Squad_3674.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "qsc": "/private/tmp/neonix-level5-check/all-qsc/ai_549.qvm/549.qsc",
+    "original_byte_identical": true
+  },
+  {
+    "original_dll_texture_oracle": true,
+    "base_pixels_identical": true,
+    "note": "Native make emits base level only; original defaults include mipmaps."
+  }
+]

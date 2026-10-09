@@ -1,0 +1,17 @@
+[
+  {
+    "check": "truncated-font",
+    "rejected": true,
+    "message": "gconv: Truncated input at byte 0"
+  },
+  {
+    "check": "unsupported-command",
+    "rejected": true,
+    "message": "gconv: Unsupported command or argument count; use --help"
+  },
+  {
+    "check": "resource-path-traversal",
+    "rejected": true,
+    "message": "gconv: Unsafe resource name: ../bad"
+  }
+]
