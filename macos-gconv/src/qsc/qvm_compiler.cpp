@@ -1,10 +1,12 @@
 #include "qvm_compiler.h"
-#include "qvm_parser.h" // for QVMOpType
+
 #include <cstring>
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
+
+#include "qvm_parser.h"  // for QVMOpType
 
 namespace qvm {
 
@@ -34,13 +36,15 @@ namespace {
 struct Gen {
   std::vector<uint8_t> code;
 
-  std::vector<std::string> idents; // appended in order
+  std::vector<std::string> idents;  // appended in order
   std::vector<std::string> strings;
   std::unordered_map<std::string, uint32_t> identIndex;
   std::unordered_map<std::string, uint32_t> stringIndex;
 
   // ---- byte emitters ----
-  void emit8(uint8_t v) { code.push_back(v); }
+  void emit8(uint8_t v) {
+    code.push_back(v);
+  }
   void emit16(uint16_t v) {
     code.push_back((uint8_t)(v & 0xFF));
     code.push_back((uint8_t)((v >> 8) & 0xFF));
@@ -61,10 +65,12 @@ struct Gen {
     auto v = static_cast<uint8_t>(op);
     code.push_back(v < sizeof(order) ? order[v] : v);
   }
-  uint32_t here() const { return (uint32_t)code.size(); }
+  uint32_t here() const {
+    return (uint32_t)code.size();
+  }
 
   // ---- interning ----
-  uint32_t internIdent(const std::string &name) {
+  uint32_t internIdent(const std::string& name) {
     auto it = identIndex.find(name);
     if (it != identIndex.end())
       return it->second;
@@ -73,7 +79,7 @@ struct Gen {
     identIndex[name] = idx;
     return idx;
   }
-  uint32_t internString(const std::string &s) {
+  uint32_t internString(const std::string& s) {
     auto it = stringIndex.find(s);
     if (it != stringIndex.end())
       return it->second;
@@ -84,7 +90,7 @@ struct Gen {
   }
 
   // ---- typed pushes ----
-  void pushIdent(const std::string &name) {
+  void pushIdent(const std::string& name) {
     uint32_t idx = internIdent(name);
     if (idx < 256) {
       emitOp(QVMOpType::PUSHIIB);
@@ -97,7 +103,7 @@ struct Gen {
       emit32(idx);
     }
   }
-  void pushString(const std::string &str) {
+  void pushString(const std::string& str) {
     uint32_t idx = internString(str);
     if (idx < 256) {
       emitOp(QVMOpType::PUSHSIB);
@@ -146,7 +152,7 @@ struct Gen {
   }
 
   // ---- operator opcode tables ----
-  static QVMOpType BinaryOp(const std::string &op) {
+  static QVMOpType BinaryOp(const std::string& op) {
     if (op == "+")
       return QVMOpType::ADD;
     if (op == "-")
@@ -185,7 +191,7 @@ struct Gen {
       return QVMOpType::ASSIGN;
     throw std::runtime_error("unknown binary operator: " + op);
   }
-  static QVMOpType UnaryOp(const std::string &op) {
+  static QVMOpType UnaryOp(const std::string& op) {
     if (op == "-")
       return QVMOpType::MINUS;
     if (op == "+")
@@ -199,48 +205,48 @@ struct Gen {
 
   // ---- expression / statement emission ----
 
-  void emitExpr(const Node &node) {
+  void emitExpr(const Node& node) {
     switch (node.kind) {
-    case NodeKind::IntLit:
-      pushInt(node.i_val);
-      return;
-    case NodeKind::FloatLit:
-      pushFloat(node.f_val);
-      return;
-    case NodeKind::BoolLit:
-      // Legacy IGI1Conv treats TRUE/FALSE as ordinary interned
-      // identifiers (resolved to runtime globals), NOT as PUSH1/0
-      // literals. Match that to preserve identifier-pool parity.
-      pushIdent(node.b_val ? "TRUE" : "FALSE");
-      return;
-    case NodeKind::StringLit:
-      pushString(node.s_val);
-      return;
-    case NodeKind::IdentLit:
-      pushIdent(node.s_val);
-      return;
+      case NodeKind::IntLit:
+        pushInt(node.i_val);
+        return;
+      case NodeKind::FloatLit:
+        pushFloat(node.f_val);
+        return;
+      case NodeKind::BoolLit:
+        // Legacy IGI1Conv treats TRUE/FALSE as ordinary interned
+        // identifiers (resolved to runtime globals), NOT as PUSH1/0
+        // literals. Match that to preserve identifier-pool parity.
+        pushIdent(node.b_val ? "TRUE" : "FALSE");
+        return;
+      case NodeKind::StringLit:
+        pushString(node.s_val);
+        return;
+      case NodeKind::IdentLit:
+        pushIdent(node.s_val);
+        return;
 
-    case NodeKind::Unary:
-      emitExpr(*node.children[0]);
-      emitOp(UnaryOp(node.s_val));
-      return;
+      case NodeKind::Unary:
+        emitExpr(*node.children[0]);
+        emitOp(UnaryOp(node.s_val));
+        return;
 
-    case NodeKind::Binary:
-      emitExpr(*node.children[0]);
-      emitExpr(*node.children[1]);
-      emitOp(BinaryOp(node.s_val));
-      return;
+      case NodeKind::Binary:
+        emitExpr(*node.children[0]);
+        emitExpr(*node.children[1]);
+        emitOp(BinaryOp(node.s_val));
+        return;
 
-    case NodeKind::Call:
-      emitCall(node);
-      return;
+      case NodeKind::Call:
+        emitCall(node);
+        return;
 
-    default:
-      throw std::runtime_error("emitExpr: unexpected node kind");
+      default:
+        throw std::runtime_error("emitExpr: unexpected node kind");
     }
   }
 
-  void emitCall(const Node &n) {
+  void emitCall(const Node& n) {
     // 1. Push callee identifier.
     pushIdent(n.s_val);
 
@@ -272,36 +278,36 @@ struct Gen {
     int32_t braOffset = (int32_t)afterArgs - (int32_t)(braAddr + 5);
     emit32At(braOffsetSlot, (uint32_t)braOffset);
 
-    (void)callOpAddr; // currently unused
+    (void)callOpAddr;  // currently unused
   }
 
-  void emitStmt(const Node &node) {
+  void emitStmt(const Node& node) {
     switch (node.kind) {
-    case NodeKind::Block:
-      for (const auto &c : node.children)
-        emitStmt(*c);
-      return;
+      case NodeKind::Block:
+        for (const auto& c : node.children)
+          emitStmt(*c);
+        return;
 
-    case NodeKind::ExprStmt:
-      emitExpr(*node.children[0]);
-      emitOp(QVMOpType::POP); // discard top-of-stack
-      return;
+      case NodeKind::ExprStmt:
+        emitExpr(*node.children[0]);
+        emitOp(QVMOpType::POP);  // discard top-of-stack
+        return;
 
-    case NodeKind::If:
-      emitIf(node);
-      return;
+      case NodeKind::If:
+        emitIf(node);
+        return;
 
-    case NodeKind::While:
-      emitWhile(node);
-      return;
+      case NodeKind::While:
+        emitWhile(node);
+        return;
 
-    default:
-      // Sometimes parser yields an empty Block for `;` empty stmts.
-      return;
+      default:
+        // Sometimes parser yields an empty Block for `;` empty stmts.
+        return;
     }
   }
 
-  void emitIf(const Node &n) {
+  void emitIf(const Node& n) {
     // children: [cond, then, (else)?]
     emitExpr(*n.children[0]);
     uint32_t bfAddr = here();
@@ -343,7 +349,7 @@ struct Gen {
     }
   }
 
-  void emitWhile(const Node &n) {
+  void emitWhile(const Node& n) {
     // children: [cond, body]
     uint32_t loopTop = here();
     emitExpr(*n.children[0]);
@@ -365,8 +371,8 @@ struct Gen {
     emit32At(bfSlot, (uint32_t)bfOff);
   }
 
-  void emitProgram(const Node &n) {
-    for (const auto &c : n.children)
+  void emitProgram(const Node& n) {
+    for (const auto& c : n.children)
       emitStmt(*c);
     // Legacy emits a trailing BRK to mark end-of-program for the runtime.
     emitOp(QVMOpType::BRK);
@@ -375,19 +381,19 @@ struct Gen {
 
 // ---------- Assembler ----------
 
-void appendU32(std::vector<uint8_t> &out, uint32_t v) {
+void appendU32(std::vector<uint8_t>& out, uint32_t v) {
   for (int i = 0; i < 4; ++i)
     out.push_back((uint8_t)((v >> (8 * i)) & 0xFF));
 }
 
-std::vector<uint8_t> assemble(const Gen &g) {
+std::vector<uint8_t> assemble(const Gen& g) {
   // Section layout: [Header(64)][ITable][IValue][STable][SValue][CTable]
 
   // Build IValue / SValue pools and per-entry offsets.
   std::vector<uint8_t> ivalue;
   std::vector<uint32_t> itable;
   itable.reserve(g.idents.size());
-  for (const auto &s : g.idents) {
+  for (const auto& s : g.idents) {
     itable.push_back((uint32_t)ivalue.size());
     ivalue.insert(ivalue.end(), s.begin(), s.end());
     ivalue.push_back(0);
@@ -395,7 +401,7 @@ std::vector<uint8_t> assemble(const Gen &g) {
   std::vector<uint8_t> svalue;
   std::vector<uint32_t> stable;
   stable.reserve(g.strings.size());
-  for (const auto &s : g.strings) {
+  for (const auto& s : g.strings) {
     stable.push_back((uint32_t)svalue.size());
     svalue.insert(svalue.end(), s.begin(), s.end());
     svalue.push_back(0);
@@ -420,8 +426,8 @@ std::vector<uint8_t> assemble(const Gen &g) {
   out.push_back('O');
   out.push_back('O');
   out.push_back('P');
-  appendU32(out, 8); // ver_major
-  appendU32(out, 7); // ver_minor
+  appendU32(out, 8);  // ver_major
+  appendU32(out, 7);  // ver_minor
   appendU32(out, of_itable);
   appendU32(out, of_ivalue);
   appendU32(out, sz_itable);
@@ -432,9 +438,9 @@ std::vector<uint8_t> assemble(const Gen &g) {
   appendU32(out, sz_svalue);
   appendU32(out, of_ctable);
   appendU32(out, sz_ctable);
-  appendU32(out, 0); // unknown_1
-  appendU32(out, 0); // unknown_2
-  appendU32(out, 0); // IGI 2 v7 extra header word
+  appendU32(out, 0);  // unknown_1
+  appendU32(out, 0);  // unknown_2
+  appendU32(out, 0);  // IGI 2 v7 extra header word
 
   // ITable
   for (uint32_t v : itable)
@@ -452,23 +458,23 @@ std::vector<uint8_t> assemble(const Gen &g) {
   return out;
 }
 
-} // namespace
+}  // namespace
 
-CompileResult Compile(const Node &program) {
+CompileResult Compile(const Node& program) {
   CompileResult result;
   try {
     Gen gen;
     gen.emitProgram(program);
     result.binary = assemble(gen);
-  } catch (const std::exception &ex) {
+  } catch (const std::exception& ex) {
     result.ok = false;
     result.error = ex.what();
   }
   return result;
 }
 
-bool CompileToFile(const Node &program, const std::string &outPath,
-                   std::string *error) {
+bool CompileToFile(const Node& program, const std::string& outPath,
+                   std::string* error) {
   CompileResult result = Compile(program);
   if (!result.ok) {
     if (error)
@@ -481,9 +487,9 @@ bool CompileToFile(const Node &program, const std::string &outPath,
       *error = "failed to open output: " + outPath;
     return false;
   }
-  f.write((const char *)result.binary.data(),
+  f.write((const char*)result.binary.data(),
           (std::streamsize)result.binary.size());
   return (bool)f;
 }
 
-} // namespace qvm
+}  // namespace qvm

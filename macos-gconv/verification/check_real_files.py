@@ -68,7 +68,7 @@ with tempfile.TemporaryDirectory(prefix='gconv-cpp17-') as temporary:
         run('qsc', 'compile', source, packed)
         originals = list(args.level5.rglob(source.stem + '.qvm'))
         assert any(packed.read_bytes() == p.read_bytes() for p in originals), str(source)
-        records.append({'qsc': str(source), 'original_byte_identical': True})
+        records.append({'qsc': source.name, 'original_byte_identical': True})
     oracle_input = Path('/private/tmp/gconv-native-test/editor.tga')
     oracle_output = Path('/private/tmp/gconv-native-test/image/editor.tex')
     if oracle_input.exists() and oracle_output.exists():

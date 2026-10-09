@@ -51,11 +51,23 @@ This is a native CLI port of the operations listed above, **not complete GConv 3
 
 The earlier Python/DLL investigation files (`engine.py`, `gconv.py`, `native_formats.py`, `originals/`) are research/oracle material only and are not linked or packaged into the native CLI. Ghidra and radare2 evidence is in `research/`. Latest downloaded Ghidra MCP source used for that analysis: commit `307b461cdbbedfbafb3771333f21875b745f940e` from mrphrazer/ghidra-headless-mcp.
 
+## Source layout
+
+- `src/main.cpp` — command-line argument routing.
+- `src/common.cpp` and `src/common.hpp` — checked binary reads/writes and shared image types.
+- `src/resources.cpp` — IRES archive listing, extraction and packing.
+- `src/images.cpp` — PNG/TGA image loading, writing and pixel conversion.
+- `src/fonts.cpp` — IGI 2 ILFF/FONT atlas operations.
+- `src/textures.cpp` — LOOP texture, sprite and picture decoding and packing.
+- `src/qsc.cpp` and `src/qsc/` — IGI 2 QVM 8.7 script compilation.
+- `.clang-format` — shared C++ formatting rules (80-column Google style).
+
 ## Build
 
 Requires a C++17 compiler, CMake, zlib and libpng 1.6 or newer:
 
 ```sh
+find macos-gconv/src -type f \( -name '*.cpp' -o -name '*.hpp' \) -print0 | xargs -0 clang-format --dry-run --Werror
 cmake -S macos-gconv -B macos-gconv/build -DCMAKE_BUILD_TYPE=Release
 cmake --build macos-gconv/build -j 4
 cmake --install macos-gconv/build --prefix "$PWD/macos-gconv/install"
