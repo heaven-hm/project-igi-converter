@@ -9,6 +9,8 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#else
+#include <unistd.h>
 #endif
 #include "../source/parsers/iff_parser.h"
 #include "../source/parsers/iff_to_bef.h"
@@ -17,6 +19,15 @@
 #include "../source/parsers/iff_bef.h"
 
 namespace fs = std::filesystem;
+
+static unsigned long current_process_id()
+{
+#ifdef _WIN32
+    return static_cast<unsigned long>(::GetCurrentProcessId());
+#else
+    return static_cast<unsigned long>(::getpid());
+#endif
+}
 
 static int iff_info(int argc, char** argv);
 static int iff_test(int argc, char** argv);
@@ -30,7 +41,7 @@ static int iff_emit_qsc(int argc, char** argv);
 int cmd_iff(int argc, char** argv) {
     if (argc < 2) {
         std::cerr <<
-            "Usage: igi1conv iff <command> [args...]\n"
+            "Usage: igi2conv iff <command> [args...]\n"
             "\n"
             "Commands:\n"
             "  info        <file.iff>                  Print IFF structure / dump\n"
@@ -62,19 +73,27 @@ int cmd_iff(int argc, char** argv) {
 
 // ─── info ────────────────────────────────────────────────────────────────
 static int iff_info(int argc, char** argv) {
-    if (argc < 3) { std::cerr << "Usage: igi1conv iff info <file.iff>\n"; return 1; }
+    if (argc < 3) { std::cerr << "Usage: igi2conv iff info <file.iff>\n"; return 1; }
     std::string file = argv[2];
     std::string outfile = file + ".info.txt";
     for (int i = 3; i < argc; i++)
         if (std::strcmp(argv[i], "-o") == 0 && i + 1 < argc) outfile = argv[++i];
+    if (!IFF_Parse(file).valid) {
+        std::cerr << "iff info: invalid input\n";
+        return 3;
+    }
     IFF_Dump(file, outfile);
+    if (!fs::exists(outfile) || fs::file_size(outfile) == 0) {
+        std::cerr << "iff info: could not write output\n";
+        return 4;
+    }
     std::cout << "Dumped IFF info to " << outfile << "\n";
     return 0;
 }
 
 // ─── test ────────────────────────────────────────────────────────────────
 static int iff_test(int argc, char** argv) {
-    if (argc < 3) { std::cerr << "Usage: igi1conv iff test <file.iff>\n"; return 1; }
+    if (argc < 3) { std::cerr << "Usage: igi2conv iff test <file.iff>\n"; return 1; }
     std::string file = argv[2];
     IffFile iff = IFF_Parse(file);
     if (!iff.valid) { std::cerr << "Invalid IFF file.\n"; return 1; }
@@ -97,7 +116,7 @@ static int iff_test(int argc, char** argv) {
 // ─── convert (IFF -> BEF) ───────────────────────────────────────────────
 static int iff_convert(int argc, char** argv) {
     if (argc < 4) {
-        std::cerr << "Usage: igi1conv iff convert <src.iff|dir> <out_dir>\n";
+        std::cerr << "Usage: igi2conv iff convert <src.iff|dir> <out_dir>\n";
         return 1;
     }
     std::string src = argv[2];
@@ -127,7 +146,7 @@ static int iff_convert(int argc, char** argv) {
 // ─── decompile (IFF -> .IFF text + per-clip IFFs) ───────────────────────
 static int iff_decompile(int argc, char** argv) {
     if (argc < 4) {
-        std::cerr << "Usage: igi1conv iff decompile <file.iff> <out_dir>\n";
+        std::cerr << "Usage: igi2conv iff decompile <file.iff> <out_dir>\n";
         return 1;
     }
     std::string src = argv[2];
@@ -198,7 +217,7 @@ static int create_from_bef_dir(const std::string& srcDir, const std::string& out
     fs::path scratch = fs::temp_directory_path() /
         ("igi1conv_iff_create_" +
          std::to_string(std::rand()) + "_" +
-         std::to_string(::GetCurrentProcessId()));
+         std::to_string(current_process_id()));
     fs::remove_all(scratch);
     fs::create_directories(scratch);
     // Write a _skeleton.BEF first so the writer can pick up the bones
@@ -246,7 +265,7 @@ static int create_from_bef_dir(const std::string& srcDir, const std::string& out
 
 static int iff_create(int argc, char** argv) {
     if (argc < 4) {
-        std::cerr << "Usage: igi1conv iff create <dir_with_befs> <out.iff>\n";
+        std::cerr << "Usage: igi2conv iff create <dir_with_befs> <out.iff>\n";
         return 1;
     }
     std::string src = argv[2];
@@ -260,7 +279,7 @@ static int iff_create(int argc, char** argv) {
 // ─── rebuild (IFF -> BEF dir -> IFF in one step) ────────────────────────
 static int iff_rebuild(int argc, char** argv) {
     if (argc < 4) {
-        std::cerr << "Usage: igi1conv iff rebuild <src.iff> <out.iff>\n";
+        std::cerr << "Usage: igi2conv iff rebuild <src.iff> <out.iff>\n";
         return 1;
     }
     std::string src = argv[2];
@@ -269,7 +288,7 @@ static int iff_rebuild(int argc, char** argv) {
     fs::path tmp = fs::temp_directory_path() /
                    ("igi1conv_iff_rebuild_" +
                     std::to_string(std::rand()) + "_" +
-                    std::to_string(::GetCurrentProcessId()));
+                    std::to_string(current_process_id()));
     fs::remove_all(tmp);
     fs::create_directories(tmp);
 
@@ -293,7 +312,7 @@ static int iff_rebuild(int argc, char** argv) {
 // ─── emit-qsc (BEF dir -> Anims.qsc) ────────────────────────────────────
 static int iff_emit_qsc(int argc, char** argv) {
     if (argc < 4) {
-        std::cerr << "Usage: igi1conv iff emit-qsc <dir_with_befs> <out.qsc>\n";
+        std::cerr << "Usage: igi2conv iff emit-qsc <dir_with_befs> <out.qsc>\n";
         return 1;
     }
     std::string src = argv[2];
@@ -339,7 +358,7 @@ bool IFF_ExportGif(const std::string& iffPath,
 
 static int iff_export_gif(int argc, char** argv) {
     if (argc < 4) {
-        std::cerr << "Usage: igi1conv iff export-gif <file.iff> <out.gif> [width] [height] [fps]\n";
+        std::cerr << "Usage: igi2conv iff export-gif <file.iff> <out.gif> [width] [height] [fps]\n";
         std::cerr << "  width,height default 640x480; fps default 30\n";
         return 1;
     }

@@ -1,3 +1,4 @@
+#include <cstring>
 #include "mef_parser.h"
 #include "../common.h"
 #include "../logger.h"

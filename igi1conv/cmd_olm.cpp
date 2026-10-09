@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 static void print_olm_help()
 {
     std::cout <<
-        "Usage: igi1conv olm <subcommand> [options]\n"
+        "Usage: igi2conv olm <subcommand> [options]\n"
         "\n"
         "Subcommands:\n"
         "  info   <input.olm>\n"

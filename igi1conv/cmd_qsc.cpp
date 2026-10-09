@@ -7,7 +7,7 @@
 static void print_help_qsc()
 {
     std::cout <<
-        "Usage: igi1conv qsc <subcommand> [options]\n"
+        "Usage: igi2conv qsc <subcommand> [options]\n"
         "\n"
         "Subcommands:\n"
         "  compile <input.qsc> -o <output.qvm>   Compile QSC script to QVM bytecode\n"
@@ -23,7 +23,7 @@ static bool read_file(const std::string& path, std::string& out)
 {
     std::ifstream f(path, std::ios::binary);
     if (!f.is_open()) {
-        std::cerr << "igi1conv qsc: cannot open '" << path << "'\n";
+        std::cerr << "igi2conv qsc: cannot open '" << path << "'\n";
         return false;
     }
     out.assign(std::istreambuf_iterator<char>(f), std::istreambuf_iterator<char>());
@@ -35,13 +35,13 @@ static int parse_qsc(const std::string& source, const std::string& path, qsc::Pa
 {
     qsc::LexResult lex = qsc::Lex(source);
     if (!lex.ok) {
-        std::cerr << "igi1conv qsc: lex error in '" << path << "': " << lex.error << "\n";
+        std::cerr << "igi2conv qsc: lex error in '" << path << "': " << lex.error << "\n";
         return 3;
     }
 
     result = qsc::Parse(lex.tokens);
     if (!result.ok) {
-        std::cerr << "igi1conv qsc: parse error in '" << path << "': " << result.error << "\n";
+        std::cerr << "igi2conv qsc: parse error in '" << path << "': " << result.error << "\n";
         return 3;
     }
 
@@ -51,8 +51,8 @@ static int parse_qsc(const std::string& source, const std::string& path, qsc::Pa
 static int do_compile(int argc, char** argv)
 {
     if (argc < 2) {
-        std::cerr << "igi1conv qsc compile: missing input file\n";
-        std::cerr << "Usage: igi1conv qsc compile <input.qsc> -o <output.qvm>\n";
+        std::cerr << "igi2conv qsc compile: missing input file\n";
+        std::cerr << "Usage: igi2conv qsc compile <input.qsc> -o <output.qvm>\n";
         return 1;
     }
 
@@ -68,7 +68,7 @@ static int do_compile(int argc, char** argv)
     }
 
     if (output.empty()) {
-        std::cerr << "igi1conv qsc compile: missing -o <output.qvm>\n";
+        std::cerr << "igi2conv qsc compile: missing -o <output.qvm>\n";
         return 1;
     }
 
@@ -87,21 +87,21 @@ static int do_compile(int argc, char** argv)
     std::string compile_error;
     if (!qvm::CompileToFile(*parsed.program, output, &compile_error)) {
         if (!compile_error.empty())
-            std::cerr << "igi1conv qsc compile: " << compile_error << "\n";
+            std::cerr << "igi2conv qsc compile: " << compile_error << "\n";
         else
-            std::cerr << "igi1conv qsc compile: failed to write '" << output << "'\n";
+            std::cerr << "igi2conv qsc compile: failed to write '" << output << "'\n";
         return 4;
     }
 
-    std::cout << "igi1conv qsc: compiled '" << input << "' -> '" << output << "'\n";
+    std::cout << "igi2conv qsc: compiled '" << input << "' -> '" << output << "'\n";
     return 0;
 }
 
 static int do_validate(int argc, char** argv)
 {
     if (argc < 2) {
-        std::cerr << "igi1conv qsc validate: missing input file\n";
-        std::cerr << "Usage: igi1conv qsc validate <input.qsc>\n";
+        std::cerr << "igi2conv qsc validate: missing input file\n";
+        std::cerr << "Usage: igi2conv qsc validate <input.qsc>\n";
         return 1;
     }
 
@@ -116,7 +116,7 @@ static int do_validate(int argc, char** argv)
     int rc = parse_qsc(source, input, parsed);
     if (rc != 0) return rc;
 
-    std::cout << "igi1conv qsc: '" << input << "' is valid"
+    std::cout << "igi2conv qsc: '" << input << "' is valid"
               << " (" << parsed.call_count << " calls, " << parsed.arg_count << " args)\n";
     return 0;
 }
@@ -135,7 +135,7 @@ int cmd_qsc(int argc, char** argv)
     if (sub == "compile")  return do_compile(sub_argc, sub_argv);
     if (sub == "validate") return do_validate(sub_argc, sub_argv);
 
-    std::cerr << "igi1conv qsc: unknown subcommand '" << sub << "'\n";
+    std::cerr << "igi2conv qsc: unknown subcommand '" << sub << "'\n";
     std::cerr << "Run 'igi1conv qsc --help' for usage.\n";
     return 1;
 }

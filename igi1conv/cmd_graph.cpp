@@ -6,10 +6,10 @@ static void print_usage()
 {
     std::cerr <<
         "Usage:\n"
-        "  igi1conv graph export <input.dat> -o <output.json>\n"
-        "  igi1conv graph table  <input.dat> -o <output.md>\n"
-        "  igi1conv graph info   <input.dat>\n"
-        "  igi1conv graph dump   <input.dat>\n";
+        "  igi2conv graph export <input.dat> -o <output.json>\n"
+        "  igi2conv graph table  <input.dat> -o <output.md>\n"
+        "  igi2conv graph info   <input.dat>\n"
+        "  igi2conv graph dump   <input.dat>\n";
 }
 
 // Return value of named option, or nullptr.  Accepts both `-o` and

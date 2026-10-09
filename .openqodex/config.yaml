@@ -1,0 +1,4 @@
+version: 1
+review:
+  default_base: origin/macos-gconv
+  block_on_severity: null

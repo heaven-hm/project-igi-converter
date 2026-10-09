@@ -10,7 +10,7 @@ using igi1conv::LightmapBindingSet;
 static void print_lightmap_help()
 {
     std::cout <<
-        "Usage: igi1conv lightmap <subcommand> [options]\n"
+        "Usage: igi2conv lightmap <subcommand> [options]\n"
         "\n"
         "Subcommands:\n"
         "  list    --model <id> --qsc <objects.qsc>\n"

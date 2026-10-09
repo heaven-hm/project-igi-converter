@@ -7,9 +7,9 @@ static void print_usage()
 {
     std::cerr <<
         "Usage:\n"
-        "  igi1conv terrain export-lmp <input.lmp> -o <output.pgm>\n"
-        "  igi1conv terrain export-ctr <input.ctr> -o <output.json>\n"
-        "  igi1conv terrain info <input.lmp|.ctr>\n";
+        "  igi2conv terrain export-lmp <input.lmp> -o <output.pgm>\n"
+        "  igi2conv terrain export-ctr <input.ctr> -o <output.json>\n"
+        "  igi2conv terrain info <input.lmp|.ctr>\n";
 }
 
 // Return value of named option, or nullptr.

@@ -1,0 +1,21 @@
+{
+  "source": "/Users/haseeb-mir/Downloads/tools/gconvapi.dll",
+  "sha256": "f76ce99b51402bba2b93b43135c1e6a622545e82b895f810309dad6fbaf4b6de",
+  "commands": {
+    "rabin2 -Ij /Users/haseeb-mir/Downloads/tools/gconvapi.dll": {
+      "exit": 0,
+      "stderr": "",
+      "output": "gconvapi-Ij.json"
+    },
+    "rabin2 -ij /Users/haseeb-mir/Downloads/tools/gconvapi.dll": {
+      "exit": 0,
+      "stderr": "",
+      "output": "gconvapi-ij.json"
+    },
+    "rabin2 -Ej /Users/haseeb-mir/Downloads/tools/gconvapi.dll": {
+      "exit": 0,
+      "stderr": "",
+      "output": "gconvapi-Ej.json"
+    }
+  }
+}

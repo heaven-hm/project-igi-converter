@@ -1,3 +1,4 @@
+#include <cstring>
 #include "mef_exporter.h"
 #include "dat_parser.h"
 #include "tex_parser.h"
@@ -10,6 +11,12 @@
 #include <utility>
 
 namespace {
+size_t BoundedStringLength(const char* text, size_t limit) {
+  size_t length = 0;
+  while (length < limit && text[length]) ++length;
+  return length;
+}
+
 
 // Collect unique renderBlock material slots in first-encounter order.
 std::vector<int> CollectMaterialSlots(const ParsedGeometry &geometry) {
@@ -402,7 +409,7 @@ bool ExportToMefAscii(const ParsedGeometry &geometry,
 
   f << std::fixed << std::setprecision(6);
   for (const auto &a : geometry.mefAttachments) {
-    std::string n(a.name, strnlen(a.name, 16));
+    std::string n(a.name, BoundedStringLength(a.name, 16));
     f << "Attachment(\"" << n << "\", "
       << a.px << ", " << a.py << ", " << a.pz << ", "
       << a.r00 << ", " << a.r01 << ", " << a.r02 << ", "

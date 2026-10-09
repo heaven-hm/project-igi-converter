@@ -338,3 +338,20 @@ exit codes, recursive directory walker with mixed good/bad inputs, and
 **Description:** `MefExportObjHasRealUvs` and `MefExportVFlipMatchesModelType` used `IGI1CONV_NEED(f, "\\.mef$")` which could pick Type 3 lightmap models. Type 3 models have synthetic UVs spanning `-11..1` (before fix) and no real texture coordinates, causing the tests' expected UV range assertions to fail.
 
 **Resolution:** Both tests now use `FindCorpusMefOfModelType(1)` (for Type 1 skinned) and `FindCorpusMefOfModelType(0)` (for Type 0 rigid) to guarantee they test only models with real texture coordinates. Type 3 models are excluded entirely from these assertions.
+
+## IGICONV-20261010: native platform and game format fixes
+
+- IGICONV-ALIGN: decode the container and each chunk's actual ILFF alignment, including IGI 1 COMMON archives.
+- IGICONV-QVM-DIALECT: retain separate IGI 1 8.5 and IGI 2 demo 8.6 / retail 8.7 headers and opcode mappings; preserve IGI 2 source version metadata.
+- IGICONV-IGI2-MESH: read split ECAF render indices and the game-specific lightmapped vertex layout; validate index ranges.
+- IGICONV-OLM: use the correct per-game layer descriptor lengths and rebuild every lightmap layer.
+- IGICONV-ANIM-DURATION: stop adding one millisecond each time an IGI 1 animation is exported to BEF.
+- IGICONV-JSON-RANGE: reject integer wrapping, missing terrain grids and incompatible game/structural metadata.
+- IGICONV-QVM-BOUNDS: validate pool and call counts without unsigned arithmetic overflow.
+- IGICONV-FIXTURE-SKIP: search real model variants without an arbitrary 64-file limit; mandatory format tests fail on absent fixtures.
+
+Validation: representative real format round trips, edited-value rebuilds, address/undefined-behavior sanitizers, synthetic CLI checks and the complete IGI 1 regression suite. Detailed platform reports are stored under verification/evidence.
+
+- IGICONV-BITMAP-GUARD: reject output aliases of every bitmap input in font/texture/lightmap packing and font extraction; regression confirms direct and hard-link inputs remain unchanged. Archive packing also refuses aliases of source resources.
+
+- IGICONV-IGI2-MODEL-WRITER: route IGI 2 mef to-text/compile through its lossless native JSON template writer; refuse the inherited IGI 1 rigid-model writer. Verify static, skeletal and lightmapped rebuilds independently.

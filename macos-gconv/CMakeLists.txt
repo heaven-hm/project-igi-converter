@@ -13,3 +13,17 @@ add_executable(gconv src/main.cpp src/common.cpp src/resources.cpp src/images.cp
 target_link_libraries(gconv PRIVATE PNG::PNG)
 target_compile_options(gconv PRIVATE -Wall -Wextra -Wpedantic)
 install(TARGETS gconv RUNTIME DESTINATION bin)
+
+option(GCONV_ENABLE_SANITIZERS "Enable address and undefined-behavior checks" OFF)
+if(GCONV_ENABLE_SANITIZERS)
+  target_compile_options(gconv PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+  target_link_options(gconv PRIVATE -fsanitize=address,undefined)
+endif()
+include(CTest)
+if(BUILD_TESTING)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  add_test(NAME gconv_cli COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/verification/check_cli.py
+    --binary $<TARGET_FILE:gconv>
+    --report ${CMAKE_CURRENT_BINARY_DIR}/cli-results.json)
+endif()

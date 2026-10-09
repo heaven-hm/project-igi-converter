@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 static void print_mef_help()
 {
     std::cout <<
-        "Usage: igi1conv mef <subcommand> [options]\n"
+        "Usage: igi2conv mef <subcommand> [options]\n"
         "\n"
         "Subcommands:\n"
         "  export  <input.mef|mex> -o <output.obj> [--dat <file.dat> --texdir <dir>]\n"
@@ -21,9 +21,8 @@ static void print_mef_help()
         "  dump    <input.mef> [-o <output.txt>]\n"
         "  info    <input.mef>\n"
         "  bundle  <input.mef> -o <outdir> --dat <file.dat> --texdir <dir>\n"
-        "  to-text <input.mef> -o <output.txt>   (binary MEF -> text MEF)\n"
-        "  compile <input.txt> -o <output.mef>   (text MEF -> binary MEF)\n"
-        "  build-rigid <input.mef> [-o <output.mef>] (merge all ATTA into rigid model)\n"
+        "  to-text <input.mef> -o <output.json>  (native IGI 2 model JSON)\n"
+        "  compile <input.json> -o <output.mef> (native IGI 2 JSON -> MEF)\n"
         "\n"
         "Exit codes: 0=success 1=bad args 2=file not found 3=parse error 4=write error\n";
 }

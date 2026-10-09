@@ -6,7 +6,7 @@
 static void print_help_qvm()
 {
     std::cout <<
-        "Usage: igi1conv qvm <subcommand> [options]\n"
+        "Usage: igi2conv qvm <subcommand> [options]\n"
         "\n"
         "Subcommands:\n"
         "  decompile <input.qvm> -o <output.qsc>   Decompile QVM bytecode to QSC source\n"
@@ -21,8 +21,8 @@ static void print_help_qvm()
 static int do_decompile(int argc, char** argv)
 {
     if (argc < 2) {
-        std::cerr << "igi1conv qvm decompile: missing input file\n";
-        std::cerr << "Usage: igi1conv qvm decompile <input.qvm> -o <output.qsc>\n";
+        std::cerr << "igi2conv qvm decompile: missing input file\n";
+        std::cerr << "Usage: igi2conv qvm decompile <input.qvm> -o <output.qsc>\n";
         return 1;
     }
 
@@ -37,13 +37,13 @@ static int do_decompile(int argc, char** argv)
     }
 
     if (output.empty()) {
-        std::cerr << "igi1conv qvm decompile: missing -o <output.qsc>\n";
+        std::cerr << "igi2conv qvm decompile: missing -o <output.qsc>\n";
         return 1;
     }
 
     QVMFile qvm = QVM_Parse(input);
     if (!qvm.valid) {
-        std::cerr << "igi1conv qvm decompile: failed to parse '" << input << "'";
+        std::cerr << "igi2conv qvm decompile: failed to parse '" << input << "'";
         if (!qvm.error.empty()) std::cerr << ": " << qvm.error;
         std::cerr << "\n";
         return (qvm.error.find("not found") != std::string::npos ||
@@ -51,19 +51,19 @@ static int do_decompile(int argc, char** argv)
     }
 
     if (!QVM_Decompile(qvm, output)) {
-        std::cerr << "igi1conv qvm decompile: failed to write '" << output << "'\n";
+        std::cerr << "igi2conv qvm decompile: failed to write '" << output << "'\n";
         return 4;
     }
 
-    std::cout << "igi1conv qvm: decompiled '" << input << "' -> '" << output << "'\n";
+    std::cout << "igi2conv qvm: decompiled '" << input << "' -> '" << output << "'\n";
     return 0;
 }
 
 static int do_disasm(int argc, char** argv)
 {
     if (argc < 2) {
-        std::cerr << "igi1conv qvm disasm: missing input file\n";
-        std::cerr << "Usage: igi1conv qvm disasm <input.qvm> [-o <output.txt>]\n";
+        std::cerr << "igi2conv qvm disasm: missing input file\n";
+        std::cerr << "Usage: igi2conv qvm disasm <input.qvm> [-o <output.txt>]\n";
         return 1;
     }
 
@@ -79,7 +79,7 @@ static int do_disasm(int argc, char** argv)
 
     QVMFile qvm = QVM_Parse(input);
     if (!qvm.valid) {
-        std::cerr << "igi1conv qvm disasm: failed to parse '" << input << "'";
+        std::cerr << "igi2conv qvm disasm: failed to parse '" << input << "'";
         if (!qvm.error.empty()) std::cerr << ": " << qvm.error;
         std::cerr << "\n";
         return (qvm.error.find("not found") != std::string::npos ||
@@ -142,15 +142,15 @@ static int do_disasm(int argc, char** argv)
     } else {
         std::ofstream f(output, std::ios::binary);
         if (!f.is_open()) {
-            std::cerr << "igi1conv qvm disasm: cannot write '" << output << "'\n";
+            std::cerr << "igi2conv qvm disasm: cannot write '" << output << "'\n";
             return 4;
         }
         f << text;
         if (!f) {
-            std::cerr << "igi1conv qvm disasm: write error on '" << output << "'\n";
+            std::cerr << "igi2conv qvm disasm: write error on '" << output << "'\n";
             return 4;
         }
-        std::cout << "igi1conv qvm: disasm '" << input << "' -> '" << output << "'\n";
+        std::cout << "igi2conv qvm: disasm '" << input << "' -> '" << output << "'\n";
     }
 
     return 0;
@@ -159,8 +159,8 @@ static int do_disasm(int argc, char** argv)
 static int do_info(int argc, char** argv)
 {
     if (argc < 2) {
-        std::cerr << "igi1conv qvm info: missing input file\n";
-        std::cerr << "Usage: igi1conv qvm info <input.qvm>\n";
+        std::cerr << "igi2conv qvm info: missing input file\n";
+        std::cerr << "Usage: igi2conv qvm info <input.qvm>\n";
         return 1;
     }
 
@@ -168,7 +168,7 @@ static int do_info(int argc, char** argv)
 
     QVMFile qvm = QVM_Parse(input);
     if (!qvm.valid) {
-        std::cerr << "igi1conv qvm info: failed to parse '" << input << "'";
+        std::cerr << "igi2conv qvm info: failed to parse '" << input << "'";
         if (!qvm.error.empty()) std::cerr << ": " << qvm.error;
         std::cerr << "\n";
         return (qvm.error.find("not found") != std::string::npos ||
@@ -212,7 +212,7 @@ int cmd_qvm(int argc, char** argv)
     if (sub == "disasm")    return do_disasm(sub_argc, sub_argv);
     if (sub == "info")      return do_info(sub_argc, sub_argv);
 
-    std::cerr << "igi1conv qvm: unknown subcommand '" << sub << "'\n";
+    std::cerr << "igi2conv qvm: unknown subcommand '" << sub << "'\n";
     std::cerr << "Run 'igi1conv qvm --help' for usage.\n";
     return 1;
 }

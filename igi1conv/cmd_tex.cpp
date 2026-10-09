@@ -12,7 +12,7 @@ namespace fs = std::filesystem;
 static void print_tex_help()
 {
     std::cout <<
-        "Usage: igi1conv tex <subcommand> [options]\n"
+        "Usage: igi2conv tex <subcommand> [options]\n"
         "\n"
         "Subcommands:\n"
         "  decode <input.tex|.spr|.pic> -o <output_dir>\n"

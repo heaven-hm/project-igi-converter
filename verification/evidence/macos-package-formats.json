@@ -1,0 +1,225 @@
+{
+  "game": 2,
+  "format_extensions": [
+    "bmp",
+    "dat",
+    "fnt",
+    "iff",
+    "jpg",
+    "mef",
+    "mp3",
+    "mtp",
+    "olm",
+    "pic",
+    "png",
+    "qsc",
+    "qvm",
+    "res",
+    "spr",
+    "syn",
+    "tex",
+    "tga",
+    "thm",
+    "tlm",
+    "tmm",
+    "wav"
+  ],
+  "binary_sha256": "0bbce8f2ad2436e9dc85569400fef661df9e06e5c8925f43782f9e76be738bcb",
+  "scope": "One real example per format, plus PNG/TGA intermediate paths; no skipped required formats.",
+  "passed": 38,
+  "failed": 0,
+  "results": [
+    {
+      "format": "QVM -> QSC -> QVM",
+      "status": "passed",
+      "fidelity": "byte-identical",
+      "source_sha256": "6c597ea3f41ef64d1f412fe9e54c37c40abcdfa441391a3b20670df8429f41df"
+    },
+    {
+      "format": "QSC -> QVM -> QSC",
+      "status": "passed",
+      "fidelity": "byte-identical source"
+    },
+    {
+      "format": "QVM retail 8.7",
+      "status": "passed",
+      "fidelity": "byte-identical",
+      "source_sha256": "111e3ffbc6e4ac1af08eab6a5c51b8aaf4c06b6e0a35ac4487983a7a41b33c3d"
+    },
+    {
+      "format": "source overwrite guard",
+      "status": "passed",
+      "rejection": "source overwrite refused and input unchanged"
+    },
+    {
+      "format": "JSON range guard",
+      "status": "passed",
+      "rejection": "integer overflow refused before writing"
+    },
+    {
+      "format": "RES",
+      "status": "passed",
+      "fidelity": "all names and payloads identical"
+    },
+    {
+      "format": "TEX",
+      "status": "passed",
+      "fidelity": "byte-identical"
+    },
+    {
+      "format": "SPR",
+      "status": "passed",
+      "fidelity": "byte-identical"
+    },
+    {
+      "format": "PIC",
+      "status": "passed",
+      "fidelity": "byte-identical"
+    },
+    {
+      "format": "FNT",
+      "status": "passed",
+      "fidelity": "byte-identical via PNG and TGA"
+    },
+    {
+      "format": "bitmap source overwrite guard",
+      "status": "passed",
+      "rejection": "bitmap and hard-link aliases remain unchanged"
+    },
+    {
+      "format": "PNG",
+      "status": "passed",
+      "fidelity": "native image -> TEX -> TGA"
+    },
+    {
+      "format": "TGA",
+      "status": "passed",
+      "fidelity": "native image -> TEX -> TGA"
+    },
+    {
+      "format": "MEF",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild; OBJ geometry exported"
+    },
+    {
+      "format": "mef-skeletal.mef",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild; OBJ geometry exported"
+    },
+    {
+      "format": "mef-lightmapped.mef",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild; OBJ geometry exported"
+    },
+    {
+      "format": "IFF",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild"
+    },
+    {
+      "format": "WAV/ILSF",
+      "status": "passed",
+      "fidelity": "byte-identical raw PCM"
+    },
+    {
+      "format": "MTP",
+      "status": "passed",
+      "fidelity": "model and texture mappings preserved"
+    },
+    {
+      "format": "DAT model mappings",
+      "status": "passed",
+      "fidelity": "model and texture mappings preserved"
+    },
+    {
+      "format": "DAT graph",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild"
+    },
+    {
+      "format": "OLM",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild"
+    },
+    {
+      "format": "THM",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild"
+    },
+    {
+      "format": "TLM",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild"
+    },
+    {
+      "format": "TMM",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild"
+    },
+    {
+      "format": "DAT forest",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild"
+    },
+    {
+      "format": "DAT graphcover",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild"
+    },
+    {
+      "format": "SYN",
+      "status": "passed",
+      "fidelity": "byte-identical JSON rebuild"
+    },
+    {
+      "format": "MP3",
+      "status": "passed",
+      "fidelity": "MPEG frames preserved; metadata removed"
+    },
+    {
+      "format": "olm.olm edited rebuild",
+      "status": "passed",
+      "fidelity": "edited value survives binary rebuild and re-export"
+    },
+    {
+      "format": "thm.thm edited rebuild",
+      "status": "passed",
+      "fidelity": "edited value survives binary rebuild and re-export"
+    },
+    {
+      "format": "tlm.tlm edited rebuild",
+      "status": "passed",
+      "fidelity": "edited value survives binary rebuild and re-export"
+    },
+    {
+      "format": "tmm.tmm edited rebuild",
+      "status": "passed",
+      "fidelity": "edited value survives binary rebuild and re-export"
+    },
+    {
+      "format": "syn.syn edited rebuild",
+      "status": "passed",
+      "fidelity": "edited value survives binary rebuild and re-export"
+    },
+    {
+      "format": "forest.dat edited rebuild",
+      "status": "passed",
+      "fidelity": "edited value survives binary rebuild and re-export"
+    },
+    {
+      "format": "graphcover.dat edited rebuild",
+      "status": "passed",
+      "fidelity": "edited value survives binary rebuild and re-export"
+    },
+    {
+      "format": "BMP",
+      "status": "passed",
+      "fidelity": "decoded RGBA pixels preserved through lossless BMP/PNG"
+    },
+    {
+      "format": "JPG",
+      "status": "passed",
+      "fidelity": "decoded RGBA pixels preserved through lossless BMP/PNG"
+    }
+  ]
+}

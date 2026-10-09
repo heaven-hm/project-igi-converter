@@ -1,160 +1,111 @@
-# igi1conv — Project IGI 1 Game Converter
-![igi1conv Logo](assets/igi1conv_logo.jpg)
+# Project IGI native converters
 
-This is a standalone command-line converter and inspector for *Project IGI 1* game files. Inspired by the original IGI1Conv shipped with IGI 2, it allows you to seamlessly read, convert, and inspect the engine's proprietary formats—textures, meshes, scripts, archives, terrain, fonts, and AI graphs—with **no OpenGL or game-editor dependency**.
+Two C++17 command-line converters live in this **one repository**, on separate branches:
 
-It's the ultimate tool for modders and researchers looking to extract game assets, modify them using modern tools, and inject them back into the game.
+| Game | Branch | Native executable |
+| --- | --- | --- |
+| Project IGI (IGI 1) | `feature/igi1conv-cross-platform` | `igi1conv` / `igi1conv.exe` |
+| IGI 2: Covert Strike | `feature/igi2conv-cross-platform` | `igi2conv` / `igi2conv.exe` |
 
-## 🖥️ GUI Version (Graphical User Interface)
+The combined release contains both converters for Windows x86_64 and macOS. macOS packages include a plain CLI and a `.app` bundle containing that CLI. Run it from Terminal; there is no graphical interface. The native IGI 2 implementation does not require `gconv.exe`, `gconvapi.dll`, Wine or Rosetta.
 
-An interactive workspace designed for visual inspection, navigation, and quick asset modifications:
-*   **File Tree Navigator**: Browse game folders with real-time directory searching.
-*   **Interactive 3D Viewer**: Render native `.mef` and `.obj` models with rotation, zoom, and wireframe views.
-*   **2D Image Viewer**: Instantly preview proprietary `.tex`, `.spr`, and `.pic` texture assets.
-*   **Texture Paint & Editor**: Edit Game assets directly by drawing, painting, and modifying textures using pencil, eraser, and color pickers, and save modifications back to the native game forma[...]
-*   **Script & Hex Inspectors**: Read decompiled `.qsc` script files and inspect raw binary data.
-*   **Right-Click Context Menu**: Trigger conversion tasks directly from the graphical user interface.
+## Build
 
-> [!IMPORTANT]
-> To use **Apply Textures** on 3D models in the GUI, you must first select the active level folder from the **Settings** menu to resolve the correct texture mappings.
+Use CMake 3.16+, a C++17 compiler and Python 3.9+ for verification. Image codecs and the pinned nlohmann/json 3.11.3 header are vendored; the CLI has no runtime dependency on libpng or Qt.
 
-> [!NOTE]
-> **Latest: v1.9.4 (June 2026) — Animation mode with skeletal skinning**:
-> - **Animation mode (Mode 6)**: New GUI mode that plays IFF bone animations on textured 3D MEF models. Toggle via **Settings > Animation**. Includes a Model dropdown, Animations listbox, Play button, Loop checkbox, and a configurable **FPS input textbox (1–120)**.
-> - **Skeletal skinning**: The textured 3D MEF mesh is deformed each frame using the IFF bone transforms — you see the actual animated character, not skeleton dots. Press `P` to toggle rest-pose skinning for debugging; press `B` to toggle the bone skeleton overlay (now depth-test disabled so it renders on top of the model at the correct scale).
-> - **Auto-setup**: Selecting a level from **Settings > Level** auto-detects `objects.qsc`, the `common/ANIMS` folder, and the level `models/` folder, so Animation mode is one click away.
-> - **Root-offset fix**: The MEF↔IFF coordinate mismatch (root at `(0,0,3990.4)` vs `(0,0,0)`) is handled, so body parts no longer detach during animation.
-> - **All hardcoded paths removed** from the source tree — GUI falls back to the user's home directory, and the corpus is resolved via the `IGI_GAME_PATH` env var or `--game-path` flag.
+IGI 1 branch:
 
-For the full version history see [**CHANGELOG.md**](./CHANGELOG.md).
-
-
-### GUI Screenshots
-
-**_1. Main View Interface_**  
-![Main View](assets/01_main_view.png)  
-*This screenshot showcases the primary **IGI Game Converter** graphical interface. It actively features the robust directory tree on the left panel, allowing seamless navigation and real-time visu[...]
-**_2. Intelligent Model Search_**  
-![Model Search](assets/02_model_search.png)  
-*Demonstrates the powerful global model search functionality. By seamlessly filtering the massive directory tree, users can instantly locate specific internal game assets, drastically accelerating[...]
-
-**_3. Texture Renderer (TEX)_**  
-![Texture View 01](assets/03a_tex_000_01.png)  
-*Presents the native 2D image renderer displaying standard proprietary `.tex` files. This highly optimized viewer decodes internal texture chunks flawlessly, offering direct visual inspection of w[...]
-
-**_4. High-Res Texture Inspection_**  
-![Texture View 04](assets/03b_tex_000_04.png)  
-*Highlights the image viewer processing larger texture assets. It efficiently unpacks complex multi-layered game textures on-the-fly, providing critical diagnostic insights and verifying accurate [...]
-
-**_5. Texture Context Menu_**  
-![Texture Context Menu](assets/03c_tex_context_menu.png)  
-*Reveals the interactive context menu available on `.tex` files. This vital popup menu grants immediate access to essential conversion commands, dynamically bridging the GUI with the underlying CL[...]
-
-**_6. Texture Paint & Drawing Editor (Edit Game Assets)_**  
-<p align="center">
-  <img src="assets/05a_tex_paint.png" width="32%" alt="Texture Paint Tools" />
-  <img src="assets/05aa_tex_paint.png" width="32%" alt="Texture Paint Canvas" />
-  <img src="assets/05b_tex_paint.png" width="32%" alt="Texture Paint Brush" />
-</p>
-<p align="center">
-  <img src="assets/05c_tex_paint.png" width="49%" alt="Editing Texture Asset" />
-  <img src="assets/05d_tex_paint.png" width="49%" alt="Save Modified Asset" />
-</p>
-*Showcases the integrated advanced Image Editor. With this tool, we can edit Game assets directly; users can draw, paint, erase, change pen size/color, and save modified texture assets directly ba[...]
-
-**_7. Raw 3D Mesh Viewer (MEF)_**  
-![3D Raw Viewer](assets/04a_mef_3d_raw.png)  
-*Shows the built-in interactive 3D renderer displaying a `.mef` model without applied textures. It provides smooth camera navigation, allowing modders to closely examine the structural geometry an[...]
-
-**_8. 3D Model Zoom Inspection_**  
-![3D Zoomed View](assets/04_mef_003_zoomed.png)  
-*Displays the 3D viewer dynamically zoomed in on a specific geometric mesh component. This fine-tuned hardware-accelerated OpenGL view is essential for inspecting intricate polygonal details and d[...]
-
-**_9. 3D Wireframe Rendering_**  
-![3D Wireframe](assets/04c_3d_wireframe.png)  
-*Features the 3D viewer explicitly toggled into wireframe rendering mode. This highly technical diagnostic view uncovers the underlying polygonal topography, exposing hidden mesh complexities crit[...]
-
-**_10. Mesh Context Menu_**  
-![MEF Context Menu](assets/04c_mef_context_menu.png)  
-*Illustrates the interactive right-click menu tailored specifically for `.mef` 3D model files. It exposes critical workflow actions like automated texture application, batch bundle processing, and[...]
-
-**_11. Integrated Text Editor_**  
-![Text View](assets/07a_qvm_text_view.png)  
-*Captures the built-in text editor actively displaying decompiled `.qsc` script files. It features an integrated file-searching utility and provides a lightweight, seamless environment for analyzi[...]
-
-**_12. Hexadecimal Inspector_**  
-![Hex View](assets/07a_qvm_hex_view.png)  
-*Showcases the integrated Hex View inspector toggled for raw binary analysis. This specialized mode empowers developers to meticulously investigate unrecognized proprietary file structures byte-by[...]
-
-**_13. UI Themes_**  
-<p align="center">
-  <img src="assets/08c_theme_dark.png" width="32%" alt="Dark Theme" />
-  <img src="assets/08c_theme_military.png" width="32%" alt="Military Theme" />
-  <img src="assets/08c_theme_solarized.png" width="32%" alt="Solarized Theme" />
-</p>
-*Customizable visual interfaces including Dark, Military, and Solarized styles.*
-
-**_14. About & Documentation_**  
-![About Dialog](assets/09b_about_dialog.png)  
-*Features the comprehensive informational dialog box. It elegantly provides crucial versioning details, integrated clickable GitHub repository documentation links, and essential architectural over[...]
-
----
-
-## 🐚 CLI Version (Command-Line Interface)
-
-A lightweight, high-performance command-line utility optimized for scripting, automated builds, and batch tasks:
-
-*   **Asset Extraction**: Unpack and pack `.res` archives.
-*   **Mesh Conversion**: Export proprietary `.mef` models directly to standard `.obj` files.
-*   **Texture Conversion**: Convert images to and from `.tex`, `.spr`, and `.pic` formats (with resizing).
-*   **Script Decompilation**: Decompile `.qvm` bytecode to `.qsc` source, and compile `.qsc` back to `.qvm`.
-*   **Metadata Editing**: Export `.dat` mappings to JSON and compile them back into binary `.dat`/`.mtp` packages.
-*   **Batch Operations**: Recursively process entire folders of assets in one command.
-
-### CLI Usage & Commands
-
-Below are practical, real-world examples showing how to leverage the `igi1conv` CLI to mod Project IGI 1 assets:
-
-#### 1. Working with Textures (`.tex`, `.spr`, `.pic`)
-The game stores textures in a proprietary format. You can export them to `.png` to edit them, and then repack them.
-```bash
-# Get information about a texture (dimensions, mipmaps, mode)
-igi1conv tex info textures/FLARE00.TEX
-
-# Export a texture to PNG for editing
-igi1conv tex to-png textures/FLARE00.TEX -o my_edits/FLARE00.png
-
-# Resize and export simultaneously
-igi1conv tex to-png textures/arrow1_1.spr -o out/arrow1_1.png --resize 32 32
-
-# Convert your edited PNG back to the game's TEX format
-igi1conv tex to-tga my_edits/FLARE00.png -o textures/FLARE00.TEX
+```sh
+cmake -S . -B build -DIGI1CONV_BUILD_GUI=OFF -DIGI1CONV_BUILD_TESTS=OFF
+cmake --build build --config Release --parallel
+./build/bin/igi1conv --help
 ```
 
-#### 2. Exporting 3D Meshes (`.mef`)
-Extract weapons, characters, or level geometry into `.obj` format.
-```bash
-# Dump the structural data of a mesh to a text file for inspection
-igi1conv mef dump models/model1.mef -o model1_struct.txt
+IGI 2 branch:
 
-# Export a single model to OBJ
-igi1conv mef export models/model1.mef -o model1.obj
+```sh
+cmake -S . -B build -DBUILD_TESTING=ON
+cmake --build build --config Release --parallel
+./build/igi2conv --help
+ctest --test-dir build --output-on-failure
+```
 
-# Export all models in a folder iteratively (Batch Mode)
-igi1conv mef export models/weapons/ -o output_objs/ --batch
+On Windows use the corresponding `Release/igi2conv.exe` or `bin/Release/igi1conv.exe` path with a Visual Studio multi-configuration generator. CLI releases use a static C++ runtime.
 
-# Bundle a MEF with its actual textures (requires the map's .dat file
+## Conversion commands
 
-## License and responsible use
+Use the executable for the game that supplied the input. Examples below use IGI 2; the shared asset commands also work with `igi1conv`.
 
-This project's Heaven-HM-owned material uses the
-[Heaven-HM Community Modding License](LICENSE). You may modify the
-source and create and share free, lawful, noncommercial mods. Selling the
-covered software or resulting mods, or charging for access, requires separate
-written permission. Illegal activity, infringement, malware, unauthorized
-access, and intentional real-world harm are prohibited. Preserve attribution
-and follow third-party licenses. Fictional events in games are not real-world harm.
+```sh
+igi2conv qvm decompile mission.qvm -o mission.qsc
+igi2conv qsc compile mission.qsc mission.qvm
+igi2conv res extract level.res extracted
+igi2conv res pack extracted rebuilt.res
+igi2conv tex extract texture.tex bitmaps
+igi2conv tex pack texture.tex bitmaps rebuilt.tex
+igi2conv tex make image.png new.tex
+igi2conv fnt extract font.fnt font.png
+igi2conv fnt pack font.fnt font.png rebuilt.fnt
+igi2conv image convert image.bmp image.png
+igi2conv wav extract sound.wav pcm.wav
+igi2conv wav pack sound.wav pcm.wav rebuilt.wav
+igi2conv mp3 normalize speech.mp3 normalized.mp3
+igi2conv mef export model.mef -o model.obj
+igi2conv mef to-text model.mef -o model.json
+igi2conv mef compile model.json -o rebuilt.mef
+igi2conv asset to-json model.mef model.json
+igi2conv asset from-json model.json rebuilt.mef
+igi2conv olm extract object.olm layers
+igi2conv olm pack object.olm layers rebuilt.olm
+igi2conv asset to-json heightmap.thm heightmap.json
+igi2conv asset from-json heightmap.json rebuilt.thm
+igi2conv terrain extract lightmap.tlm lightmap.png
+igi2conv terrain pack lightmap.tlm lightmap.png rebuilt.tlm
+igi2conv mtp to-dat level.mtp -o level.dat
+igi2conv dat to-mtp level.dat -o rebuilt.mtp
+```
 
-This is a **source-available** project under a custom restrictive license.
-[Prior permissions and separately licensed material](LICENSE_SCOPE.md) remain
-valid; this change does not revoke rights granted for earlier versions.
+IGI 2 `mef to-text` and `mef compile` use its native JSON template representation. Rigid model authoring and VQ texture codecs are currently unavailable.
+
+IGI 1 QSC compilation uses `igi1conv qsc compile input.qsc -o output.qvm`. Its IFF animation text path is `igi1conv iff convert animation.iff befs`, then `igi1conv iff create befs rebuilt.iff`. The separate JSON animation path preserves the original binary layout exactly.
+
+## Format coverage
+
+| Format | IGI 1 | IGI 2 | Conversion / fidelity |
+| --- | --- | --- | --- |
+| QVM / QSC | LOOP 8.5, 60-byte header | Demo 8.6 and retail 8.7, 64-byte header | Decompile / compile. IGI 2 version comment preserves the original opcode dialect. |
+| RES | IRES, including aligned COMMON archives | IRES | Extract / pack. Resource names and payloads preserved; container layout may change. |
+| TEX / SPR / PIC | Supported native image containers | Supported native image containers | Extract / template pack / create TEX. Template headers and untouched pixel payloads retained. |
+| FNT | ILFF font atlases | ILFF font atlases | PNG/TGA export / template pack, preserving glyph metadata. |
+| PNG / TGA / BMP / JPEG | Image codecs | Image codecs | Native image conversion; JPEG encoding is lossy. |
+| MEF / MEX | Existing mesh tools and ILFF JSON | Static, skeletal and lightmapped render mesh export; ILFF JSON | OBJ geometry export. JSON preserves all chunks and permits fixed-size payload edits. |
+| IFF / BEF | FORM animation / BEF / JSON | ILFF/MINA animation / JSON | IGI 1 BEF preserves decoded animation content within float tolerance; JSON preserves exact bytes. IGI 2 exposes header/skeleton fields and raw keyframe chunks. |
+| WAV / ILSF | PCM and IMA ADPCM | PCM and IMA ADPCM | Standard PCM16 export / template pack. ADPCM re-encoding is lossy. |
+| MTP / DAT mapping | Model / texture mappings | Model / texture mappings | MTP↔DAT, JSON export. |
+| DAT navigation graph | IGI 1 adjacency header and TLV records | IGI 2 header and TLV records | Editable typed JSON / exact rebuild. |
+| OLM | 16-byte layer descriptors | 24-byte layer descriptors and intervening metadata | All layers to images / template pack; editable RGBA JSON. |
+| HMP / BIT / CMD / CTR / LMP | Game-specific terrain formats | — | Editable JSON / exact rebuild. |
+| THM / TLM / TMM | — | Height floats / RGBA lightmap / material indices | Editable JSON / exact rebuild. TLM/TMM image template pack; THM image export is a normalized preview. |
+| SYN | — | Float32 lip-sync samples | Editable JSON / exact rebuild. |
+| DAT forest / graphcover | — | Forest transforms/colors / AICC cover data | Editable JSON / exact rebuild. |
+| MP3 | — | MPEG audio frames | Frame-preserving metadata normalization; no PCM↔MP3 transcoder. |
+| AVI / AFP | Existing video / opaque game key | — | Byte-preserving copy; AVI transcoding and AFP decryption are not implemented. |
+
+`asset to-json INPUT OUTPUT` / `asset from-json INPUT OUTPUT` handles terrain, navigation graphs, OLM, animation and model containers. Keep the JSON `game`, `format`, headers and structural counts consistent. Template commands preserve dimensions and fixed chunk sizes; they are not a general-purpose model authoring pipeline.
+
+## Verification
+
+[Verification documentation](docs/verification.md) records the scope and reproducible commands. The representative harness requires **one real, nonempty sample per format**, plus distinct script/model variants. Missing files fail explicitly. It checks binary or decoded-content equality and edited-value persistence, not merely successful exit codes.
+
+```sh
+python verification/check_format_coverage.py --binary PATH_TO_CLI \
+  --game 2 --samples PATH_TO_IGI2_FIXTURES --report format-report.json
+```
+
+The official IGI 2 single-player demo supplies animation and other missing fixtures. LEVEL5 and the provided sprite/font/texture archives supply retail examples. The full game is unnecessary for the current format matrix. Proprietary game executables, PDBs, installer archives and test fixtures are excluded from converter source and deliverable packages.
+
+A passing representative test does not establish compatibility with every asset ever shipped, every original GConv QScript recipe, or in-game engine behavior. Unsupported operations fail rather than being reported as converted.
+
+## License
+
+See [LICENSE_SCOPE.md](LICENSE_SCOPE.md). Preserve prior contributor notices and the separate licenses for vendored dependencies. The tools do not distribute the games.

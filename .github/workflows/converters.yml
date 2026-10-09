@@ -1,0 +1,73 @@
+name: Native converters
+on:
+  push:
+    branches: [feature/igi2conv-cross-platform]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        game: ['1', '2']
+        os: [windows-latest, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/igi${{ matrix.game }}conv-cross-platform
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Configure C++17 CLI
+        shell: bash
+        run: |
+          if [ '${{ matrix.game }}' = '1' ]; then
+            cmake -S . -B build -DIGI1CONV_BUILD_GUI=OFF -DIGI1CONV_BUILD_TESTS=OFF
+          else
+            cmake -S . -B build -DBUILD_TESTING=ON
+          fi
+      - name: Build
+        run: cmake --build build --config Release --parallel 4
+      - name: Fetch private temporary format fixtures
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download converter-test-fixtures-20261010 --repo '${{ github.repository }}' --pattern format-fixtures.zip --dir fixtures
+          python -m zipfile -e fixtures/format-fixtures.zip fixtures
+      - name: Run representative format checks on native host
+        shell: bash
+        run: |
+          if [ '${{ runner.os }}' = 'Windows' ]; then
+            if [ '${{ matrix.game }}' = '1' ]; then
+              binary=build/bin/Release/igi1conv.exe
+            else
+              binary=build/Release/igi2conv.exe
+            fi
+          elif [ '${{ matrix.game }}' = '1' ]; then
+            binary=build/bin/igi1conv
+          else
+            binary=build/igi2conv
+          fi
+          mkdir -p evidence dist
+          "$binary" --version
+          python verification/check_format_coverage.py --binary "$binary" --game '${{ matrix.game }}' --samples fixtures/igi${{ matrix.game }} --report evidence/format-report.json
+          if [ '${{ matrix.game }}' = '2' ]; then
+            python macos-gconv/verification/check_cli.py --binary "$binary" --report evidence/cli-report.json
+          fi
+          python scripts/package_converter.py --binary "$binary" --game '${{ matrix.game }}' --output dist/igi${{ matrix.game }}conv-${{ runner.os }}-x86_64.zip --report evidence/format-report.json
+      - name: Verify extracted release package
+        shell: bash
+        run: |
+          python scripts/verify_package.py --archive dist/igi${{ matrix.game }}conv-${{ runner.os }}-x86_64.zip --game '${{ matrix.game }}' --samples fixtures/igi${{ matrix.game }} --report evidence/package-format-report.json
+      - name: Upload verified package and test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: igi${{ matrix.game }}conv-${{ runner.os }}-x86_64
+          path: |
+            dist/
+            evidence/
+          if-no-files-found: error

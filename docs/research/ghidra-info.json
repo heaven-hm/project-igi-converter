@@ -1,0 +1,8 @@
+{
+  "deterministic": true,
+  "ghidra_version": "12.1.2",
+  "install_dir": "/opt/homebrew/Cellar/ghidra/12.1.2/libexec",
+  "jvm_started": true,
+  "pyghidra_version": "3.1.0",
+  "status": "ok"
+}

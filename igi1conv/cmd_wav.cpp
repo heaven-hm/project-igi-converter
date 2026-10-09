@@ -548,9 +548,9 @@ void print_usage()
 {
     std::cerr <<
         "Usage:\n"
-        "  igi1conv wav info         <file.wav>\n"
-        "  igi1conv wav convert      <file.wav> -o <out.wav>\n"
-        "  igi1conv wav convert-dir  <src_dir>  -o <dst_dir> [--no-recursive]\n"
+        "  igi2conv wav info         <file.wav>\n"
+        "  igi2conv wav convert      <file.wav> -o <out.wav>\n"
+        "  igi2conv wav convert-dir  <src_dir>  -o <dst_dir> [--no-recursive]\n"
         "\n"
         "The .wav files inside the IGI game directory are not normal PCM .wav files.\n"
         "They use a proprietary InnerLoop container (signature \"ILSF\") that wraps\n"
@@ -564,7 +564,7 @@ void print_usage()
         "Output format: only `.wav` is supported in this build.  Earlier\n"
         "versions of this command could emit `.mp3` via an external `lame.exe`\n"
         "or a bundled LAME 3.100 DLL; both paths have been removed to keep\n"
-        "igi1conv a single binary with zero external dependencies.  Any\n"
+        "igi2conv a single binary with zero external dependencies.  Any\n"
         "Windows media player will play the produced `.wav` out of the box.\n"
         "\n"
         "If -o points at an existing directory (or has no extension) the output\n"

@@ -1,9 +1,7 @@
-BasedOnStyle: Google
-ColumnLimit: 80
-IndentWidth: 2
-AllowShortBlocksOnASingleLine: Never
-AllowShortFunctionsOnASingleLine: Empty
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 100
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
-BreakBeforeBraces: Attach
-SortIncludes: true
+AllowShortFunctionsOnASingleLine: Empty
+BreakBeforeBraces: Allman

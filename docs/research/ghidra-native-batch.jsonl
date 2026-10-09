@@ -1,0 +1,4 @@
+{"tool": "program.open", "arguments": {"path": "/Users/haseeb-mir/Downloads/tools/gconvapi.dll", "project_location": "/private/tmp/gconv-ghidra-project", "project_name": "gconv-update", "update_analysis": false, "read_only": false}}
+{"tool": "listing.disassemble.seed", "arguments": {"address": "0x10007110", "limit": 128}}
+{"tool": "function.create", "arguments": {"address": "0x10007110", "name": "gcExecuteScript"}}
+{"tool": "decomp.function", "arguments": {"function_start": "0x10007110", "timeout_secs": 30}}

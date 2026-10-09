@@ -1,0 +1,394 @@
+[
+  {
+    "check": "help",
+    "passed": true
+  },
+  {
+    "check": "version",
+    "passed": true
+  },
+  {
+    "check": "no arguments",
+    "passed": true
+  },
+  {
+    "check": "qsc compile: missing arguments",
+    "passed": true
+  },
+  {
+    "check": "res list: missing arguments",
+    "passed": true
+  },
+  {
+    "check": "res extract: missing arguments",
+    "passed": true
+  },
+  {
+    "check": "res pack: missing arguments",
+    "passed": true
+  },
+  {
+    "check": "fnt info: missing arguments",
+    "passed": true
+  },
+  {
+    "check": "fnt extract: missing arguments",
+    "passed": true
+  },
+  {
+    "check": "fnt pack: missing arguments",
+    "passed": true
+  },
+  {
+    "check": "tex extract: missing arguments",
+    "passed": true
+  },
+  {
+    "check": "tex make: missing arguments",
+    "passed": true
+  },
+  {
+    "check": "tex pack: missing arguments",
+    "passed": true
+  },
+  {
+    "check": "unknown command",
+    "passed": true
+  },
+  {
+    "check": "missing source",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 0",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 1",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 2",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 3",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 4",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 5",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 6",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 7",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 8",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 9",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 10",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 11",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 12",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 13",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 14",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 15",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 16",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 17",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 18",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 19",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 20",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 21",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 22",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 23",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 24",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 25",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 26",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 27",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 28",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 29",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 30",
+    "passed": true
+  },
+  {
+    "check": "truncated TEX header 31",
+    "passed": true
+  },
+  {
+    "check": "zero width",
+    "passed": true
+  },
+  {
+    "check": "zero height",
+    "passed": true
+  },
+  {
+    "check": "missing base pixels",
+    "passed": true
+  },
+  {
+    "check": "truncated pixels",
+    "passed": true
+  },
+  {
+    "check": "zero sprite bitmap count",
+    "passed": true
+  },
+  {
+    "check": "TGA 16bpp origin 0 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 16bpp origin 0 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "TGA 16bpp origin 16 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 16bpp origin 16 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "TGA 16bpp origin 32 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 16bpp origin 32 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "TGA 16bpp origin 48 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 16bpp origin 48 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "TGA 24bpp origin 0 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 24bpp origin 0 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "TGA 24bpp origin 16 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 24bpp origin 16 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "TGA 24bpp origin 32 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 24bpp origin 32 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "TGA 24bpp origin 48 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 24bpp origin 48 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "TGA 32bpp origin 0 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 32bpp origin 0 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "TGA 32bpp origin 16 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 32bpp origin 16 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "TGA 32bpp origin 32 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 32bpp origin 32 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "TGA 32bpp origin 48 RLE=False",
+    "passed": true
+  },
+  {
+    "check": "TGA 32bpp origin 48 RLE=True",
+    "passed": true
+  },
+  {
+    "check": "RLE repeat packet",
+    "passed": true
+  },
+  {
+    "check": "RLE packet overrun",
+    "passed": true
+  },
+  {
+    "check": "invalid PNG",
+    "passed": true
+  },
+  {
+    "check": "TEX source overwrite",
+    "passed": true
+  },
+  {
+    "check": "QSC source overwrite",
+    "passed": true
+  },
+  {
+    "check": "TEX hardlink output preserved",
+    "passed": true
+  },
+  {
+    "check": "QSC hardlink output preserved",
+    "passed": true
+  },
+  {
+    "check": "malformed QSC b'Foo('",
+    "passed": true
+  },
+  {
+    "check": "malformed QSC b'if(TRUE) {'",
+    "passed": true
+  },
+  {
+    "check": "malformed QSC b'Foo(\"unterminated);'",
+    "passed": true
+  },
+  {
+    "check": "malformed QSC b'@'",
+    "passed": true
+  },
+  {
+    "check": "resource traversal LOCAL:../escape",
+    "passed": true
+  },
+  {
+    "check": "resource traversal LOCAL:/absolute",
+    "passed": true
+  },
+  {
+    "check": "resource traversal LOCAL:C:/escape",
+    "passed": true
+  },
+  {
+    "check": "resource traversal LOCAL:folder/../../escape",
+    "passed": true
+  },
+  {
+    "check": "duplicate resource names",
+    "passed": true
+  },
+  {
+    "check": "resource symlink escape",
+    "passed": true
+  },
+  {
+    "check": "resource existing output preserved",
+    "passed": true
+  },
+  {
+    "check": "resource pack/list/extract",
+    "passed": true
+  },
+  {
+    "check": "empty resource extract and repack",
+    "passed": true
+  },
+  {
+    "check": "font edit preserves second atlas and metadata",
+    "passed": true
+  },
+  {
+    "check": "texture edits change exactly the base pixels",
+    "passed": true
+  }
+]

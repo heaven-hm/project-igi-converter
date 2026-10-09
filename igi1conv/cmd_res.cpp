@@ -8,13 +8,13 @@ static void print_usage()
 {
     std::cerr <<
         "Usage:\n"
-        "  igi1conv res list <input.res>\n"
-        "  igi1conv res extract <input.res> -o <output_dir>\n"
-        "  igi1conv res extract <input.res> --file <name> -o <output_dir>\n"
-        "  igi1conv res compile <file.qsc>\n"
-        "  igi1conv res pack <dir> <out.res>\n"
-        "  igi1conv res unpack <file.res> <dir>\n"
-        "  igi1conv res append <input.res> <file1> [file2...] -o <out.res> [--prefix LOCAL:textures/]\n";
+        "  igi2conv res list <input.res>\n"
+        "  igi2conv res extract <input.res> -o <output_dir>\n"
+        "  igi2conv res extract <input.res> --file <name> -o <output_dir>\n"
+        "  igi2conv res compile <file.qsc>\n"
+        "  igi2conv res pack <dir> <out.res>\n"
+        "  igi2conv res unpack <file.res> <dir>\n"
+        "  igi2conv res append <input.res> <file1> [file2...] -o <out.res> [--prefix LOCAL:textures/]\n";
 }
 
 // Return the value of a named option (e.g. "-o", "--file"), or nullptr if absent.
