@@ -1,0 +1,32 @@
+[
+  {
+    "game": 2,
+    "variant": ".spr v9 mode3",
+    "status": "passed",
+    "fidelity": "byte-identical"
+  },
+  {
+    "game": 2,
+    "variant": ".spr v9 mode2",
+    "status": "passed",
+    "fidelity": "byte-identical"
+  },
+  {
+    "game": 2,
+    "variant": ".tex v11 mode67",
+    "status": "passed",
+    "fidelity": "byte-identical"
+  },
+  {
+    "game": 2,
+    "variant": ".tex v11 mode2",
+    "status": "passed",
+    "fidelity": "byte-identical"
+  },
+  {
+    "game": 2,
+    "variant": ".spr v7 mode3",
+    "status": "passed",
+    "fidelity": "byte-identical"
+  }
+]

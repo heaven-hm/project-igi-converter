@@ -355,3 +355,5 @@ Validation: representative real format round trips, edited-value rebuilds, addre
 - IGICONV-BITMAP-GUARD: reject output aliases of every bitmap input in font/texture/lightmap packing and font extraction; regression confirms direct and hard-link inputs remain unchanged. Archive packing also refuses aliases of source resources.
 
 - IGICONV-IGI2-MODEL-WRITER: route IGI 2 mef to-text/compile through its lossless native JSON template writer; refuse the inherited IGI 1 rigid-model writer. Verify static, skeletal and lightmapped rebuilds independently.
+
+- IGICONV-GRAPH-CAPACITY-OVERFLOW: validate the squared 32-bit graph capacity against input bytes before multiplying by the eight-byte entry stride. Crafted capacity 0x80000000 now fails instead of wrapping to an empty table.

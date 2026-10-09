@@ -24,7 +24,7 @@
     "tmm",
     "wav"
   ],
-  "binary_sha256": "0bbce8f2ad2436e9dc85569400fef661df9e06e5c8925f43782f9e76be738bcb",
+  "binary_sha256": "ff4f4ce387b0fa5585bae79b25d752235969630cec4885bc45929f2d032f8912",
   "scope": "One real example per format, plus PNG/TGA intermediate paths; no skipped required formats.",
   "passed": 38,
   "failed": 0,

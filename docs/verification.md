@@ -42,3 +42,9 @@ Native Windows and Intel macOS CI uses the same representative script and tempor
 ## Evidence and limits
 
 Local reports under `verification/evidence/` identify the exact executable by SHA-256 and distinguish byte fidelity, decoded-content fidelity, edits and preservation-only operations. A successful process exit alone is insufficient. Real-game execution and unsupported original GConv recipe APIs are outside the claims of this asset-converter test matrix.
+
+## Latest local results
+
+IGI 2: 38 mandatory checks across 22 extensions; 98 synthetic checks. Five distinct texture/sprite layouts rebuild exactly.
+
+The native Windows and Intel macOS matrix first passed in run 38005115413; a second run verifies the final graph overflow regression. The IGI 2 legacy source-directory build entry point now forwards to the complete native target.

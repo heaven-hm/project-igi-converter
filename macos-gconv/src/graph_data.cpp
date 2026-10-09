@@ -36,9 +36,10 @@ Json exportGraphData(const Bytes &bytes, bool igi2)
     if (!igi2)
     {
         const auto capacity = readU32(bytes, 12);
-        const uint64_t tableSize = uint64_t(capacity) * capacity * 8;
-        if (tableSize > bytes.size())
+        const uint64_t entries = uint64_t(capacity) * capacity;
+        if (entries > bytes.size() / 8)
             fail("Invalid IGI 1 adjacency table size");
+        const uint64_t tableSize = entries * 8;
         position = 30 + static_cast<size_t>(tableSize);
         requireRange(bytes, 0, position);
     }
