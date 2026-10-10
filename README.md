@@ -1,9 +1,38 @@
-# igi1conv — Project IGI 1 Game Converter
+# IGI1Conv and IGI2Conv — game asset converters
 ![igi1conv Logo](assets/igi1conv_logo.jpg)
 
 This is a standalone command-line converter and inspector for *Project IGI 1* game files. Inspired by the original IGI1Conv shipped with IGI 2, it allows you to seamlessly read, convert, and inspect the engine's proprietary formats—textures, meshes, scripts, archives, terrain, fonts, and AI graphs—with **no OpenGL or game-editor dependency**.
 
 It's the ultimate tool for modders and researchers looking to extract game assets, modify them using modern tools, and inject them back into the game.
+
+## Shared macOS and Windows desktop build
+
+`converters/` builds two separate applications, `igi1conv` and `igi2conv`, from shared
+format readers, codecs and Qt GUI code. Each executable also provides its game's CLI.
+
+```bash
+cmake -S converters -B build-unified -DCMAKE_BUILD_TYPE=Release -DIGICONV_BUILD_GUI=ON
+cmake --build build-unified --parallel
+./build-unified/bin/igi1conv --help
+./build-unified/bin/igi2conv --help
+./build-unified/bin/igi2conv --open /path/to/Level5/graph4.dat
+```
+
+Install Qt 6 Widgets, OpenGL and Multimedia to build the GUI. For a CLI-only build,
+set `-DIGICONV_BUILD_GUI=OFF`. The packaging scripts in `converters/packaging/`
+deploy Qt frameworks on macOS and Qt DLLs/plugins plus compiler runtimes on Windows.
+Keep the complete extracted release folder when running either app.
+
+Both apps support model and navigation graph viewing, texture editing, script viewing
+and compilation, and music transport. IGI2's MINA animation reader supports the
+validated hierarchy, root translation and quaternion track layouts; unknown event
+layouts are rejected. `mp3 to-wav INPUT OUTPUT` decodes MP3 to 16-bit PCM in either CLI.
+Under CrossOver, a per-player WinMM backend plays cached PCM music and controls volume.
+Native macOS and native Windows use Qt Multimedia. Windows GUI verification here runs
+under CrossOver on macOS; a native Windows-host test is still separate.
+
+The native IGI2 converter implements the documented format operations. Complete
+behavioral equivalence with every original GConv command/DLL is not established.
 
 ## 🖥️ GUI Version (Graphical User Interface)
 
@@ -104,6 +133,21 @@ For the full version history see [**CHANGELOG.md**](./CHANGELOG.md).
 
 A lightweight, high-performance command-line utility optimized for scripting, automated builds, and batch tasks:
 
+### macOS CLI build
+
+The native CLI build does not require Qt at runtime:
+
+```bash
+cmake -S . -B build-macos-cli \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DIGI1CONV_BUILD_GUI=OFF \
+  -DIGI1CONV_BUILD_TESTS=OFF
+cmake --build build-macos-cli --target igi1conv --parallel
+./build-macos-cli/bin/igi1conv --version
+```
+
+The legacy root build remains available. Use the shared `converters/` build above for both game applications and the native macOS GUI.
+
 *   **Asset Extraction**: Unpack and pack `.res` archives.
 *   **Mesh Conversion**: Export proprietary `.mef` models directly to standard `.obj` files.
 *   **Texture Conversion**: Convert images to and from `.tex`, `.spr`, and `.pic` formats (with resizing).
@@ -144,3 +188,17 @@ igi1conv mef export models/model1.mef -o model1.obj
 igi1conv mef export models/weapons/ -o output_objs/ --batch
 
 # Bundle a MEF with its actual textures (requires the map's .dat file
+
+## License and responsible use
+
+This project's Heaven-HM-owned material uses the
+[Heaven-HM Community Modding License](LICENSE). You may modify the
+source and create and share free, lawful, noncommercial mods. Selling the
+covered software or resulting mods, or charging for access, requires separate
+written permission. Illegal activity, infringement, malware, unauthorized
+access, and intentional real-world harm are prohibited. Preserve attribution
+and follow third-party licenses. Fictional events in games are not real-world harm.
+
+This is a **source-available** project under a custom restrictive license.
+[Prior permissions and separately licensed material](LICENSE_SCOPE.md) remain
+valid; this change does not revoke rights granted for earlier versions.
