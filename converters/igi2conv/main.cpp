@@ -13,7 +13,7 @@ namespace gconv
 {
 void printUsage()
 {
-    std::cout << "igi2conv 0.2.0 — native C++17 IGI 2 CLI\n"
+    std::cout << "igi2conv " IGI1CONV_VERSION " — native C++17 IGI 2 converter\n"
                  "  igi2conv qsc compile INPUT.qsc OUTPUT.qvm\n"
                  "  igi2conv res list INPUT.res\n"
                  "  igi2conv res extract INPUT.res DIRECTORY\n"
@@ -22,7 +22,7 @@ void printUsage()
                  "  igi2conv fnt extract INPUT.fnt OUTPUT.png|OUTPUT.tga\n"
                  "  igi2conv fnt pack TEMPLATE.fnt IMAGE.png|IMAGE.tga OUTPUT.fnt\n"
                  "  igi2conv tex extract INPUT.tex|INPUT.spr|INPUT.pic DIRECTORY\n"
-                 "  igi2conv tex make IMAGE.png|IMAGE.tga OUTPUT.tex\n"
+                 "  igi2conv tex make IMAGE.png|IMAGE.tga OUTPUT.tex [--mipmaps]\n"
                  "  igi2conv tex pack TEMPLATE.tex|TEMPLATE.spr|TEMPLATE.pic "
                  "BITMAP_DIRECTORY OUTPUT\n"
                  "JSON: asset to-json INPUT OUTPUT; asset from-json INPUT OUTPUT.\n"
@@ -42,10 +42,16 @@ void runCommand(int argc, char **argv)
     if (family == "res" && operation == "unpack") operation = "extract";
     if (family == "fnt" && operation == "export") operation = "extract";
     std::vector<const char*> paths;
+    bool mipmaps = false;
     for (int i = 3; i < argc; ++i)
     {
         const std::string argument = argv[i];
-        if (argument == "-o" || argument == "--out" || argument == "--output")
+        if (argument == "--mipmaps")
+        {
+            if (family != "tex" || operation != "make") fail("--mipmaps requires tex make");
+            mipmaps = true;
+        }
+        else if (argument == "-o" || argument == "--out" || argument == "--output")
         {
             if (++i >= argc) fail("Missing output path");
             paths.push_back(argv[i]);
@@ -95,7 +101,7 @@ void runCommand(int argc, char **argv)
     }
     if (family == "tex" && operation == "make" && pathCount == 2)
     {
-        createTexture(paths[0], paths[1]);
+        createTexture(paths[0], paths[1], mipmaps);
         return;
     }
     if (family == "tex" && operation == "pack" && pathCount == 3)
@@ -126,7 +132,7 @@ int main(int argc, char **argv)
         }
         if (std::string(argv[1]) == "--version")
         {
-            std::cout << "igi2conv 0.2.0 (C++17 native)\n";
+            std::cout << "igi2conv " IGI1CONV_VERSION " (C++17 native)\n";
             return 0;
         }
         const int audioResult = gconv::runAudioCommand(argc, argv);

@@ -54,7 +54,7 @@ std::vector<Image> readTextureBitmaps(const fs::path &p)
     uint16_t bits = mode == 2 ? 16 : (mode == 3 || mode == 67) ? 32 : 0;
     if (!bits)
         fail("Unsupported texture mode (VQ decoding is not implemented)");
-    for (size_t n = 0; n < (v == 11 ? 10 : count); ++n)
+    for (size_t n = 0; n < (v == 11 ? 16 : count); ++n)
     {
         uint32_t width = v == 11 ? w >> n : w, height = v == 11 ? h >> n : h;
         if (!width || !height)
@@ -70,22 +70,59 @@ std::vector<Image> readTextureBitmaps(const fs::path &p)
     }
     return images;
 }
-void createTexture(const fs::path &src, const fs::path &dst)
+std::vector<Image> makeMipmaps(Image image)
+{
+    validateImage(image);
+    if (image.bitsPerPixel != 32)
+        fail("Mipmap generation requires 32-bit BGRA pixels");
+    std::vector<Image> levels;
+    levels.push_back(std::move(image));
+    while (levels.back().width > 1 && levels.back().height > 1)
+    {
+        const auto &previous = levels.back();
+        const uint32_t width = previous.width / 2, height = previous.height / 2;
+        Bytes pixels(size_t(width) * height * 4);
+        for (uint32_t y = 0; y < height; ++y)
+            for (uint32_t x = 0; x < width; ++x)
+                for (size_t channel = 0; channel < 4; ++channel)
+                {
+                    const size_t top = (size_t(y * 2) * previous.width + x * 2) * 4 + channel;
+                    const size_t bottom = top + size_t(previous.width) * 4;
+                    pixels[(size_t(y) * width + x) * 4 + channel] =
+                        (unsigned(previous.pixels[top]) + previous.pixels[top + 4] +
+                         previous.pixels[bottom] + previous.pixels[bottom + 4] + 2) / 4;
+                }
+        levels.push_back(Image{width, height, 32, std::move(pixels)});
+    }
+    return levels;
+}
+
+void createTexture(const fs::path &src, const fs::path &dst, bool mipmaps)
 {
     requireDifferentFiles(src, dst, "Texture output must differ from source image");
     auto i = loadImage(src);
-    if (i.bitsPerPixel == 24)
+    if (mipmaps && ((i.width & (i.width - 1)) || (i.height & (i.height - 1))))
+        fail("Mipmap texture dimensions must be powers of two");
+    if (i.bitsPerPixel == 24 || (mipmaps && i.bitsPerPixel != 32))
         i = fromRgba(i.width, i.height, toRgba(i), 32);
     Bytes b(32);
     std::memcpy(b.data(), "LOOP", 4);
     writeUnsigned(b, 4, 11);
-    writeUnsigned(b, 8, i.bitsPerPixel == 16 ? 2 : 3);
+    writeUnsigned(b, 8, mipmaps ? 67 : i.bitsPerPixel == 16 ? 2 : 3);
+    if (mipmaps)
+        writeUnsigned(b, 20, 5, 2); // Original GConv default texture scale factor.
     writeUnsigned(b, 22, i.width, 2);
     writeUnsigned(b, 24, i.height, 2);
     writeUnsigned(b, 26, i.width, 2);
     writeUnsigned(b, 28, i.height, 2);
     writeUnsigned(b, 30, i.bitsPerPixel / 8, 2);
-    b.insert(b.end(), i.pixels.begin(), i.pixels.end());
+    // GConv ARGB8888 mipmaps average each 2x2 BGRA block with round-to-nearest.
+    // Rectangular chains stop when either dimension cannot be halved.
+    if (mipmaps)
+        for (const auto &level : makeMipmaps(std::move(i)))
+            b.insert(b.end(), level.pixels.begin(), level.pixels.end());
+    else
+        b.insert(b.end(), i.pixels.begin(), i.pixels.end());
     writeFile(dst, b);
 }
 void packTexture(const fs::path &src, const fs::path &directory, const fs::path &dst)

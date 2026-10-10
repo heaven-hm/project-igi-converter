@@ -202,3 +202,5 @@ and follow third-party licenses. Fictional events in games are not real-world ha
 This is a **source-available** project under a custom restrictive license.
 [Prior permissions and separately licensed material](LICENSE_SCOPE.md) remain
 valid; this change does not revoke rights granted for earlier versions.
+
+The shared source also supports `igi1conv tex make INPUT.tga OUTPUT.tex --mipmaps` and `igi2conv tex make INPUT.tga OUTPUT.tex --mipmaps` for 32-bit power-of-two textures. This post-preview change matches original GConv square/rectangular uncompressed mip chains in differential tests; it is not yet in the published Qt preview packages.

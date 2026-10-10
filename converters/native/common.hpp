@@ -62,8 +62,10 @@ void extractFont(const fs::path &input, const fs::path &output);
 void packFont(const fs::path &templatePath, const fs::path &imagePath, const fs::path &outputPath);
 
 std::vector<Image> readTextureBitmaps(const fs::path &path);
+std::vector<Image> makeMipmaps(Image image);
 void extractTexture(const fs::path &input, const fs::path &outputDirectory);
-void createTexture(const fs::path &imagePath, const fs::path &outputPath);
+void createTexture(const fs::path &imagePath, const fs::path &outputPath,
+                   bool mipmaps = false);
 void packTexture(const fs::path &templatePath, const fs::path &bitmapDirectory,
                  const fs::path &outputPath);
 void compileScript(const fs::path &input, const fs::path &output);

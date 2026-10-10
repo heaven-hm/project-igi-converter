@@ -34,7 +34,7 @@ static void print_help()
                  "Usage: igi1conv <command> [options]\n"
                  "\n"
                  "Commands:\n"
-                 "  tex      TEX/SPR/PIC texture operations (decode, info, to-png, to-tga)\n"
+                 "  tex      TEX/SPR/PIC operations; make INPUT OUTPUT [--mipmaps]\n"
                  "  mef      MEF 3D mesh operations (export to OBJ, bundle, dump, info)\n"
                  "  qsc      QSC QScript (compile to QVM, validate)\n"
                  "  qvm      QVM bytecode (decompile to QSC, disasm, info)\n"

@@ -1,4 +1,5 @@
 #include "gui_main.h"
+#include "../native/common.hpp"
 
 #include <QApplication>
 #include <QMainWindow>
@@ -2044,16 +2045,16 @@ public:
             return b;
         };
 
-        btnDraw    = mkBtn("✏ Draw",   "Toggle pencil tool [D]");
-        btnEraser  = mkBtn("⌫ Erase",  "Toggle eraser tool [E]");
-        QPushButton* btnColor  = mkBtnNorm("🎨 Color",  "Pick pen color");
-        QPushButton* btnFlipH  = mkBtnNorm("↔ Flip H",  "Flip horizontally (and save with the flip)");
-        QPushButton* btnFlipV  = mkBtnNorm("↕ Flip V",  "Flip vertically (and save with the flip)");
-        QPushButton* btnFit    = mkBtnNorm("⊡ Fit",     "Fit to window");
+        btnDraw    = mkBtn("Draw",   "Toggle pencil tool [D]");
+        btnEraser  = mkBtn("Erase",  "Toggle eraser tool [E]");
+        QPushButton* btnColor  = mkBtnNorm("Color",  "Pick pen color");
+        QPushButton* btnFlipH  = mkBtnNorm("Flip H",  "Flip horizontally (and save with the flip)");
+        QPushButton* btnFlipV  = mkBtnNorm("Flip V",  "Flip vertically (and save with the flip)");
+        QPushButton* btnFit    = mkBtnNorm("Fit",     "Fit to window");
         QPushButton* btnZoomIn = mkBtnNorm("+ Zoom",    "Zoom in");
         QPushButton* btnZoomOut= mkBtnNorm("- Zoom",    "Zoom out");
-        QPushButton* btnClear  = mkBtnNorm("⟳ Reset",  "Reset to original");
-        QPushButton* btnSave   = mkBtnNorm("💾 Save",  "Save (Ctrl+S)");
+        QPushButton* btnClear  = mkBtnNorm("Reset",  "Reset to original");
+        QPushButton* btnSave   = mkBtnNorm("Save",  "Save (Ctrl+S)");
 
         // Pen size spinner
         QLabel* lblSize = new QLabel("Size:");
@@ -2068,6 +2069,8 @@ public:
         // Info label
         infoLabel = new QLabel("No image");
         infoLabel->setStyleSheet("color:#888;font-size:10px;font-family:Consolas;");
+        infoLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
+        infoLabel->setMinimumWidth(0);
 
         tools->addWidget(btnDraw);
         tools->addWidget(btnEraser);
@@ -2084,8 +2087,7 @@ public:
         tools->addSpacing(10);
         tools->addWidget(btnClear);
         tools->addWidget(btnSave);
-        tools->addStretch();
-        tools->addWidget(infoLabel);
+        tools->addWidget(infoLabel, 1);
         layout->addWidget(toolsWidget);
 
         // ── Scroll area for zoomable canvas ──────────────────
@@ -2119,11 +2121,13 @@ public:
         // undo a flip.
         connect(btnFlipH, &QPushButton::clicked, this, [this]() {
             if (currentImage.isNull()) return;
+            pushUndo();
             currentImage = currentImage.mirrored(true, false);
             updateDisplay();
         });
         connect(btnFlipV, &QPushButton::clicked, this, [this]() {
             if (currentImage.isNull()) return;
+            pushUndo();
             currentImage = currentImage.mirrored(false, true);
             updateDisplay();
         });
@@ -2138,35 +2142,35 @@ public:
         connect(btnZoomIn,  &QPushButton::clicked, this, [this]() { zoomFactor = qMin(zoomFactor * 1.25, 8.0); updateDisplay(); });
         connect(btnZoomOut, &QPushButton::clicked, this, [this]() { zoomFactor = qMax(zoomFactor / 1.25, 0.1); updateDisplay(); });
         connect(penSizeSpin, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int v) { penSize = v; });
-        connect(btnClear, &QPushButton::clicked, this, [this]() { currentImage = originalImage; updateDisplay(); });
-        connect(btnSave, &QPushButton::clicked, this, [this]() {
-            if (!currentPath.isEmpty() && !currentImage.isNull()) {
-                bool isGameFormat = currentPath.endsWith(".tex", Qt::CaseInsensitive)
-                                 || currentPath.endsWith(".spr", Qt::CaseInsensitive)
-                                 || currentPath.endsWith(".pic", Qt::CaseInsensitive);
-                if (isGameFormat) {
-                    if (saveAsTex(currentImage, currentPath))
-                        QMessageBox::information(this, "Saved", "Saved to game format:\n" + currentPath);
-                    else
-                        QMessageBox::critical(this, "Error", "Failed to save:\n" + currentPath);
-                } else {
-                    if (currentImage.save(currentPath))
-                        QMessageBox::information(this, "Saved", "Saved:\n" + currentPath);
-                    else
-                        QMessageBox::critical(this, "Error", "Failed to save:\n" + currentPath);
-                }
-            }
-        });
+        connect(btnClear, &QPushButton::clicked, this, [this]() { pushUndo(); currentImage = originalImage; updateDisplay(); });
+        connect(btnSave, &QPushButton::clicked, this, [this]() { saveImageEdits(); });
 
         imageLabel->installEventFilter(this);
         scrollArea->viewport()->installEventFilter(this);
     }
 
 
-    // Write `img` to `outPath` as a LOOP v11 container.  When `mode` is
-    // -1 (the default) the format is chosen from the filename: ".spr"
-    // and ".pic" produce ARGB8888, anything else produces the legacy
-    // 16-bit packed format.  Pass an explicit mode to override.
+    void saveImageEdits() {
+        if (!currentPath.isEmpty() && !currentImage.isNull()) {
+            bool isGameFormat = currentPath.endsWith(".tex", Qt::CaseInsensitive)
+                             || currentPath.endsWith(".spr", Qt::CaseInsensitive)
+                             || currentPath.endsWith(".pic", Qt::CaseInsensitive);
+            if (isGameFormat) {
+                if (saveAsTex(currentImage, currentPath))
+                    QMessageBox::information(this, "Saved", "Saved to game format:\n" + currentPath);
+                else
+                    QMessageBox::critical(this, "Error", "Failed to save:\n" + currentPath);
+            } else {
+                if (currentImage.save(currentPath))
+                    QMessageBox::information(this, "Saved", "Saved:\n" + currentPath);
+                else
+                    QMessageBox::critical(this, "Error", "Failed to save:\n" + currentPath);
+            }
+        }
+    }
+
+    // Preserve existing game containers and atomically save rebuilt pixels.
+    // New TEX files use LOOP11; new sprite/picture layouts require metadata.
     bool saveAsTex(const QImage& img, const QString& outPath, int mode = -1) {
         if (img.isNull()) return false;
         if (img.width() > 65535 || img.height() > 65535) return false;
@@ -2174,12 +2178,6 @@ public:
         // Make sure the destination directory exists.
         QFileInfo outInfo(outPath);
         QDir().mkpath(outInfo.absolutePath());
-
-        if (mode < 0) {
-            QString lower = outPath.toLower();
-            mode = (lower.endsWith(".spr") || lower.endsWith(".pic") ||
-                    lower.contains("argb8888")) ? 3 : 2;
-        }
 
         // QImage::Format_ARGB32 is stored as 0xAARRGGBB in memory on
         // little-endian, i.e. bytes are B, G, R, A.  We re-pack into
@@ -2197,6 +2195,47 @@ public:
                 rgba[o + 3] = static_cast<uint8_t>(qAlpha(row[x]));
             }
         }
+        const QString lower = outPath.toLower();
+        const bool gameFormat = lower.endsWith(".tex") || lower.endsWith(".spr") || lower.endsWith(".pic");
+        if (mode < 0 && gameFormat && QFileInfo::exists(outPath)) {
+            try {
+                QTemporaryDir work;
+                if (!work.isValid()) return false;
+                const QString source = work.filePath("template." + QFileInfo(outPath).suffix());
+                if (!QFile::copy(outPath, source)) return false;
+                const auto bitmaps = gconv::readTextureBitmaps(source.toStdString());
+                if (bitmaps.empty() || bitmaps.front().width != uint32_t(img.width()) ||
+                    bitmaps.front().height != uint32_t(img.height())) return false;
+                const auto templateBytes = gconv::readFile(source.toStdString());
+                const QString images = work.filePath("images");
+                gconv::extractTexture(source.toStdString(), images.toStdString());
+                auto edited = gconv::fromRgba(img.width(), img.height(), rgba, bitmaps.front().bitsPerPixel);
+                std::vector<gconv::Image> replacements;
+                if (gconv::readU32(templateBytes, 4) == 11 &&
+                    gconv::readU32(templateBytes, 8) == 67 && bitmaps.size() > 1)
+                    replacements = gconv::makeMipmaps(std::move(edited));
+                else
+                    replacements.push_back(std::move(edited));
+                if (replacements.size() > bitmaps.size()) replacements.resize(bitmaps.size());
+                for (size_t index = 0; index < replacements.size(); ++index)
+                    gconv::saveImage((images + QString("/template.%1.tga").arg(index)).toStdString(), replacements[index]);
+                const QString rebuilt = work.filePath("rebuilt." + QFileInfo(outPath).suffix());
+                gconv::packTexture(source.toStdString(), images.toStdString(), rebuilt.toStdString());
+                QFile result(rebuilt);
+                if (!result.open(QIODevice::ReadOnly)) return false;
+                const QByteArray bytes = result.readAll();
+                QSaveFile destination(outPath);
+                return destination.open(QIODevice::WriteOnly) &&
+                    destination.write(bytes) == bytes.size() && destination.commit();
+            } catch (const std::exception& error) {
+                if (g_logger) g_logger(QString("Texture save failed: %1").arg(error.what()), LOG_ERROR);
+                return false;
+            }
+        }
+        // Creating SPR/PIC layouts requires authoring metadata; never silently
+        // write a single-image TEX container under those extensions.
+        if (lower.endsWith(".spr") || lower.endsWith(".pic")) return false;
+        if (mode < 0) mode = lower.contains("argb8888") ? 3 : 2;
         return TEX_WriteLOOP(outPath.toStdString(),
                              rgba.data(), texImg.width(), texImg.height(),
                              mode, 11);
@@ -2204,6 +2243,8 @@ public:
 
     void loadImage(const QString& path, const QImage& img) {
         currentPath = path;
+        undoStack.clear();
+        redoStack.clear();
         originalImage = img;
         currentImage = img;
         // Default to the same fit-to-window view as the Fit toolbar button.
@@ -2219,6 +2260,7 @@ public:
             infoLabel->setText(QString("%1x%2 | %3")
                 .arg(img.width()).arg(img.height())
                 .arg(QFileInfo(path).fileName()));
+            infoLabel->setToolTip(infoLabel->text());
         }
     }
 
@@ -2266,8 +2308,6 @@ public:
                 QMouseEvent* me = static_cast<QMouseEvent*>(event);
                 if (drawingNow) {
                     QPoint pt = getMappedPoint(me->pos());
-                    QPainter painter(&currentImage);
-                    painter.setRenderHint(QPainter::Antialiasing);
                     if (isErasing) {
                         // Restore original pixels along the erased line
                         int r = penSize;
@@ -2289,9 +2329,11 @@ public:
                         updateDisplay();
                         return true;
                     } else {
+                        QPainter painter(&currentImage);
+                        painter.setRenderHint(QPainter::Antialiasing);
                         painter.setPen(QPen(penColor, penSize, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+                        painter.drawLine(lastPoint, pt);
                     }
-                    painter.drawLine(lastPoint, pt);
                     lastPoint = pt;
                     updateDisplay();
                 }
@@ -2319,6 +2361,17 @@ public:
     // image buttons sit at the same screen position as the 3D graph
     // buttons and the IFF media bar.
     QWidget* toolsWidget = nullptr;
+    void undoImage() { imgUndo(); }
+    void redoImage() { imgRedo(); }
+    void copyImage() { if (!currentImage.isNull()) QApplication::clipboard()->setImage(currentImage); }
+    void cutImage() {
+        if (currentImage.isNull()) return;
+        copyImage(); pushUndo(); currentImage.fill(Qt::transparent); updateDisplay();
+    }
+    void pasteImage() {
+        const QImage image = QApplication::clipboard()->image();
+        if (!image.isNull()) { pushUndo(); currentImage = image; updateDisplay(); }
+    }
 
 protected:
     void resizeEvent(QResizeEvent* event) override {
@@ -3131,6 +3184,10 @@ public:
         }, QKeySequence("Ctrl+Shift+O"));
 
         fileMenu->addAction(QIcon::fromTheme("document-save"), "&Save", this, [this]() {
+            if (imageEditor && imageEditor->isVisible()) {
+                imageEditor->saveImageEdits();
+                return;
+            }
             if (viewerEdit->isVisible() && !currentFile.isEmpty() && !viewerEdit->isReadOnly()) {
                 if (currentExt == "qvm" || (currentExt == "dat" && viewerShowsDecodedDat)) {
                     QTemporaryDir temporary;
@@ -3196,12 +3253,24 @@ public:
         fileMenu->addAction("E&xit", this, &QWidget::close, QKeySequence::Quit);
 
         QMenu* editMenu = menuBar()->addMenu("&Edit");
-        editMenu->addAction("Undo", this, [this](){ viewerEdit->undo(); }, QKeySequence::Undo);
-        editMenu->addAction("Redo", this, [this](){ viewerEdit->redo(); }, QKeySequence::Redo);
+        editMenu->addAction("Undo", this, [this](){
+            if (imageEditor && imageEditor->isVisible()) imageEditor->undoImage();
+            else viewerEdit->undo();
+        }, QKeySequence::Undo);
+        editMenu->addAction("Redo", this, [this](){
+            if (imageEditor && imageEditor->isVisible()) imageEditor->redoImage();
+            else viewerEdit->redo();
+        }, QKeySequence::Redo);
         editMenu->addSeparator();
-        editMenu->addAction("Cut", this, [this](){ viewerEdit->cut(); }, QKeySequence::Cut);
-        editMenu->addAction("Copy", this, [this](){ viewerEdit->copy(); }, QKeySequence::Copy);
-        editMenu->addAction("Paste", this, [this](){ viewerEdit->paste(); }, QKeySequence::Paste);
+        editMenu->addAction("Cut", this, [this](){
+            if (imageEditor && imageEditor->isVisible()) imageEditor->cutImage(); else viewerEdit->cut();
+        }, QKeySequence::Cut);
+        editMenu->addAction("Copy", this, [this](){
+            if (imageEditor && imageEditor->isVisible()) imageEditor->copyImage(); else viewerEdit->copy();
+        }, QKeySequence::Copy);
+        editMenu->addAction("Paste", this, [this](){
+            if (imageEditor && imageEditor->isVisible()) imageEditor->pasteImage(); else viewerEdit->paste();
+        }, QKeySequence::Paste);
         editMenu->addSeparator();
         editMenu->addAction("Find in Text", this, [this](){
             textSearchWidget->setVisible(!textSearchWidget->isVisible());
@@ -3764,7 +3833,9 @@ public:
 
         QMenu* helpMenu = menuBar()->addMenu("&Help");
         helpMenu->addAction("About", this, [this]() {
-            QMessageBox::about(this, "About", "IGI Game Convertor\nVersion 1.10.0\nAuthor: HeavenHM\nDeveloped in C++ with Qt5/Qt6.\nAdvanced Edition with MEF Native Viewer and full CLI integration.");
+            QMessageBox::about(this, "About",
+                QString("IGI %1 Converter\nVersion %2\nAuthor: HeavenHM\nBuilt with C++ and Qt.\nGUI and CLI share the native conversion code.")
+                    .arg(CONVERTER_GAME).arg(QStringLiteral(IGI1CONV_VERSION)));
         });
 
         QSplitter* splitter = new QSplitter(Qt::Horizontal, this);

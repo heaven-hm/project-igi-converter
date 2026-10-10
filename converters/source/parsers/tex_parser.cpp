@@ -169,7 +169,7 @@ bool ParseV7or9(std::ifstream& f, uint32_t ver, TEXFile& tex) {
 // Loop11 header ('4s4I6H' = 32 bytes):
 //   signature(4)  version(I)  mode(I)  multi(I)  _0(I)
 //   _1(H)  _2(H)  _3(H)  width(H)  height(H)  depth(H)
-// Followed by up to 10 mipmap bitmaps; each level i:
+// Followed by up to 16 mipmap bitmaps (16-bit dimensions); each level i:
 //   size = (width >> i) * (height >> i) * DEPTH[mode]
 //   stop when read returns 0 bytes.
 bool ParseV11(std::ifstream& f, TEXFile& tex) {
@@ -207,7 +207,7 @@ bool ParseV11(std::ifstream& f, TEXFile& tex) {
     if (depth == 0) { tex.error = "v11: unsupported mode=" + std::to_string(mode); return false; }
 
     tex.version = 11;
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 16; ++i) {
         const uint32_t mw = static_cast<uint32_t>(width)  >> i;
         const uint32_t mh = static_cast<uint32_t>(height) >> i;
         if (mw == 0 || mh == 0) break;

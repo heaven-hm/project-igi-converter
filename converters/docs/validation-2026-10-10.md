@@ -19,3 +19,11 @@ Four ZIPs extracted successfully and each extracted CLI launched. Both macOS app
 ## Remaining original-engine parity
 
 Original GConv recipe expression evaluation/command sequencing, automatic mipmap/VQ generation, font creation/scanning, full model authoring and callback/option behavior still need reconstruction and differential validation. Existing native conversions and GUI tests do not establish 100% GConv/DLL parity or in-game engine acceptance.
+
+## Follow-up texture editor and original-DLL parity checks
+
+Post-preview changes add optional ARGB8888 `--mipmaps` creation. Square, rectangular and varying-alpha fixtures match original GConv 3.5 with AutoMipMap=ON, AutoVQ=OFF, Dither=OFF exactly. Both readers support eleven-level 1024-square textures. General recipe/VQ/font/model authoring parity remains unfinished.
+
+CUA verifies native macOS IGI2 and CrossOver Windows IGI2 horizontal-flip saves match the original DLL's complete nine-level output. Undo and platform Save shortcuts restore the original complete file. Native and Windows IGI1 unchanged version-9 sprite saves are byte-identical; flipped sprites preserve the header, decode to the exact mirrored pixels and match across platforms. Windows cut/paste/save round trip preserves the original texture. Save confirmations were dismissed through desktop input; converter processes were closed through normal window/application controls. No converter windows remained after these checks.
+
+GUI saves now rebuild supported existing containers atomically; they refuse new SPR/PIC layout authoring without metadata. Existing structural restrictions and unsupported VQ semantics remain. These follow-up changes require new packages and are not in the original `v2026.10.10-qt-desktop` preview.

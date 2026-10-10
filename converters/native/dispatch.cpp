@@ -28,9 +28,16 @@ int runNativeCommand(int argc, char **argv)
             gconv::extractTexture(argv[3], argv[4]);
             return 0;
         }
-        if (family == "tex" && op == "make" && argc == 5)
+        if (family == "tex" && op == "make")
         {
-            gconv::createTexture(argv[3], argv[4]);
+            bool mipmaps = false;
+            std::vector<const char*> paths;
+            for (int n = 3; n < argc; ++n)
+                if (std::string(argv[n]) == "--mipmaps") mipmaps = true;
+                else paths.push_back(argv[n]);
+            if (paths.size() != 2)
+                gconv::fail("Usage: tex make INPUT OUTPUT [--mipmaps]");
+            gconv::createTexture(paths[0], paths[1], mipmaps);
             return 0;
         }
         if (family == "res" && op == "pack" && argc == 5)
