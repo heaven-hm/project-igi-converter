@@ -203,4 +203,4 @@ This is a **source-available** project under a custom restrictive license.
 [Prior permissions and separately licensed material](LICENSE_SCOPE.md) remain
 valid; this change does not revoke rights granted for earlier versions.
 
-The shared source also supports `igi1conv tex make INPUT.tga OUTPUT.tex --mipmaps` and `igi2conv tex make INPUT.tga OUTPUT.tex --mipmaps` for 32-bit power-of-two textures. This post-preview change matches original GConv square/rectangular uncompressed mip chains in differential tests; it is not yet in the published Qt preview packages.
+The shared source also supports `igi1conv tex make INPUT.tga OUTPUT.tex --mipmaps` and `igi2conv tex make INPUT.tga OUTPUT.tex --mipmaps` for 32-bit power-of-two textures. This option matches original GConv square/rectangular uncompressed mip chains in differential tests and is included in the [Qt desktop r2 preview](https://github.com/heaven-hm/project-igi-converter/releases/tag/v2026.10.10-qt-desktop-r2).
