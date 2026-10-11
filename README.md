@@ -145,6 +145,8 @@ Replace `N` with `1` or `2`. Set `IGICONV_LOG_DIR` to choose another CLI log fol
 
 Published Qt packages have been checked on **native macOS ARM64** and **Windows x64 through CrossOver on macOS**. Native Windows-host testing and Intel macOS desktop packages are not claimed. Format checks exercise representative extraction, conversion, rebuild, edited-value persistence and input-preservation paths; they do not cover every asset or every layout variant.
 
+Fresh extracted-release CLI checks pass **33/33 for IGI1Conv on both platforms**. IGI2Conv passes **37 checks on each platform**; its remaining animation check needs a valid independent IGI2 ILFF/MINA fixture. Full end-to-end certification is therefore incomplete.
+
 Detailed evidence and limitations are recorded in the [desktop validation reports](https://github.com/heaven-hm/project-igi-converter/tree/feature/unified-igi-desktop-qt/converters/docs). Proprietary game fixtures are not included in the release packages.
 
 Remaining work includes complete original GConv recipe/API equivalence, Dreamcast/VQ behavior, font creation/scanning, full skeleton and weight export, and unrestricted mesh topology authoring. Some native rebuilds require the original template and reject structural changes. The tools do not guarantee in-game acceptance of arbitrary edited assets or reproduction of a level's complete scene lighting.
