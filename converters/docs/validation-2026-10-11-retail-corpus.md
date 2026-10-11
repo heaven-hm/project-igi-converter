@@ -97,12 +97,41 @@ All 22 selected Windows MINA container variants parsed successfully; the full
 The macOS bundles passed strict code-signature and embedded-framework checks;
 verbose CLI logs were confirmed for both native macOS executables.
 
-Final GUI verification is pending: the macOS desktop became screen-locked during
-this follow-up. CLI testing continues while it is locked. No new release is
-certified or published by this report. The prior r4 GUI checks remain recorded
-in the separate desktop reports; they do not prove the new format fixes' GUI
-behavior. The staged package candidates pass CLI verification, but the GUI
-release workflow remains unverified until interactive desktop checks can run.
+The 2026-10-12 interactive follow-up verified native IGI1 right-click animation
+playback against a retail soldier MEF and matching 33-bone IFF, including changing
+clips, pausing and resuming. A normal exit initially exposed shared OpenGL texture
+references surviving context teardown; clearing those references while the context
+is current fixed the shutdown warning, and a repeat animated-texture exit passed.
+
+Retail assets installed through Wine carry macOS hidden-file attributes. The
+shared GUI browser and asset directory scans now include hidden files. The fresh
+IGI1 browser displays all 21 representative files, and IGI2 displays all 25.
+IGI1's native GUI sweep exercised every representative: graph/MEF in 3D, IFF in
+animation, QVM/DAT in text, OLM/PIC/SPR/TEX in image, WAV in audio, and remaining
+formats in the hex viewer. WAV playback advanced the transport and stopped before
+a normal exit. The QVM editor contains decompiled source without an injected
+version comment. Hex display alone does not certify conversion or editing; those
+operations are covered by the CLI matrices above.
+
+Both games' rebuilt package CLI matrices passed again on native macOS and
+CrossOver Windows (33/33 and 38/38). Both macOS bundles passed strict signature
+checks; both Windows packages contain runtime DLLs and qwindows.dll. Both native format viewer sweeps completed (21 IGI1 and 25 IGI2 samples).
+IGI2 MP3 playback advanced its transport, and editor font size changes persisted.
+Windows IGI1 displayed graph/model previews and comment-free QVM source; a
+repeated IFF selection displayed an advancing skeleton animation. It exited
+normally with code 0. The Windows IGI2 25-file viewer sweep completed; inspected graph, MINA skeleton,
+MEF and retail QVM views rendered correctly. MP3 playback changed to Pause and
+advanced the timeline after a foreground-input retry. The app exited normally
+with code 0. Both Windows GUI apps created their default verbose log files.
+
+A scratch copy of the reported IGI1 security building was textured from the
+retail DAT/TEX mapping through the GUI context menu. Its surfaces retained visible
+texture detail when rotated, rather than the almost-black preview in the bug
+report. The scratch preview excludes sibling models, so this is a brightness
+regression check, not proof of complete assembled-building material coverage.
+Normal textured shutdown passed without the earlier GL texture destruction
+warning. GUI editing/save and original-game acceptance checks remain pending. No new release is
+certified or published by this report yet.
 
 Native Windows-host execution is not claimed. Full original GConv recipe/API
 parity, Dreamcast/VQ processing, skeleton and weight authoring, unrestricted
