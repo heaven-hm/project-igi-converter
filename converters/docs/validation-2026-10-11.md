@@ -25,3 +25,19 @@ Missing DAT texture-slot warnings are not claimed resolved by the brightness fix
 Final extracted macOS and Windows GUIs open comment-free QSC with the saved enlarged font, and each app writes its verbose startup message to its actual per-user log. Apps are tested separately and closed normally before starting the next one. Extracted CLIs for all four packages launch successfully. GUI macOS logs live in ~/Library/Preferences/igiNconv/igiNconv.log; CLI logs live in ~/Library/Logs/igiNconv/igiNconv-cli.log. Windows GUI logs live in %LOCALAPPDATA%/igiNconv/igiNconv.log and CLI logs in %LOCALAPPDATA%/igiNconv/logs/igiNconv-cli.log.
 
 Published follow-up: https://github.com/heaven-hm/project-igi-converter/releases/tag/v2026.10.11-qt-desktop-r3, pinned to source commit 4b293b9e782955d2c79fbec00a2bd2d2f4639cdb. All four remotely downloaded ZIPs and SHA256SUMS match the local candidates. The final rebuild also retains explicit INFO filtering while defaulting to VERBOSE. No converter test processes remain open.
+
+## Unused material diagnostics follow-up
+
+The SECURITYBUILDING bundle's 58 missing-slot warnings all refer to TAMC slots
+unused by exported faces. All 118 face materials resolve correctly. The bundle
+resolver now tracks actual face material usage for each recursively merged MEF,
+retaining the original global indices. Native and Windows full exports have zero
+warnings and preserve every OBJ, MTL and TGA byte against the previous release
+on their respective platforms. With no DAT/textures, both platforms still warn
+for all 118 used materials. Platform OBJ/MTL newline conventions differ; parsed
+text agrees and TGA bytes agree. Additional native real models 015_01_1 (8 face
+materials), 000_01_1 (10) and 236_01_1 (1) pass the same complete/missing tests
+and byte preservation. check_mef_bundle_textures.py accepts real fixture paths
+and an optional reference binary; proprietary fixtures remain outside source.
+This resolves the reported unused-slot noise, while genuine missing-texture
+warnings and original GConv parity limitations remain.

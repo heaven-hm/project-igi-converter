@@ -439,3 +439,16 @@ and a startup message identifying the log path. Added shared CLI output teeing
 to per-user logs without changing terminal output. Both apps create GUI and CLI
 logs on macOS and Windows through CrossOver. Added persistent per-app editor
 font size (6–72 points); CUA verified visibly larger text on both platforms.
+
+## Bug: MEF-UnusedMaterialTextureWarnings (2026-10-11)
+
+The IGI1 merged bundle resolver attempted every TAMC slot, including slots that
+no exported face referenced. The real SECURITYBUILDING bundle emitted 58 false
+missing-texture warnings while all 118 face materials had textures. Track used
+material slots per source MEF, retaining original global slot offsets, and
+resolve textures only for exported face materials. Native and Windows exports
+are byte-identical before/after, with zero warnings for the complete building
+and 118 warnings when its textures are genuinely unavailable. Native soldier
+015_01_1, soldier 000_01_1 and prop 236_01_1 also pass byte-preservation and
+missing-texture checks. Added check_mef_bundle_textures.py for reusable real
+fixture regression testing. Original GConv parity remains unfinished.

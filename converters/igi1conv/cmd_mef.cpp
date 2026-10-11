@@ -306,6 +306,7 @@ struct MergeSource {
     std::string dir;      // directory of the source MEF (for local fallback)
     uint32_t    mOffset;  // global material slot offset for this model
     uint32_t    mCount;   // number of material slots from this model
+    std::vector<bool> usedMaterials; // slots referenced by exported faces
 };
 
 // Resolve textures for all merged sources: DAT+TEX first, then local mat_N.* fallback.
@@ -337,6 +338,7 @@ static std::vector<std::string> ResolveAndExportTextures(
         }
 
         for (uint32_t local = 0; local < src.mCount; ++local) {
+            if (!src.usedMaterials[local]) continue;
             uint32_t global = src.mOffset + local;
             std::string tgaName = "mat_" + std::to_string(global) + ".tga";
             std::string tgaPath = bundleDir + "/" + tgaName;
@@ -411,6 +413,14 @@ static void MergeGeometryRecursive(ParsedGeometry& baseGeo, const std::string& c
         src.dir     = fs::path(currentPath).parent_path().string();
         src.mOffset = mOffset;
         src.mCount  = static_cast<uint32_t>(child.tamcRecords.size());
+        src.usedMaterials.assign(src.mCount, false);
+        if (child.renderBlocks.empty() && !child.triangles.empty() && src.mCount > 0)
+            src.usedMaterials[0] = true;
+        for (const auto& block : child.renderBlocks) {
+            if (block.triangleCount > 0 && block.materialSlot >= 0 &&
+                static_cast<uint32_t>(block.materialSlot) < src.mCount)
+                src.usedMaterials[block.materialSlot] = true;
+        }
         sources.push_back(src);
     }
 
