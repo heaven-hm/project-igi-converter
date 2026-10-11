@@ -1,3 +1,4 @@
+#include "../native/command_log.hpp"
 #ifdef IGICONV_WITH_GUI
 #include "gui_main.h"
 #endif
@@ -14,7 +15,7 @@ namespace gconv
 void printUsage()
 {
     std::cout << "igi2conv " IGI1CONV_VERSION " — native C++17 IGI 2 converter\n"
-                 "  igi2conv qsc compile INPUT.qsc OUTPUT.qvm\n"
+                 "  igi2conv qsc compile INPUT.qsc OUTPUT.qvm [--qvm-version 8.6|8.7]\n"
                  "  igi2conv res list INPUT.res\n"
                  "  igi2conv res extract INPUT.res DIRECTORY\n"
                  "  igi2conv res pack DIRECTORY OUTPUT.res\n"
@@ -43,10 +44,17 @@ void runCommand(int argc, char **argv)
     if (family == "fnt" && operation == "export") operation = "extract";
     std::vector<const char*> paths;
     bool mipmaps = false;
+    int targetMinor = -1;
     for (int i = 3; i < argc; ++i)
     {
         const std::string argument = argv[i];
-        if (argument == "--mipmaps")
+        if (argument == "--qvm-version") {
+            if (family != "qsc" || operation != "compile" || ++i >= argc) fail("--qvm-version requires qsc compile and 8.6 or 8.7");
+            const std::string version = argv[i];
+            if (version != "8.6" && version != "8.7") fail("Unsupported IGI 2 QVM target version");
+            targetMinor = version == "8.6" ? 6 : 7;
+        }
+        else if (argument == "--mipmaps")
         {
             if (family != "tex" || operation != "make") fail("--mipmaps requires tex make");
             mipmaps = true;
@@ -61,7 +69,7 @@ void runCommand(int argc, char **argv)
     const int pathCount = static_cast<int>(paths.size());
     if (family == "qsc" && operation == "compile" && pathCount == 2)
     {
-        compileScript(paths[0], paths[1]);
+        compileScript(paths[0], paths[1], targetMinor);
         return;
     }
     if (family == "res" && operation == "list" && pathCount == 1)
@@ -115,6 +123,7 @@ void runCommand(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+    gconv::CommandLog commandLog("igi2conv", argc, argv);
     try
     {
 #ifdef IGICONV_WITH_GUI

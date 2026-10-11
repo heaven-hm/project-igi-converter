@@ -403,3 +403,39 @@ CrossOver supplies a context that rejects GLSL330; ignored shader compilation fa
 - GUI-TEXTURE-CONTAINER-SAVE-20261010: Replaced destructive generic LOOP11 GUI saves with atomic template rebuilds preserving TEX/SPR/PIC layout and metadata. Edited mode-67 textures regenerate all existing mipmaps. Native macOS and CrossOver Windows IGI2 flipped nine-level files match original GConv output exactly; real IGI1 version-9 sprites preserve unchanged bytes and edited decoded pixels, with Windows output identical to native. Unsupported new SPR/PIC authoring fails without writing a false container.
 - GUI-IMAGE-ACTIONS-20261010: Routed File Save and Edit Undo/Redo/Cut/Copy/Paste to the active image editor, recorded flips/reset in undo history, and cleared history when changing files. Native Cmd+Z/Cmd+S and Windows Ctrl+Z/Ctrl+S restore original files exactly; Windows cut/paste/save preserves the texture. Scoped QPainter to drawing instead of active eraser mutation.
 - GUI-TOOLBAR-IDENTITY-20261010: Replaced unsupported icon text with readable ASCII button labels, allowed the image filename label to shrink, and corrected IGI2 About/CLI version identity to the compiled shared version. Both platform image toolbars display all actions.
+
+
+## Bug: GUI-TGA-RGB555-DarkPreview (2026-10-11)
+
+Qt's TGA reader returned unexpanded 5-bit RGB555 channels (red 16 instead of
+131 for a real building texture), making models appear almost black. TGA
+loading now uses the existing stb decoder. Textured previews also avoid
+compounding their baked shading with the viewer headlight. The unchanged
+400_20_1 bundle renders correctly on native macOS and Windows through CrossOver;
+a controlled region's mean RGB rose from approximately 12 to 99. This is a
+neutral asset preview, not a recreation of the game's scene lighting.
+
+## Bug: GUI-Animation-NestedModelResolution (2026-10-11)
+
+Play Animation searched only the configured models root although extracted
+MEFs were inside a models subfolder. Playback now prefers the selected MEF
+and searches configured folders recursively, case-insensitively. Added a
+visible Play button, selected the first available animation by default, and
+removed the duplicate MEF context-menu action. Native playback succeeds for
+015_01_1 and 000_01_1; Windows 015_01_1 playback advances with 33 mapped bones.
+
+## Bug: QSC-GeneratedVersionComment (2026-10-11)
+
+Removed generated version comments from shared QVM decompilation. IGI2 version
+metadata lives in a neighboring .qvm-version file; the CLI accepts an explicit
+--qvm-version and GUI saves retain the original QVM header version. Native and
+Windows 8.5/8.6/8.7 round trips are byte-identical. Unrelated sidecar files and
+existing QSC source are preserved when metadata validation rejects an output.
+
+## Bug: Diagnostics-DefaultLogsMissing (2026-10-11)
+
+Enabled verbose GUI diagnostics by default with a one-time preference migration
+and a startup message identifying the log path. Added shared CLI output teeing
+to per-user logs without changing terminal output. Both apps create GUI and CLI
+logs on macOS and Windows through CrossOver. Added persistent per-app editor
+font size (6–72 points); CUA verified visibly larger text on both platforms.

@@ -48,6 +48,7 @@ def main():
     parser.add_argument("--samples", required=True, type=Path)
     parser.add_argument("--game", required=True, choices=("1", "2"))
     parser.add_argument("--report", required=True, type=Path)
+    parser.add_argument("--only", action="append", help="Run only this exact check label (repeatable)")
     args = parser.parse_args()
     binary = args.binary.resolve()
     samples = args.samples.resolve()
@@ -85,6 +86,8 @@ def main():
                 raise AssertionError(f"Binary round trip differs: {first.name}")
 
         def check(label, operation):
+            if args.only and label not in args.only:
+                return
             try:
                 detail = operation() or {}
                 rows.append({"format": label, "status": "passed", **detail})
@@ -98,6 +101,14 @@ def main():
             output = root / "script.qsc"
             rebuilt = root / "script.qvm"
             run("qvm", "decompile", source, "-o", output)
+            script = output.read_text()
+            if any(line.lstrip().startswith("//") for line in script.splitlines()):
+                raise AssertionError("Generated QSC contains comments")
+            minor = struct.unpack_from("<I", source.read_bytes(), 8)[0]
+            if args.game == "2":
+                metadata = Path(str(output) + ".qvm-version")
+                if metadata.read_text().strip() != f"8.{minor}":
+                    raise AssertionError("QSC version metadata does not match QVM")
             if args.game == "1":
                 run("qsc", "compile", output, "-o", rebuilt)
             else:
@@ -515,7 +526,7 @@ def main():
             ).split()
         ),
         "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
-        "scope": "One real example per format, plus PNG/TGA intermediate paths; no skipped required formats.",
+        "scope": ("Selected checks: " + ", ".join(args.only)) if args.only else "One real example per format, plus PNG/TGA intermediate paths; no skipped required formats.",
         "passed": sum(row["status"] == "passed" for row in rows),
         "failed": sum(row["status"] == "failed" for row in rows),
         "results": rows,

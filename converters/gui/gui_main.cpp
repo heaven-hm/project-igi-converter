@@ -158,7 +158,10 @@ static bool isNavigationGraphName(const QString& name)
 #include "../../third_party/tinygltf/stb_image.h"
 
 static QImage loadImageSafe(const QString& path) {
-    QImage img(path);
+    // Qt's TGA plugin leaves 16-bit RGB555 channels in the 0..31
+    // range. stb expands them to 8-bit, matching the native decoder.
+    const bool isTga = QFileInfo(path).suffix().compare("tga", Qt::CaseInsensitive) == 0;
+    QImage img = isTga ? QImage() : QImage(path);
     if (img.isNull()) {
         int w, h, channels;
         unsigned char* data = stbi_load(path.toLocal8Bit().constData(), &w, &h, &channels, 4);
@@ -1645,7 +1648,7 @@ protected:
             "uniform bool useOverrideColor;\n"
             "uniform vec4 overrideColor;\n"
             "void main() {\n"
-            "    vec3 norm = normalize(Normal);\n"
+            "    vec3 norm = length(Normal) > 0.00001 ? normalize(Normal) : vec3(0.0, 0.0, 1.0);\n"
             "    vec3 viewDir = vec3(0.0, 0.0, 1.0);\n" // Directional headlight
             "    float diff = max(abs(dot(norm, viewDir)), 0.1);\n" // Two-sided lighting
             "    float ambient = 0.3;\n"
@@ -1654,7 +1657,7 @@ protected:
             "    if (hasTexture) baseColor = texture(texture1, TexCoord);\n"
             "    if (hasLightmap) baseColor.rgb *= texture(lightmapTex, LightmapCoord).rgb;\n"
             "    if (useOverrideColor) baseColor = overrideColor;\n"
-            "    FragColor = vec4(lighting * baseColor.rgb, baseColor.a);\n"
+            "    FragColor = vec4((hasTexture ? 1.0 : lighting) * baseColor.rgb, baseColor.a);\n"
             "}\n";
 
         QByteArray vertexSource(vsrc), fragmentSource(fsrc);
@@ -2998,6 +3001,13 @@ public:
         fileModel = new QFileSystemModel(this);
         fileModel->setReadOnly(false);
         QString iniPath = converterSettingsPath();
+        QSettings startupSettings(iniPath, QSettings::IniFormat);
+        if (startupSettings.value("DiagnosticsDefaultsVersion", 0).toInt() < 1) {
+            startupSettings.setValue("LOGS_ENABLED", true);
+            startupSettings.setValue("LOGS_LEVEL", "VERBOSE");
+            startupSettings.setValue("DiagnosticsDefaultsVersion", 1);
+            startupSettings.sync();
+        }
         // Fall back to the user's home directory; the previous
         // default was a machine-specific absolute path.
         QString defaultFolder = QDir::homePath();
@@ -3202,6 +3212,18 @@ public:
                         QStringList arguments = script
                             ? QStringList{"qsc", "compile", tempQscPath, "-o", compiledPath}
                             : QStringList{"asset", "from-json", tempQscPath, compiledPath};
+#if CONVERTER_GAME == 2
+                        if (script) {
+                            QFile original(currentFile);
+                            if (!original.open(QIODevice::ReadOnly)) return;
+                            const QByteArray header = original.read(12);
+                            if (header.size() < 12) return;
+                            const auto* bytes = reinterpret_cast<const unsigned char*>(header.constData());
+                            const quint32 minor = quint32(bytes[8]) | (quint32(bytes[9]) << 8) |
+                                (quint32(bytes[10]) << 16) | (quint32(bytes[11]) << 24);
+                            arguments << "--qvm-version" << QString("8.%1").arg(minor);
+                        }
+#endif
                         QFile compiled(compiledPath);
                         QSaveFile destination(currentFile);
                         if (QProcess::execute(cmd, arguments) != 0 || !compiled.open(QIODevice::ReadOnly)) {
@@ -3413,9 +3435,21 @@ public:
         globalTextureDir = settings.value("TextureDir", "").toString();
         globalCacheDir = settings.value("CacheDir", QDir::tempPath() + "/igi_temp_mef").toString();
         globalAutoSaveRes = settings.value("AutoSaveRes", false).toBool();
-        QString logLevel = settings.value("LOGS_LEVEL", "INFO").toString();
+        QString logLevel = settings.value("LOGS_LEVEL", "VERBOSE").toString();
 
         QMenu* settingsMenu = menuBar()->addMenu("&Settings");
+        settingsMenu->addAction("Editor Font Size...", this, [this, iniPath]() {
+            bool accepted = false;
+            const int current = QSettings(iniPath, QSettings::IniFormat).value("EditorFontSize", 12).toInt();
+            const int size = QInputDialog::getInt(this, "Editor Font Size", "Size in points:", current, 6, 72, 1, &accepted);
+            if (!accepted) return;
+            QSettings(iniPath, QSettings::IniFormat).setValue("EditorFontSize", size);
+            QFont font = viewerEdit->font(); font.setPointSize(size);
+            viewerEdit->setFont(font);
+            viewerEdit->document()->setDefaultFont(font);
+            logMessage(QString("Editor font size set to %1 points").arg(size), LOG_VERBOSE);
+        });
+
 
         // ── Animation submenu ───────────────────────────────────────────────
         // The new "Animation" mode is gated by this menu: the Mode
@@ -4051,7 +4085,10 @@ public:
         viewerToolbarLayout->addWidget(graphToolbar);
 
         viewerEdit = new CodeEditor(this);
-        viewerEdit->setFont(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+        QFont editorFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+        editorFont.setPointSize(qBound(6, QSettings(converterSettingsPath(), QSettings::IniFormat).value("EditorFontSize", 12).toInt(), 72));
+        viewerEdit->setFont(editorFont);
+        viewerEdit->document()->setDefaultFont(editorFont);
         viewerEdit->hide();
 
         // ── Text editor toolbar ──────────────────────────────────────────────
@@ -4386,11 +4423,10 @@ public:
         animAnimList->setToolTip("Available (boneHierarchy, animation) pairs for the selected model");
         animLayout->addWidget(animAnimList);
 
-        // No standalone Play button here: the shared IFF media bar above
-        // already provides play/pause/forward/backward transport.  This
-        // panel only drives the objects.qsc-based model/anim selector
-        // and FPS input; double-clicking an entry in animAnimList loads
-        // + plays it via onAnimationPlayClicked.
+        auto* animationPlay = new QPushButton("Play");
+        animationPlay->setToolTip("Load and play the selected model animation");
+        animLayout->addWidget(animationPlay);
+        connect(animationPlay, &QPushButton::clicked, this, &MainWindow::onAnimationPlayClicked);
 
         animLoopChk = new QCheckBox("Loop");
         animLoopChk->setChecked(true);
@@ -4532,6 +4568,10 @@ public:
             menu.exec(consoleEdit->mapToGlobal(pos));
         });
         debugLayout->addWidget(consoleEdit);
+        logMessage(QString("IGI %1 Converter %2 started; logging level %3; log file: %4/%5.log")
+            .arg(CONVERTER_GAME).arg(IGI1CONV_VERSION)
+            .arg(QSettings(converterSettingsPath(), QSettings::IniFormat).value("LOGS_LEVEL", "VERBOSE").toString())
+            .arg(QFileInfo(converterSettingsPath()).absolutePath()).arg(qApp->applicationName()), LOG_VERBOSE);
 
         rightLayout->addWidget(debugGroup, 1);
 
@@ -4611,7 +4651,7 @@ public:
 
     void logMessage(const QString& msg, LogLevel msgLevel = LOG_INFO) {
         QString iniPath = converterSettingsPath();
-        QString levelStr = QSettings(iniPath, QSettings::IniFormat).value("LOGS_LEVEL", "INFO").toString();
+        QString levelStr = QSettings(iniPath, QSettings::IniFormat).value("LOGS_LEVEL", "VERBOSE").toString();
         LogLevel currentLevel = LOG_INFO;
         if (levelStr == "ERROR") currentLevel = LOG_ERROR;
         else if (levelStr == "DEBUG") currentLevel = LOG_DEBUG;
@@ -4958,7 +4998,7 @@ private:
                 .arg(a.boneHierarchy, 3, 10, QChar('0'))
                 .arg(a.standAnimation));
         }
-        (void)anims; // anim list is already populated above
+        if (!anims.empty()) animAnimList->setCurrentRow(0);
         if (anims.empty()) {
             animStatusLabel->setText("No animations for this model");
         } else {
@@ -5278,17 +5318,24 @@ if (mefPath.isEmpty()) {
         animStatusLabel->setText(QString("Loading %1 / bh=%2 / anim=%3 ...")
             .arg(modelId).arg(bh).arg(sa));
 
-        // Resolve MEF path (search 4 extensions + LEVEL1/models)
-        QStringList modelDirs;
-        if (!globalModelsDir.isEmpty()) modelDirs << globalModelsDir;
-        QStringList mefExts = {".mef", ".MEF", ".mex", ".MEX"};
+        // Resource extraction may place files beneath an additional models folder.
         QString mefPath;
-        for (const QString& d : modelDirs) {
-            for (const QString& e : mefExts) {
-                QString p = d + "/" + modelId + e;
-                if (QFile::exists(p)) { mefPath = p; break; }
+        const QFileInfo selectedModel(currentFile);
+        if (selectedModel.exists() && selectedModel.completeBaseName().compare(modelId, Qt::CaseInsensitive) == 0 &&
+            (selectedModel.suffix().compare("mef", Qt::CaseInsensitive) == 0 ||
+             selectedModel.suffix().compare("mex", Qt::CaseInsensitive) == 0)) mefPath = currentFile;
+        if (mefPath.isEmpty() && !globalModelsDir.isEmpty()) {
+            QStringList matches;
+            QDirIterator files(globalModelsDir, QDir::Files, QDirIterator::Subdirectories);
+            while (files.hasNext()) {
+                const QString path = files.next();
+                const QFileInfo info(path);
+                const QString extension = info.suffix().toLower();
+                if (info.completeBaseName().compare(modelId, Qt::CaseInsensitive) == 0 &&
+                    (extension == "mef" || extension == "mex")) matches << path;
             }
-            if (!mefPath.isEmpty()) break;
+            matches.sort();
+            if (!matches.isEmpty()) mefPath = matches.front();
         }
         if (mefPath.isEmpty()) {
             animStatusLabel->setText("MEF not found: " + modelId);
@@ -6482,19 +6529,6 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
             QString cmdPrefix = ext;
 
             if (isBinary) {
-                // Play Animation only applies to HumanSoldier AI models -
-                // these are model ids in the 000_00_0..030_00_0 range (the
-                // same range applyIffOnModel's picker filters to). Building/
-                // prop meshes outside that range have no bone animation set
-                // and showing the action for them is misleading.
-                QString modelId = QFileInfo(path).completeBaseName();
-                if (modelId >= "000_00_0" && modelId <= "030_00_0") {
-                    menu.addAction("Play Animation", [this, path]() {
-                        playAnimationForFile(path);
-                    });
-                    menu.addSeparator();
-                }
-
                 QMenu* infoMenu = menu.addMenu("Details");
                 infoMenu->addAction("Info", [this, path, cmdPrefix]() { loadFile(path); executeCommand(cmdPrefix + " info"); });
                 infoMenu->addAction("Dump", [this, path, cmdPrefix]() { loadFile(path); executeCommand(cmdPrefix + " dump"); });

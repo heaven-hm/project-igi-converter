@@ -1,3 +1,4 @@
+#include "../native/command_log.hpp"
 #include "../native/asset_json.hpp"
 #include "cmd_dat.h"
 #include "cmd_fnt.h"
@@ -68,6 +69,7 @@ static void print_help()
 
 int main(int argc, char **argv)
 {
+    gconv::CommandLog commandLog("igi1conv", argc, argv);
     if (argc < 2)
     {
 #ifdef IGI1CONV_WITH_GUI

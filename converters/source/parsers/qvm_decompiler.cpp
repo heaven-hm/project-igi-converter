@@ -738,8 +738,7 @@ std::string QVM_DecompileToString(const QVMFile &qvm)
         return "";
     }
 
-    std::string qvmtext =
-        "// igi2conv QVM version: 8." + std::to_string(qvm.header.ver_minor) + "\n";
+    std::string qvmtext;
     for (const auto &st : qvmtree)
     {
         if (st->type == ASTNodeType::StatementIf || st->type == ASTNodeType::StatementWhile)
@@ -763,8 +762,7 @@ bool QVM_Decompile(const QVMFile &qvm, const std::string &outpath)
         return false;
     }
 
-    std::string qvmtext =
-        "// igi2conv QVM version: 8." + std::to_string(qvm.header.ver_minor) + "\n";
+    std::string qvmtext;
     if (!qvm.instructions.empty())
     {
         std::map<uint32_t, size_t> addrToInstrIndex;
@@ -796,6 +794,18 @@ bool QVM_Decompile(const QVMFile &qvm, const std::string &outpath)
         }
     }
 
+    if (qvm.header.ver_minor == 6 || qvm.header.ver_minor == 7) {
+        const std::string metadata = outpath + ".qvm-version";
+        std::ifstream previous(metadata, std::ios::binary);
+        if (previous) {
+            const std::string value((std::istreambuf_iterator<char>(previous)), {});
+            if (value != "8.6\n" && value != "8.7\n") {
+                Logger::Get().Log(LogLevel::ERR, "Refusing to overwrite unrelated QVM metadata: " + metadata);
+                return false;
+            }
+        }
+    }
+
     std::ofstream out(outpath, std::ios::binary);
     if (!out.is_open())
     {
@@ -806,6 +816,15 @@ bool QVM_Decompile(const QVMFile &qvm, const std::string &outpath)
     out << qvmtext;
     out.flush();
     out.close();
+    if (!out) return false;
+    // Metadata lives beside the source, never inside the QSC program.
+    if (qvm.header.ver_minor == 6 || qvm.header.ver_minor == 7) {
+        const std::string metadata = outpath + ".qvm-version";
+        std::ofstream version(metadata, std::ios::binary);
+        version << "8." << qvm.header.ver_minor << "\n";
+        version.close();
+        if (!version) return false;
+    }
 
     Logger::Get().Log(LogLevel::INFO, "[QVM_Decompile] Written " +
                                           std::to_string(qvm.instructions.size()) +

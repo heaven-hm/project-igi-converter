@@ -23,6 +23,19 @@ set `-DIGICONV_BUILD_GUI=OFF`. The packaging scripts in `converters/packaging/`
 deploy Qt frameworks on macOS and Qt DLLs/plugins plus compiler runtimes on Windows.
 Keep the complete extracted release folder when running either app.
 
+Both GUIs provide **Settings > Editor Font Size...** (6–72 points), saved separately
+for each app. Verbose GUI logs are enabled on first launch or upgrade; later user
+log preferences are respected. The startup message shows the GUI log file path.
+CLI commands also append a diagnostic log while preserving normal terminal output:
+macOS uses `~/Library/Logs/igi1conv/igi1conv-cli.log` (or `igi2conv`), Windows uses
+`%LOCALAPPDATA%/igi1conv/logs/igi1conv-cli.log` (or `igi2conv`). Set
+`IGICONV_LOG_DIR` to override the CLI folder or `IGICONV_LOG_ENABLED=0` to disable it.
+
+QVM decompilation generates QSC without version comments. IGI2 keeps the original
+8.6/8.7 version in a neighboring `.qsc.qvm-version` file; retain that file for CLI
+round trips, or specify `qsc compile INPUT.qsc OUTPUT.qvm --qvm-version 8.6`.
+The GUI preserves the opened QVM's version when saving.
+
 Both apps support model and navigation graph viewing, texture editing, script viewing
 and compilation, and music transport. IGI2's MINA animation reader supports the
 validated hierarchy, root translation and quaternion track layouts; unknown event

@@ -68,5 +68,5 @@ void createTexture(const fs::path &imagePath, const fs::path &outputPath,
                    bool mipmaps = false);
 void packTexture(const fs::path &templatePath, const fs::path &bitmapDirectory,
                  const fs::path &outputPath);
-void compileScript(const fs::path &input, const fs::path &output);
+void compileScript(const fs::path &input, const fs::path &output, int targetMinor = -1);
 } // namespace gconv
