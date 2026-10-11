@@ -550,3 +550,16 @@ therefore displayed only its one unhidden texture. The shared QFileSystemModel
 and file/directory enumerations now include QDir::Hidden. Original game flags
 are preserved; the fix applies to all assets without filename exceptions.
 Validation is recorded in the GUI release QA report.
+
+## Bug: Qt-Cocoa-StaleAccessibleCellBounds (2026-10-12)
+
+Qt 6.11.2 Cocoa cached table accessibility cells could carry negative indices
+after atomic QVM replacement. Saving from the GUI after a computer-use scan
+raised NSRangeException and aborted IGI1Conv. A matching Cocoa plugin now guards
+missing tables and invalid row/column indices before array access, including
+synthetic-cell parent lookup. Accessibility stays enabled. Packaging accepts
+the rebuilt plugin together with corresponding source, dependency headers,
+licenses and rebuild instructions; Qt framework relocation preserves Versions.
+After tightening synthetic-parent guards during review, the final r9 packages
+passed retail QVM GUI saves after accessibility scans in both native apps. Both
+exited normally with code 0. Windows IGI1/IGI2 GUI QVM saves also passed.

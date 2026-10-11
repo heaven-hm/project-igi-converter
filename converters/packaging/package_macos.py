@@ -12,7 +12,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--build', type=pathlib.Path, required=True)
 parser.add_argument('--output', type=pathlib.Path, required=True)
 parser.add_argument('--macdeployqt', required=True)
+parser.add_argument('--cocoa-plugin', type=pathlib.Path,
+                    help='Matching rebuilt Qt Cocoa plugin with accessibility bounds checks')
+parser.add_argument('--cocoa-source-package', type=pathlib.Path,
+                    help='Corresponding patched plugin source, dependency headers and rebuild instructions')
 args = parser.parse_args()
+if bool(args.cocoa_plugin) != bool(args.cocoa_source_package):
+    parser.error('--cocoa-plugin and --cocoa-source-package must be supplied together')
 
 def run(*command):
     subprocess.run(command, check=True)
@@ -24,7 +30,8 @@ def relocate_qt(executable: pathlib.Path, bundle: pathlib.Path) -> None:
         library = line.strip().split(' (compatibility', 1)[0]
         match = re.search(r'/(Qt[^/]+\.framework)/Versions/([^/]+)/([^/]+)$', library)
         if library.startswith('/opt/homebrew/') and match:
-            embedded = '@rpath/' + '/'.join(match.groups())
+            framework, version, filename = match.groups()
+            embedded = f'@rpath/{framework}/Versions/{version}/{filename}'
             run('install_name_tool', '-change', library, embedded, str(executable))
     load_commands = subprocess.check_output(['otool', '-l', str(executable)], text=True)
     for path in re.findall(r'path (/opt/homebrew/[^ ]+) \(offset', load_commands):
@@ -70,7 +77,8 @@ for game in (1, 2):
                      'imageformats/libqtga.dylib'):
         target = contents / 'PlugIns' / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(plugin_root / relative, target)
+        source = args.cocoa_plugin if relative == 'platforms/libqcocoa.dylib' and args.cocoa_plugin else plugin_root / relative
+        shutil.copyfile(source, target)
         plugins.append(target)
     subprocess.run([args.macdeployqt, str(bundle.resolve()), '-always-overwrite',
                     '-no-plugins', '-no-codesign',
@@ -94,4 +102,10 @@ for game in (1, 2):
     subprocess.run([str(launcher.resolve()), '--help'], check=True)
     qt_version = subprocess.check_output([str(pathlib.Path(args.macdeployqt).parent / 'qmake'), '-query', 'QT_VERSION'], text=True).strip()
     add_package_notices(args.output / (name + '-package-info'), name, 'macos', qt_version)
+    if args.cocoa_source_package:
+        info = args.output / (name + '-package-info')
+        shutil.copytree(args.cocoa_source_package, info / 'qt-cocoa-source')
+        with (info / 'licenses/THIRD-PARTY-NOTICES.txt').open('a') as notice:
+            notice.write('The macOS Cocoa plugin includes accessibility row/column bounds guards.\n'
+                         'Corresponding source and rebuild instructions: ../qt-cocoa-source/\n')
     print(f'Packaged GUI and CLI: {bundle}')
