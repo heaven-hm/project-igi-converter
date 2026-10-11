@@ -16,3 +16,18 @@ GUI/CrossOver checks and self-contained release packaging remain separate valida
 The original GConv 3.5 executable now runs successfully under CrossOver with its actual Windows Z: path. Its help confirms case-sensitive options, automatic mipmap/VQ defaults and recipe execution. A real IGI2 string-resource ExtractResource recipe completed; it reported 16 strings and produced no output files. Native `res extract` writes resource payload files, so those operations must not be described as identical recipe behavior. Resource callback registration and disassembly evidence are recorded separately.
 
 Post-preview work adds shared `tex make INPUT OUTPUT --mipmaps`. Square and rectangular power-of-two 32-bit textures match original GConv complete files byte-for-byte with AutoMipMap=ON, AutoVQ=OFF and Dither=OFF; Windows and macOS outputs agree. Rectangular chains stop when either dimension reaches one. The filter rounds each 2x2 channel mean with `(sum+2)/4`. Both LOOP11 readers now allow sixteen levels, bounded by 16-bit dimensions. Non-power-of-two dimensions are rejected. This feature is included in the `v2026.10.10-qt-desktop-r2` preview assets. The original recipe registration inventory contains 112 callbacks; it is discovery evidence, not semantic parity.
+
+## Original PC versus Dreamcast texture probe — 2026-10-11
+
+An isolated original GConv 3.5 run used generated 32×32 and 64×64 BGRA gradient
+TGAs with AutoMipMap=ON, AutoVQ=ON, ConversionMode=ARGB1555, Dither=OFF and
+UpToDateCheck=OFF. All four runs exited successfully. PC_Glide produced LOOP11
+mode 2, with 2080 and 8224 byte files respectively (header plus one 16-bit
+bitmap). Dreamcast produced mode 0xc4 / 2764 bytes at 32×32 and mode 0xd4 /
+3446 bytes at 64×64. Thus the advertised AutoVQ and mipmap options do not
+produce the same layouts on these two output platforms. Native IGI2 extraction
+accepts the PC_Glide output; it explicitly rejects the Dreamcast 64×64 output
+with its unsupported-VQ error and produces no images. Evidence is recorded
+under .qa/2026-10-11/gconv-vq-investigation, including original command logs,
+input fixtures, output headers and native-reader results. This identifies a
+specific compatibility gap; it is not a completed VQ decoder/compressor port.

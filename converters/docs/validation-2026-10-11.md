@@ -41,3 +41,11 @@ and byte preservation. check_mef_bundle_textures.py accepts real fixture paths
 and an optional reference binary; proprietary fixtures remain outside source.
 This resolves the reported unused-slot noise, while genuine missing-texture
 warnings and original GConv parity limitations remain.
+
+The material diagnostics follow-up is published as
+v2026.10.11-qt-desktop-r4, pinned to source commit
+ae037a9a3788c0795c756cf4aa25885b80b24569. All four remotely downloaded ZIPs
+and SHA256SUMS match local candidates. Final extracted native and Windows
+IGI1 binaries repeat the complete/missing building tests successfully. Both
+macOS bundles pass strict deep signatures and contain 38 audited Mach-O files;
+both Windows packages contain 31 DLLs with no missing non-system imports.
