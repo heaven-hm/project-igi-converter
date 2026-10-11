@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0] - 2026-10-12
+
+### Added
+- Separate IGI1Conv and IGI2Conv GUI/CLI packages for macOS and Windows,
+  including Qt runtimes, platform plugins, launchers, notices and checksums.
+- IGI2 native conversion workflows reimplemented from the original GConv.exe
+  and `gconvapi.dll` behavior, with the supported format matrix documented.
+
+### Fixed
+- Hidden retail assets are included in GUI browsing and asset discovery.
+- Animated textured-model shutdown releases OpenGL resources while a context is
+  current.
+- macOS Qt Cocoa accessibility rejects stale table-cell indices during atomic
+  QVM saves; the matching plugin source and rebuild instructions ship with the
+  macOS package.
+
+### Validation
+- Supported matrix: 142/142 checks passed across native macOS and Windows via
+  CrossOver (33 IGI1 and 38 IGI2 checks per platform).
+- GUI QVM saves and representative texture edits passed on both platforms.
+- Complete GUI-control coverage and original-game acceptance remain documented
+  release limitations.
+
 ## [1.10.0] - 2026-06-24
 
 ### Added
