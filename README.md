@@ -6,6 +6,14 @@ The desktop distribution contains two separate applications built from shared C+
 
 [Download the latest release](https://github.com/heaven-hm/project-igi-converter/releases/latest) · [Desktop source](https://github.com/heaven-hm/project-igi-converter/tree/feature/unified-igi-desktop-qt/converters) · [Validation reports](https://github.com/heaven-hm/project-igi-converter/tree/feature/unified-igi-desktop-qt/converters/docs)
 
+## Project background
+
+**IGI1Conv** is a research-driven converter for Project I.G.I. assets. Its implementation is based on analysis of retail files, recovered format layouts and conversion round-trip tests. It provides inspection and editing workflows for the first game rather than relying on the original game editor.
+
+**IGI2Conv** is a native C++ reimplementation of supported asset-conversion workflows from **GConv.exe**, the original IGI2 developer conversion tool. Work uses the original executable and `gconvapi.dll` as references, together with recovered file structures, the existing C++ GConv implementation and differential comparisons of original-tool output. The released converter runs its own native code; it does not require GConv.exe or the original Windows DLL at runtime.
+
+This reconstruction is incremental. Supported conversions are documented and tested individually; complete equivalence with every original GConv recipe, option, callback and legacy output platform remains unfinished. Both applications now share common parsers, codecs and desktop components while retaining game-specific behavior.
+
 ## Downloads
 
 | Application | macOS Apple Silicon | Windows x64 |
