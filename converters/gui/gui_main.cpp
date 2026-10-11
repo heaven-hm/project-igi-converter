@@ -860,10 +860,19 @@ public:
     }
 
     ~ModelViewer() {
+        animTimer->stop();
         makeCurrent();
-        textureCache.clear();
+        // Rest-pose meshes also retain shared texture references. Release
+        // every owner while the viewer's GL context is still current.
+        restSubmeshes.clear();
         submeshes.clear();
+        textureCache.clear();
+        texture.reset();
+        lightmapUvVbo.destroy();
+        gridVbo.destroy();
         vbo.destroy();
+        vao.destroy();
+        program.removeAllShaders();
         doneCurrent();
     }
 
@@ -3001,6 +3010,9 @@ public:
 
         fileModel = new QFileSystemModel(this);
         fileModel->setReadOnly(false);
+        // Retail assets installed through Wine can carry the hidden attribute.
+        // Keep them visible and usable in the asset browser.
+        fileModel->setFilter(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden);
         QString iniPath = converterSettingsPath();
         QSettings startupSettings(iniPath, QSettings::IniFormat);
         if (startupSettings.value("DiagnosticsDefaultsVersion", 0).toInt() < 1) {
@@ -3581,7 +3593,7 @@ public:
             QString levelName = dir.dirName(); // e.g. "LEVEL8"
 
             // Find .DAT
-            QStringList dats = dir.entryList(QStringList() << "*.dat" << "*.DAT", QDir::Files);
+            QStringList dats = dir.entryList(QStringList() << "*.dat" << "*.DAT", QDir::Files | QDir::Hidden);
             if (!dats.isEmpty()) {
                 globalLevelDatPath = levelDir + "/" + dats.first();
                 QSettings(iniPath, QSettings::IniFormat).setValue("LevelDAT", globalLevelDatPath);
@@ -3589,7 +3601,7 @@ public:
             }
 
             // Find .MTP
-            QStringList mtps = dir.entryList(QStringList() << "*.mtp" << "*.MTP", QDir::Files);
+            QStringList mtps = dir.entryList(QStringList() << "*.mtp" << "*.MTP", QDir::Files | QDir::Hidden);
             if (!mtps.isEmpty()) {
                 globalLevelMtpPath = levelDir + "/" + mtps.first();
                 QSettings(iniPath, QSettings::IniFormat).setValue("LevelMTP", globalLevelMtpPath);
@@ -3606,7 +3618,7 @@ public:
             }
             // If not found, check for .RES file and auto-extract
             if (globalTextureDir.isEmpty()) {
-                QStringList resList = dir.entryList(QStringList() << "*.res" << "*.RES", QDir::Files);
+                QStringList resList = dir.entryList(QStringList() << "*.res" << "*.RES", QDir::Files | QDir::Hidden);
                 for (const QString& resName : resList) {
                     if (resName.contains(levelName, Qt::CaseInsensitive) || resName.contains("TEXTURES", Qt::CaseInsensitive)) {
                         globalTextureDir = levelDir + "/TEXTURES";
@@ -3624,7 +3636,7 @@ public:
 
                 // Extract any .res files inside texture dir
                 QDir texDir(globalTextureDir);
-                for (const QString& res : texDir.entryList(QStringList() << "*.res" << "*.RES", QDir::Files)) {
+                for (const QString& res : texDir.entryList(QStringList() << "*.res" << "*.RES", QDir::Files | QDir::Hidden)) {
                     logMessage("[INFO] Extracting " + res + " from textures dir...");
                     QProcess::execute(qApp->applicationFilePath(), QStringList() << "res" << "extract" << texDir.absoluteFilePath(res) << "-o" << globalTextureDir);
                 }
@@ -3647,13 +3659,13 @@ public:
             {
                 QDir d(levelDir);
                 // Check this level folder
-                QStringList qvms = d.entryList(QStringList() << "objects.qvm" << "OBJECTS.QVM", QDir::Files);
+                QStringList qvms = d.entryList(QStringList() << "objects.qvm" << "OBJECTS.QVM", QDir::Files | QDir::Hidden);
                 for (const auto& q : qvms) qvmCandidates << (levelDir + "/" + q);
                 // Check sibling level folders (objects.qvm might be in level1 only)
                 if (d.cdUp()) {
                     QDirIterator it(d.absolutePath(),
                                     QStringList() << "objects.qvm" << "OBJECTS.QVM",
-                                    QDir::Files, QDirIterator::Subdirectories);
+                                    QDir::Files | QDir::Hidden, QDirIterator::Subdirectories);
                     while (it.hasNext()) {
                         QString p = it.next();
                         if (!qvmCandidates.contains(p)) qvmCandidates << p;
@@ -3710,11 +3722,11 @@ public:
                 // Also check for unpacked models
                 QDir md(levelDir + "/models");
                 if (md.exists()) {
-                    QStringList subs = md.entryList(QStringList() << "*unpacked*", QDir::Dirs);
+                    QStringList subs = md.entryList(QStringList() << "*unpacked*", QDir::Dirs | QDir::Hidden);
                     for (const auto& s : subs) modelCands << (levelDir + "/models/" + s);
                 }
                 for (const auto& c : modelCands) {
-                    if (QDir(c).exists() && !QDir(c).entryList(QStringList() << "*.mef" << "*.MEF", QDir::Files).isEmpty()) {
+                    if (QDir(c).exists() && !QDir(c).entryList(QStringList() << "*.mef" << "*.MEF", QDir::Files | QDir::Hidden).isEmpty()) {
                         modelsDir = c;
                         break;
                     }
@@ -3723,7 +3735,7 @@ public:
                 if (modelsDir.isEmpty()) {
                     QString resPath = levelDir + "/models/" + levelName + ".res";
                     if (!QFile::exists(resPath)) {
-                        QStringList resList = QDir(levelDir + "/models").entryList(QStringList() << "*.res" << "*.RES", QDir::Files);
+                        QStringList resList = QDir(levelDir + "/models").entryList(QStringList() << "*.res" << "*.RES", QDir::Files | QDir::Hidden);
                         if (!resList.isEmpty()) resPath = levelDir + "/models/" + resList.first();
                     }
                     if (QFile::exists(resPath)) {
@@ -3751,7 +3763,7 @@ public:
                 QDir srcDir(animsDir);
                 QStringList filters; filters << "*.IFF" << "*.iff" << "*.BFF" << "*.bff";
                 int copied = 0;
-                for (const QFileInfo& fi : srcDir.entryInfoList(filters, QDir::Files)) {
+                for (const QFileInfo& fi : srcDir.entryInfoList(filters, QDir::Files | QDir::Hidden)) {
                     QString dst = globalAnimsCacheDir + "/" + fi.fileName();
                     if (!QFile::exists(dst)) {
                         if (QFile::copy(fi.absoluteFilePath(), dst)) ++copied;
@@ -3793,10 +3805,10 @@ public:
             }
             int files = 0;
             qint64 bytes = 0;
-            for (const QFileInfo& fi : QDir(globalCacheDir).entryInfoList(QDir::Files | QDir::NoDotAndDotDot))
+            for (const QFileInfo& fi : QDir(globalCacheDir).entryInfoList(QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot))
                 { files++; bytes += fi.size(); }
             // Walk subdirs too
-            QDirIterator it(globalCacheDir, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+            QDirIterator it(globalCacheDir, QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
             while (it.hasNext()) { it.next(); files++; bytes += it.fileInfo().size(); }
             for (const QString& entry : dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot)) {
                 QFileInfo fi(globalCacheDir + "/" + entry);
@@ -4855,7 +4867,7 @@ private:
                 if (p.exists()) {
                     QDirIterator it(p.absolutePath(),
                                     QStringList() << "objects.qsc" << "OBJECTS.qsc",
-                                    QDir::Files, QDirIterator::Subdirectories);
+                                    QDir::Files | QDir::Hidden, QDirIterator::Subdirectories);
                     while (it.hasNext()) {
                         QString p2 = it.next();
                         if (!candidates.contains(p2)) candidates << p2;
@@ -5028,7 +5040,7 @@ private:
         }
         QDir srcDir(globalAnimsSourceDir);
         QStringList filters; filters << "*.IFF" << "*.iff" << "*.BFF" << "*.bff";
-        QFileInfoList list = srcDir.entryInfoList(filters, QDir::Files);
+        QFileInfoList list = srcDir.entryInfoList(filters, QDir::Files | QDir::Hidden);
         if (list.isEmpty()) {
             logMessage("[WARN] No IFF files found in " + globalAnimsSourceDir);
             return;
@@ -5139,7 +5151,7 @@ private:
         for (const QString& d : searchDirs) {
             QDirIterator it(d, QStringList() << "*.mef" << "*.MEF"
                                               << "*.mex" << "*.MEX",
-                        QDir::Files, QDirIterator::Subdirectories);
+                        QDir::Files | QDir::Hidden, QDirIterator::Subdirectories);
             while (it.hasNext()) {
                 QString p = it.next();
                 QString stem = QFileInfo(p).completeBaseName();
@@ -5336,7 +5348,7 @@ if (mefPath.isEmpty()) {
              selectedModel.suffix().compare("mex", Qt::CaseInsensitive) == 0)) mefPath = currentFile;
         if (mefPath.isEmpty() && !globalModelsDir.isEmpty()) {
             QStringList matches;
-            QDirIterator files(globalModelsDir, QDir::Files, QDirIterator::Subdirectories);
+            QDirIterator files(globalModelsDir, QDir::Files | QDir::Hidden, QDirIterator::Subdirectories);
             while (files.hasNext()) {
                 const QString path = files.next();
                 const QFileInfo info(path);
@@ -5662,7 +5674,7 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
         QDir d(dir);
         int n = d.entryList(QStringList() << "*.wav",
                             QDir::Files | QDir::Hidden).size();
-        for (const QFileInfo& sub : d.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        for (const QFileInfo& sub : d.entryInfoList(QDir::Dirs | QDir::Hidden | QDir::NoDotAndDotDot)) {
             n += countWavFilesRec(sub.absoluteFilePath(), depth + 1);
         }
         return n;
@@ -6091,7 +6103,7 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
         // Single item context menu
         if (isDir) {
             QDir d(path);
-            if (!d.entryList({"*.iff", "*.IFF"}, QDir::Files).isEmpty()) {
+            if (!d.entryList({"*.iff", "*.IFF"}, QDir::Files | QDir::Hidden).isEmpty()) {
                 menu.addAction("Batch Convert IFF -> BEF", [this, path]() {
                     QString outDir = QFileDialog::getExistingDirectory(this, "Select Output Directory", path);
                     if (outDir.isEmpty()) return;
@@ -6130,7 +6142,7 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
             }
             // If the folder contains a batch of .BEF scripts, offer to pack them
             // back into a single IFF (the inverse of convert).
-            if (!d.entryList({"*.bef", "*.BEF"}, QDir::Files).isEmpty()) {
+            if (!d.entryList({"*.bef", "*.BEF"}, QDir::Files | QDir::Hidden).isEmpty()) {
                 menu.addAction("Create IFF from .BEF scripts", [this, path]() {
                     QString outIff = QFileDialog::getSaveFileName(this, "Save IFF",
                         QFileInfo(path).absoluteFilePath() + ".iff", "IFF Skeletal Animation (*.iff)");
@@ -6248,7 +6260,7 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
                     if (proc.exitStatus() == QProcess::NormalExit && proc.exitCode() == 0) {
                         QStringList filters; filters << "*.BEF" << "*.bef";
                         QDir out(tempDir + "/Converted");
-                        for (QString f : out.entryList(filters, QDir::Files)) {
+                        for (QString f : out.entryList(filters, QDir::Files | QDir::Hidden)) {
                             QFile::copy(tempDir + "/Converted/" + f, dir + "/" + f);
                         }
                         logMessage("[SUCCESS] Converted IFF to BEF in " + dir);
@@ -6400,7 +6412,7 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
         if (isDir) {
             bool hasMefs = false;
             QDir dir(path);
-            if (!dir.entryList(QStringList() << "*.mef", QDir::Files).isEmpty()) hasMefs = true;
+            if (!dir.entryList(QStringList() << "*.mef", QDir::Files | QDir::Hidden).isEmpty()) hasMefs = true;
             if (hasMefs) {
                 menu.addSeparator();
                 menu.addAction("Apply Textures All (in Folder)", [this, path]() {
@@ -7035,7 +7047,7 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
             bundleDir.mkpath(".");
 
             QDir dir(folderPath);
-            QStringList mefs = dir.entryList(QStringList() << "*.mef" << "*.MEF", QDir::Files);
+            QStringList mefs = dir.entryList(QStringList() << "*.mef" << "*.MEF", QDir::Files | QDir::Hidden);
             logMessage(QString("[INFO] Apply Textures to All: found %1 MEF files in %2").arg(mefs.size()).arg(folderPath));
 
             QProgressDialog progress("Extracting textures for all MEFs in folder...", "Cancel", 0, mefs.size(), this);
@@ -7103,7 +7115,7 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
             if (texDir.isEmpty()) return;
 
             QDir dir(folderPath);
-            QStringList mefs = dir.entryList(QStringList() << "*.mef" << "*.MEF", QDir::Files);
+            QStringList mefs = dir.entryList(QStringList() << "*.mef" << "*.MEF", QDir::Files | QDir::Hidden);
             logMessage(QString("[INFO] Export All: found %1 MEF files in %2").arg(mefs.size()).arg(folderPath));
 
             QProgressDialog progress("Exporting all MEFs in folder...", "Cancel", 0, mefs.size(), this);

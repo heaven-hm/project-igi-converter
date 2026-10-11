@@ -531,3 +531,22 @@ by the actual mesh in a second pair. The exporter now selects the first complete
 nonempty pair and validates every triangle index against its vertex set. All
 six models now produce nonempty OBJ geometry and retain exact MEF JSON binary
 round trips on native macOS and Windows through CrossOver.
+
+## Bug: GUI-AnimatedTextureShutdownContext (2026-10-12)
+
+After textured MEF animation, normal GUI exit reported texture destruction
+without a current OpenGL context. Rest-pose submeshes retained shared texture
+references beyond the viewer destructor's doneCurrent call. The shared viewer
+now stops playback and releases rest-pose meshes, live meshes, cached textures,
+the standalone texture, all GL buffers, the VAO and shaders before releasing
+the current context. Validation is recorded in the GUI release QA report.
+
+## Bug: GUI-HiddenRetailAssetDiscovery (2026-10-12)
+
+Retail game files installed through Wine retained macOS hidden-file flags.
+The GUI file browser and level, texture, model and animation folder scans
+used Qt's default filters, excluding those assets; a 21-file QA folder
+therefore displayed only its one unhidden texture. The shared QFileSystemModel
+and file/directory enumerations now include QDir::Hidden. Original game flags
+are preserved; the fix applies to all assets without filename exceptions.
+Validation is recorded in the GUI release QA report.
