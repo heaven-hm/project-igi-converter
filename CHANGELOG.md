@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0 desktop preview] - 2026-10-10
+
+### Added
+- Shared `converters/` codebase builds separate IGI1Conv and IGI2Conv GUI/CLI apps for macOS and Windows.
+- Qt framework/DLL packaging and compiler runtime deployment for portable release folders.
+- IGI2 MINA hierarchy, root translation and quaternion-track animation viewing for validated layouts.
+- Shared MP3-to-PCM CLI decoding and per-player WinMM music transport under Wine/CrossOver.
+
+### Fixed
+- Native macOS OpenGL context and legacy GLSL fallback for model/graph/animation rendering under CrossOver.
+- Wine DirectWrite glyph-cache crash while painting Qt controls.
+- DAT/QVM editor saves compile and validate temporary output before atomic replacement; failed compilation preserves the original.
+- Single-click pencil painting, model statistics refresh and graphcover DAT classification.
+- Configuration files live outside signed macOS bundles; animation transport uses readable controls.
+
+Windows verification uses CrossOver on macOS. Unknown MINA event layouts are rejected;
+complete original GConv behavioral parity is not claimed.
+
+## [1.10.1] - 2026-09-09
+
+### Added
+- Native macOS CLI build support through `-DIGI1CONV_BUILD_GUI=OFF` (the default on non-Windows hosts).
+
+### Fixed
+- Replaced Windows-only process and executable path lookups with portable macOS/Linux implementations.
+- Excluded the Windows multimedia GUI from CLI-only builds while preserving the existing Windows GUI default.
+- Made the process-level test harness portable across Windows and macOS, including native paths, timeouts, and SHA-256 checks.
+
 ## [1.10.0] - 2026-06-24
 
 ### Added

@@ -338,3 +338,126 @@ exit codes, recursive directory walker with mixed good/bad inputs, and
 **Description:** `MefExportObjHasRealUvs` and `MefExportVFlipMatchesModelType` used `IGI1CONV_NEED(f, "\\.mef$")` which could pick Type 3 lightmap models. Type 3 models have synthetic UVs spanning `-11..1` (before fix) and no real texture coordinates, causing the tests' expected UV range assertions to fail.
 
 **Resolution:** Both tests now use `FindCorpusMefOfModelType(1)` (for Type 1 skinned) and `FindCorpusMefOfModelType(0)` (for Type 0 rigid) to guarantee they test only models with real texture coordinates. Type 3 models are excluded entirely from these assertions.
+
+## Bug ID: SHARED-GAME-DIALECT-20261010
+**Description:** Consolidating the native converters rejected IGI1 QVM 8.5 and MEF files, and changed BEF animation durations.
+**Resolution:** Shared QVM reader accepts 8.5–8.7 headers, shared MEF reader preserves both structural dialects, and BEF export preserves duration. Real-format matrices pass IGI1 33/33 and IGI2 38/38; evidence is in `.qa/2026-10-10/unified-igi1-formats.json` and `unified-igi2-formats.json`.
+
+## Bug ID: GUI-GAME-NAME-20261010
+**Description:** IGI2's macOS Quit menu used the IGI1 executable name.
+**Resolution:** QApplication argv is now derived from CONVERTER_GAME; both native GUI targets rebuild successfully. Menu behavior still requires a fresh GUI check.
+
+## Bug ID: GUI-MODEL-STATS-20261010
+**Description:** The 3D viewer rendered loaded MEF geometry while the vertex/triangle/material counters stayed at zero because model metadata was refreshed before parsing populated the geometry.
+**Resolution:** Refresh model information after `setupBuffers()` completes for non-DAT model loads. Rebuilt both native GUI targets; GUI visual verification is pending desktop unlock.
+
+## Bug ID: GUI-GRAPHCOVER-MODE-20261010
+**Description:** IGI2 files named `graphcover*.dat` were treated as navigation graph files because GUI dispatch matched every basename starting with `graph`, even though graphcover DAT uses the forest/cover data parser.
+**Resolution:** Added `isNavigationGraphName()` matching only `graph` optionally followed by digits, and used it in all GUI DAT mode dispatch points. Rebuilt both native targets; CLI checks confirmed all four Level5 graphcover DAT files parse through generic asset JSON export.
+
+## Bug ID: GUI-SIGNED-BUNDLE-WRITES-20261010
+**Description:** Launching a packaged macOS converter created its INI settings and log inside Contents/MacOS, invalidating the sealed app signature; installed Windows apps also cannot rely on writing beside their executable.
+**Resolution:** Shared GUI settings and logs now use QStandardPaths::AppConfigLocation, separated by application name, with migration from the legacy INI file. Both platform targets rebuild successfully; signature preservation is being checked after GUI use.
+
+## Bug ID: GUI-AUDIO-VOLUME-20261010
+**Description:** The shared volume slider was a no-op on macOS, and Windows Qt6 sent volume changes to MCI even though playback used Qt Multimedia.
+**Resolution:** Route volume commands through the shared transport adapter, which updates QAudioOutput for Qt6 and MCI for the legacy backend. Also include windows.h before mmsystem.h so the Windows GUI compiles with MinGW.
+
+## Bug ID: GUI-IGI2-CLI-ARGUMENTS-20261010
+**Description:** IGI2 GUI QSC compilation, RES extraction/unpacking and font export used named output flags or operation aliases that its positional-only command adapter rejected.
+**Resolution:** IGI2 CLI accepts -o/--out/--output for core operations and normalizes res unpack to extract and fnt export to extract while retaining the existing native argument forms.
+
+## Bug ID: GUI-MODEL-OUTPUT-OVERWRITE-20261010
+**Description:** GUI model text export and compilation chose the input file as the output, causing source-preservation guards to reject the action and risking data loss in legacy command paths.
+**Resolution:** Both actions now use Save As dialogs with distinct editable/rebuilt output filenames.
+
+## Bug ID: GUI-EDITOR-COMPILE-SAVE-20261010
+QVM save previously ignored compiler failure and reported success. QVM and structured DAT edits now compile into a temporary directory and atomically replace the source only after successful compilation. DAT text view decodes through the shared asset JSON codec; large truncated hex previews are read-only. Both platform builds pass; real Level5 graphcover JSON round-trip is byte-identical. Interactive editor verification remains pending desktop unlock.
+
+## Bug ID: PACKAGE-QT-RUNTIME-20261010
+Added reproducible deployment for both Windows apps with Qt plugins/DLLs and explicit matching compiler runtime validation. macOS deployment includes the required widget, image and audio plugins, relocates Homebrew dependencies and verifies strict ad-hoc signatures. New macOS packages pass strict signature and packaged CLI checks.
+
+## Bug ID: GUI-IGI2-MINA-ANIMATION-20261010
+The GUI treated IGI2 ILFF/MINA animations as IGI1 FORM containers, aborted on the first chunk size and still claimed successful parsing. Added bounded MINA hierarchy/event decoding for translation and quaternion records, initialized parser outputs, and reject unsupported/truncated records. Real corpse.iff loads 31 bones and a 160ms clip, renders its skeleton, pauses and frame-steps in native macOS CUA testing. Standalone regression checks cover this fixture, real IGI1 animation and a malformed MINA record. Unsupported event layouts are rejected rather than claimed fully decoded.
+
+## Bug ID: GUI-DAT-SAVE-VERIFIED-20261010
+Native IGI2 GUI testing verified both save outcomes: malformed JSON produces a compile error with the original hash unchanged, and a valid changed cover word survives atomic save and binary JSON re-export. Evidence is in .qa/2026-10-10/igi2-editor-invalid-save.json and igi-valid-editor-after.json (temporary test output).
+
+## Bug ID: GUI-WINE-DIRECTWRITE-20261010
+Windows Qt controls crashed in QRasterPaintEngine/QImageTextureGlyphCache under CrossOver DirectWrite. Verified Qt windows:nodirectwrite restores layout and avoids the reproduced crash. The shared GUI detects Wine's wine_get_version export and applies this backend before QApplication unless the user supplied QT_QPA_PLATFORM. Native Windows keeps its usual backend.
+
+## Bug ID: GUI-LEGACY-OPENGL-SHADERS-20261010
+CrossOver supplies a context that rejects GLSL330; ignored shader compilation failures linked an empty program, showing a fixed white silhouette and ignoring model rotation. Added checked shader compilation, GLSL120 attribute/varying shaders for legacy contexts, CPU normal-matrix uniforms, explicit attribute bindings and legacy wireframe support. Windows CUA verifies shaded Jones with changing rotation, wireframe, graph rendering and animation playback. Both platform builds succeed; final macOS regression pending.
+
+- GUI-WINE-AUDIO-STARTUP (2026-10-10): Qt Multimedia initialization stalled CrossOver GUI startup on music. Added a Wine-only MCI transport; the real IGI1 68.519-second WAV now loads and advances in the GUI. Native Qt transport retained. Remaining transport interactions still under validation.
+- AUDIO-MP3-PCM (2026-10-10): Added shared `mp3 to-wav` decoding with upstream CC0 minimp3, and cached PCM playback under Wine. Mono fixture and Level5 stereo music match FFmpeg rate/channels/sample count; maximum PCM error 1 and 2 respectively. Windows GUI verification pending.
+
+- GUI-WINE-AUDIO-VOLUME (2026-10-10): MCI waveaudio rejected per-player volume. Replaced Wine audio transport with a shared WinMM PCM device (native Windows/macOS retain Qt). Focused Windows assertions pass play, paused-position stability, seek/resume, stop/reset, volume and close. Added pause position snapshot because Wine reports delayed hardware positions after pause.
+
+- PACKAGE-MACOS-QT-VERSION-20261010: Fixed an undefined Path reference in the deployment helper by using pathlib.Path, allowing Qt version and package notices generation to complete.
+
+- GUI-AUDIO-FINAL-VALIDATION-20261010: Both final Wine GUIs load real WAV/MP3 audio, advance playback, pause, seek, adjust volume and stop; IGI1 stop resets to zero. Both apps quit normally. Native IGI2 Qt music transport also passes.
+
+- TEX-MIPMAP-GENERATION-20261010: Reconstructed original GConv ARGB8888 mipmap filtering as rounded 2x2 BGRA averages. Shared `tex make INPUT OUTPUT --mipmaps` produces square and rectangular outputs byte-identical to the original with AutoMipMap=ON, AutoVQ=OFF and Dither=OFF, verified in both native macOS and Windows CLIs. Rejects non-power-of-two inputs and preserves source-overwrite guards. Extended both LOOP11 readers from ten to sixteen levels, allowing complete 1024x1024 eleven-level chains. This option does not implement VQ or original recipe evaluation.
+
+- GUI-TEXTURE-CONTAINER-SAVE-20261010: Replaced destructive generic LOOP11 GUI saves with atomic template rebuilds preserving TEX/SPR/PIC layout and metadata. Edited mode-67 textures regenerate all existing mipmaps. Native macOS and CrossOver Windows IGI2 flipped nine-level files match original GConv output exactly; real IGI1 version-9 sprites preserve unchanged bytes and edited decoded pixels, with Windows output identical to native. Unsupported new SPR/PIC authoring fails without writing a false container.
+- GUI-IMAGE-ACTIONS-20261010: Routed File Save and Edit Undo/Redo/Cut/Copy/Paste to the active image editor, recorded flips/reset in undo history, and cleared history when changing files. Native Cmd+Z/Cmd+S and Windows Ctrl+Z/Ctrl+S restore original files exactly; Windows cut/paste/save preserves the texture. Scoped QPainter to drawing instead of active eraser mutation.
+- GUI-TOOLBAR-IDENTITY-20261010: Replaced unsupported icon text with readable ASCII button labels, allowed the image filename label to shrink, and corrected IGI2 About/CLI version identity to the compiled shared version. Both platform image toolbars display all actions.
+
+
+## Bug: GUI-TGA-RGB555-DarkPreview (2026-10-11)
+
+Qt's TGA reader returned unexpanded 5-bit RGB555 channels (red 16 instead of
+131 for a real building texture), making models appear almost black. TGA
+loading now uses the existing stb decoder. Textured previews also avoid
+compounding their baked shading with the viewer headlight. The unchanged
+400_20_1 bundle renders correctly on native macOS and Windows through CrossOver;
+a controlled region's mean RGB rose from approximately 12 to 99. This is a
+neutral asset preview, not a recreation of the game's scene lighting.
+
+## Bug: GUI-Animation-NestedModelResolution (2026-10-11)
+
+Play Animation searched only the configured models root although extracted
+MEFs were inside a models subfolder. Playback now prefers the selected MEF
+and searches configured folders recursively, case-insensitively. Added a
+visible Play button, selected the first available animation by default, and
+removed the duplicate MEF context-menu action. Native playback succeeds for
+015_01_1 and 000_01_1; Windows 015_01_1 playback advances with 33 mapped bones.
+
+## Bug: QSC-GeneratedVersionComment (2026-10-11)
+
+Removed generated version comments from shared QVM decompilation. IGI2 version
+metadata lives in a neighboring .qvm-version file; the CLI accepts an explicit
+--qvm-version and GUI saves retain the original QVM header version. Native and
+Windows 8.5/8.6/8.7 round trips are byte-identical. Unrelated sidecar files and
+existing QSC source are preserved when metadata validation rejects an output.
+
+## Bug: Diagnostics-DefaultLogsMissing (2026-10-11)
+
+Enabled verbose GUI diagnostics by default with a one-time preference migration
+and a startup message identifying the log path. Added shared CLI output teeing
+to per-user logs without changing terminal output. Both apps create GUI and CLI
+logs on macOS and Windows through CrossOver. Added persistent per-app editor
+font size (6–72 points); CUA verified visibly larger text on both platforms.
+
+## Bug: MEF-UnusedMaterialTextureWarnings (2026-10-11)
+
+The IGI1 merged bundle resolver attempted every TAMC slot, including slots that
+no exported face referenced. The real SECURITYBUILDING bundle emitted 58 false
+missing-texture warnings while all 118 face materials had textures. Track used
+material slots per source MEF, retaining original global slot offsets, and
+resolve textures only for exported face materials. Native and Windows exports
+are byte-identical before/after, with zero warnings for the complete building
+and 118 warnings when its textures are genuinely unavailable. Native soldier
+015_01_1, soldier 000_01_1 and prop 236_01_1 also pass byte-preservation and
+missing-texture checks. Added check_mef_bundle_textures.py for reusable real
+fixture regression testing. Original GConv parity remains unfinished.
+
+## Bug: QA-WineCaptureAndCanonicalPaths (2026-10-11)
+
+Windows format checks could falsely time out because Wine helper processes held
+captured pipes open. The coverage harness now redirects child output to temporary
+files and supports a launcher while hashing the actual tested executable. The
+CrossOver launcher resolves fixture paths before mapping them onto Z: to avoid
+macOS /var symlink canonicalization failures. Fresh extracted Windows IGI1
+checks pass 33/33, matching native macOS. This changes test infrastructure only.

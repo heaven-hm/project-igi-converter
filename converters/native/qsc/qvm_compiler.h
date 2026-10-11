@@ -1,0 +1,26 @@
+#pragma once
+#include <cstdint>
+#include <string>
+#include <vector>
+
+#include "qsc_parser.h"
+
+namespace qvm
+{
+
+struct CompileResult
+{
+    std::vector<uint8_t> binary;
+    bool ok = true;
+    std::string error;
+};
+
+// Compile a parsed QSC AST (Program node) into a complete IGI 2 QVM v0.7 binary
+// (LOOP 8.7). Returns the bytes in `binary` on success.
+CompileResult Compile(const qsc::Node &program, uint32_t minorVersion = 7);
+
+// Convenience: compile and write to disk.
+bool CompileToFile(const qsc::Node &program, const std::string &outPath,
+                   std::string *error = nullptr);
+
+} // namespace qvm
