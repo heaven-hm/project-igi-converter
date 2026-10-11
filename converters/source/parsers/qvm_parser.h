@@ -39,6 +39,9 @@ struct QVMFile {
     std::vector<std::string> identifiers;  // ivalue parsed
     std::vector<std::string> strings;      // svalue parsed
     std::vector<QVMInstruction> instructions;
+    uint32_t trailerOffset = 0;
+    uint32_t sectionEnd = 0;
+    std::vector<uint8_t> trailer;
     bool valid = false;
     std::string error;
 

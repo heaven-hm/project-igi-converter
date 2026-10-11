@@ -461,3 +461,73 @@ files and supports a launcher while hashing the actual tested executable. The
 CrossOver launcher resolves fixture paths before mapping them onto Z: to avoid
 macOS /var symlink canonicalization failures. Fresh extracted Windows IGI1
 checks pass 33/33, matching native macOS. This changes test infrastructure only.
+
+## Bug: Graph-IGI1LegacyTaggedLayout (2026-10-11)
+
+Added support for the older one-byte property tags and adjacency-table trailer
+found in retail IGI1 navigation graphs. Imports validate the original header,
+record types, coordinate bounds and table size before writing output. All 317
+available distinct IGI1 DAT cases passed on native macOS and Windows through
+CrossOver; the corpus harness also checks that coordinate edits preserve the
+untouched adjacency data.
+
+## Bug: Texture-VariableSpriteFrameLayout (2026-10-11)
+
+SPR/ANM frames can have different dimensions, pixel offsets and pixel formats.
+Both native conversion and GUI decoding now read each frame's item descriptor
+instead of applying the first frame's dimensions to the entire file. Packing
+writes edited frame pixels at their original offsets and preserves the template.
+The supplied five-frame LOOP9 ANM and observed sprite variants pass native
+round trips; the selected IGI1 and IGI2 variant suites also pass through Windows
+CrossOver. Packaged GUI verification is still pending.
+
+## Bug: OLM-IGI1MultilayerDescriptors (2026-10-11)
+
+Some IGI1 lightmaps include 28 extra descriptor bytes between layers. Detect the
+layout by validating all dimensions and the complete pixel payload rather than
+assuming descriptor size solely from the game. Rebuilds infer the spacing from
+the preserved header. All 242 selected IGI1 corpus variants pass on macOS,
+including edited lightmap pixels. Windows subsequently passed the same 242
+selected IGI1 variants. The GUI first-layer decoder additionally matches raw
+pixel payloads for all 38 selected IGI1 and 838 selected IGI2 OLM samples on
+macOS; interactive GUI verification remains pending while the screen is locked.
+
+## Bug: Mapping-TextureManifestAndInterleavedAliases (2026-10-11)
+
+Preserve the complete DAT texture manifest when generating MTP, including
+unreferenced textures and their order. MTP INST can interleave several virtual
+mappings for the same physical model: select each model's first mapping, then
+retain remaining mappings as VNAM aliases. DAT JSON diagnostics now expose
+aliases, animations, sounds and shadows so regression comparisons check these
+fields too. All 70 selected IGI2 mapping variants pass on macOS; the selected
+Windows corpus and CLI matrices also pass their DAT/MTP checks.
+
+## Bug: MEF-ShadowAndLegacyMenuContainers (2026-10-11)
+
+Accept IGI2 shadow meshes without HSEM and losslessly preserve FORM/TDOB menu
+model chunks in native JSON. Geometry export reads SEMS groups, XTVS vertices
+and local CAFS indices for shadows, including the unbound-bone sentinel. Legacy
+menu export uses VPOS/CFAC collision geometry; textured PRIM reconstruction is
+still unsupported. All 76 discovered special models pass lossless metadata
+round trips and nonempty geometry export on macOS and Windows through
+CrossOver; this does not establish complete original GConv parity.
+
+## Bug: QVM-IGI2ExtendedPayloadLoss (2026-10-11)
+
+The retail IGI2 configuration QVM has an extended-header offset and data after
+its executable sections. Decompilation now retains that payload and reserved
+header words in a separate .qvm-layout metadata file, without QSC comments.
+Compilation restores the payload and relocates its offset after text edits. GUI
+saves recreate the metadata from the original binary before compiling. Four
+checks pass on macOS and Windows: exact retail round trip, edited payload
+relocation, invalid metadata rejection preserving existing binary output, and
+unrelated metadata rejection preserving existing source text. The native IGI2
+loose script/mapping corpus also passes 1,275 assets.
+
+## Bug: MEF-SecondaryCollisionPairFallback (2026-10-11)
+
+Six retail IGI1 collision models contain an empty first XTVC/ECFC pair followed
+by the actual mesh in a second pair. The exporter now selects the first complete
+nonempty pair and validates every triangle index against its vertex set. All
+six models now produce nonempty OBJ geometry and retain exact MEF JSON binary
+round trips on native macOS and Windows through CrossOver.

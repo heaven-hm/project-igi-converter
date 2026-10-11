@@ -33,7 +33,7 @@ Support describes the operations below, rather than unrestricted authoring of ev
 | --- | --- | --- | --- |
 | Resource archives | `.res` | `.res` | List, extract and repack resource names and payloads. |
 | Scripts | `.qvm`, `.qsc` | `.qvm`, `.qsc` | Decompile bytecode, edit source and compile back to QVM. |
-| Textures, sprites and pictures | `.tex`, `.spr`, `.pic` | `.tex`, `.spr`, `.pic` | Decode images, edit bitmaps and rebuild supported existing containers. Create uncompressed TEX, including optional ARGB8888 mipmaps. |
+| Textures, sprites and pictures | `.tex`, `.spr`, `.pic` | `.tex`, `.spr`, `.pic`, `.anm` | Decode images, including sprite frames with different dimensions, edit bitmaps and rebuild supported existing containers. Create uncompressed TEX, including optional ARGB8888 mipmaps. |
 | Models | `.mef` | `.mef` | Inspect geometry, export OBJ/MTL and rebuild supported native metadata or text representations. IGI1 also bundles attached models and mapped textures. |
 | Animation | `.iff`, `.bef` | `.iff` (ILFF/MINA) | Inspect and rebuild supported animation data; IGI1 converts between IFF and text BEF. Desktop playback supports the validated skeletal layouts. |
 | Model and texture mappings | `.mtp`, `.dat` | `.mtp`, `.dat` | Convert mappings, export metadata and rebuild supported structures. |
@@ -145,11 +145,13 @@ Replace `N` with `1` or `2`. Set `IGICONV_LOG_DIR` to choose another CLI log fol
 
 Published Qt packages have been checked on **native macOS ARM64** and **Windows x64 through CrossOver on macOS**. Native Windows-host testing and Intel macOS desktop packages are not claimed. Format checks exercise representative extraction, conversion, rebuild, edited-value persistence and input-preservation paths; they do not cover every asset or every layout variant.
 
-Fresh extracted-release CLI checks pass **33/33 for IGI1Conv on both platforms**. IGI2Conv passes **37 checks on each platform**; its remaining animation check needs a valid independent IGI2 ILFF/MINA fixture. Full end-to-end certification is therefore incomplete.
+The published r4 packages passed **33/33 IGI1 checks on both platforms** and **37 IGI2 checks**, with the IGI2 animation check blocked by an invalid fixture at that time. Subsequent testing uses an independently installed, licensed GOG retail copy of IGI2. Native macOS checks now pass **38/38 for IGI2**, including a valid MINA animation, and all **1,244 discovered IGI2 animation clips** pass lossless metadata round trips.
+
+The current development build passes **242 selected IGI1 format variants** and **1,149 selected IGI2 format variants** on both macOS and Windows through CrossOver. The Windows build also passes the extended retail QVM payload regression and all **76 IGI2 shadow and legacy FORM/TDOB menu models**. On macOS, all **1,244 discovered IGI2 animation clips** and the same 76 models pass, and the expanded IGI1 corpus round-trip passed for 35,527 of 35,533 unique assets before a targeted fix; all six affected collision models now pass on both platforms. Final GUI verification remains pending because the macOS desktop is locked. These results describe the development build, not the published r4 application bytes. See the [retail corpus report](converters/docs/validation-2026-10-11-retail-corpus.md) for scope and remaining checks.
 
 Detailed evidence and limitations are recorded in the [desktop validation reports](https://github.com/heaven-hm/project-igi-converter/tree/feature/unified-igi-desktop-qt/converters/docs). Proprietary game fixtures are not included in the release packages.
 
-Remaining work includes complete original GConv recipe/API equivalence, Dreamcast/VQ behavior, font creation/scanning, full skeleton and weight export, and unrestricted mesh topology authoring. Some native rebuilds require the original template and reject structural changes. The tools do not guarantee in-game acceptance of arbitrary edited assets or reproduction of a level's complete scene lighting.
+Remaining work includes complete original GConv recipe/API equivalence, Dreamcast/VQ behavior, font creation/scanning, full skeleton and weight export, and unrestricted mesh topology authoring. Legacy FORM/TDOB menu models currently export collision geometry; textured render primitives are not reconstructed. Shadow meshes preserve their group and bone references but do not establish full skeleton export. Some native rebuilds require the original template and reject structural changes. The tools do not guarantee in-game acceptance of arbitrary edited assets or reproduction of a level's complete scene lighting.
 
 ## License
 

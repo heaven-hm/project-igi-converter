@@ -43,7 +43,7 @@ static int do_mef_export(const std::string& input, const std::string& outpath,
         std::ifstream probe(input, std::ios::binary);
         char magic[4] = {0};
         probe.read(magic, 4);
-        isBinary = (std::memcmp(magic, "ILFF", 4) == 0);
+        isBinary = (std::memcmp(magic, "ILFF", 4) == 0 || std::memcmp(magic, "FORM", 4) == 0);
     }
 
     if (isBinary)
@@ -111,7 +111,7 @@ static int do_mef_dump(const std::string& input, const std::string& outpath)
     file.read(magic, 4);
     file.close();
 
-    if (std::memcmp(magic, "ILFF", 4) == 0)
+    if (std::memcmp(magic, "ILFF", 4) == 0 || std::memcmp(magic, "FORM", 4) == 0)
     {
         // Binary MEF
         ParsedGeometry geo;

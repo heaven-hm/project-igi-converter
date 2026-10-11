@@ -480,10 +480,13 @@ bool MTP_Generate(const std::string& outPath,
                   const std::vector<std::string>& animations,
                   const std::vector<std::string>& sounds,
                   const std::vector<std::string>& shadows,
-                  const std::vector<DATVnamEntry>& vnam_models) {
+                  const std::vector<DATVnamEntry>& vnam_models,
+                  const std::vector<std::string>& textureManifest) {
     std::vector<std::string> models;
     std::vector<std::string> vnamStrings;
-    std::vector<std::string> textures;
+    // Preserve manifest-only entries and their original ordering. Mapping
+    // indices then refer to this table, adding only genuinely new textures.
+    std::vector<std::string> textures = textureManifest;
     std::vector<uint8_t> instData;
 
     std::vector<uint32_t> texCountsForVNAM;

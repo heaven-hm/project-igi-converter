@@ -72,7 +72,19 @@ void validateModelHeader(const Json &container, bool igi2)
             headerFound = true;
         }
     if (!headerFound)
-        fail("Missing MEF model header");
+    {
+        bool groups = false, vertices = false, faces = false;
+        for (const auto &chunk : container.at("chunks"))
+        {
+            const auto tag = chunk.at("tag").get<std::string>();
+            const auto size = chunk.at("data").get<std::string>().size() / 2;
+            groups |= tag == "SEMS" && size > 0 && size % 28 == 0;
+            vertices |= tag == "XTVS" && size > 0 && size % 12 == 0;
+            faces |= tag == "CAFS" && size > 0 && size % 28 == 0;
+        }
+        if (!igi2 || container.value("container", "") != "OCEM" || !groups || !vertices || !faces)
+            fail("Missing MEF model header or valid shadow mesh chunks");
+    }
 }
 
 Bytes importIlff(const Json &document)
@@ -151,7 +163,36 @@ Json exportOlm(const Bytes &bytes, bool igi2)
     if (!count || count > 64)
         fail("Invalid OLM layer count");
     const size_t descriptorSize = igi2 ? 24 : 16;
-    const size_t extraSize = igi2 ? 28 : 0;
+    size_t extraSize = 0;
+    bool layoutFound = false;
+    for (const size_t candidate : {size_t(0), size_t(28)})
+    {
+        size_t total = 88 + count * descriptorSize + (count - 1) * candidate;
+        if (total > bytes.size())
+            continue;
+        bool valid = true;
+        for (size_t i = 0; i < count; ++i)
+        {
+            const size_t descriptor = 88 + i * (descriptorSize + candidate);
+            const auto width = readU16(bytes, descriptor + descriptorSize - 4);
+            const auto height = readU16(bytes, descriptor + descriptorSize - 2);
+            const uint64_t pixels = uint64_t(width) * height * 4;
+            if (!width || !height || pixels > bytes.size() - total)
+            {
+                valid = false;
+                break;
+            }
+            total += static_cast<size_t>(pixels);
+        }
+        if (valid && total == bytes.size())
+        {
+            extraSize = candidate;
+            layoutFound = true;
+            break;
+        }
+    }
+    if (!layoutFound)
+        fail("OLM descriptors do not match the pixel payload");
     const size_t pixelStart = 88 + count * descriptorSize + (count - 1) * extraSize;
     requireRange(bytes, 0, pixelStart);
     Json document = {{"header", encodeHex(bytes, 0, pixelStart)}, {"layers", Json::array()}};
@@ -183,10 +224,13 @@ Bytes importOlm(const Json &document, bool igi2)
     requireRange(bytes, 0, 88);
     const auto count = readU32(bytes, 44);
     const size_t descriptorSize = igi2 ? 24 : 16;
-    const size_t extraSize = igi2 ? 28 : 0;
     if (!count || count > 64 || count != document.at("layers").size() ||
-        bytes.size() != 88 + count * descriptorSize + (count - 1) * extraSize)
+        bytes.size() < 88 + count * descriptorSize)
         fail("Invalid OLM header or layer count");
+    const size_t extraBytes = bytes.size() - 88 - count * descriptorSize;
+    const size_t extraSize = count > 1 ? extraBytes / (count - 1) : 0;
+    if ((extraSize != 0 && extraSize != 28) || extraBytes != (count - 1) * extraSize)
+        fail("Invalid OLM descriptor layout");
     for (size_t i = 0; i < count; ++i)
     {
         const auto &layer = document.at("layers")[i];
@@ -216,7 +260,8 @@ Json exportMetadata(const fs::path &path, bool igi2)
     std::transform(format.begin(), format.end(), format.begin(),
                    [](unsigned char c) { return std::tolower(c); });
     Json document = {{"schema", "igi-asset/1"}, {"format", format}, {"game", igi2 ? 2 : 1}};
-    if (format == ".dat" && bytes.size() >= 4 && readU32(bytes, 0) == 0xffeeddcc)
+    if (format == ".dat" && bytes.size() >= 4 &&
+        (readU32(bytes, 0) == 0xffeeddcc || (!igi2 && bytes[0] == 5)))
     {
         document.update(exportGraphData(bytes, igi2));
         return document;
@@ -251,6 +296,12 @@ Json exportMetadata(const fs::path &path, bool igi2)
         }
         return document;
     }
+    if (igi2 && format == ".mef" && hasTag(bytes, 0, "FORM") && hasTag(bytes, 8, "TDOB"))
+    {
+        document.update(exportFormAnimation(bytes));
+        document["kind"] = "form-model";
+        return document;
+    }
     if (!igi2 && format == ".iff" && hasTag(bytes, 0, "FORM"))
     {
         document.update(exportFormAnimation(bytes));
@@ -273,6 +324,13 @@ Json exportMetadata(const fs::path &path, bool igi2)
 Bytes importMetadata(const Json &document, bool igi2)
 {
     const auto format = document.at("format").get<std::string>();
+    if (format == ".mef" && document.value("kind", "") == "form-model")
+    {
+        auto bytes = importFormAnimation(document);
+        if (!igi2 || !hasTag(bytes, 8, "TDOB"))
+            fail("FORM model container does not match this game");
+        return bytes;
+    }
     if (format == ".mef")
         validateModelHeader(document, igi2);
     if (format == ".iff" && ((igi2 && document.value("container", "") != "MINA") ||

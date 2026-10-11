@@ -1,4 +1,6 @@
 #include "qvm_parser.h"
+#include <algorithm>
+#include <utility>
 #include <cstring>
 #include <fstream>
 
@@ -162,6 +164,28 @@ QVMFile QVM_Parse(const std::string &filepath)
                     std::to_string(qvm.header.ver_major) + "." +
                     std::to_string(qvm.header.ver_minor) + ")";
         return qvm;
+    }
+
+    // IGI2's extended header can reference data after the executable sections.
+    // Keep it separate from QSC; the text language cannot represent this payload.
+    if (qvm.header.ver_minor >= 6 && qvm.header.of_itable == 64 && buf_size >= 64)
+    {
+        uint64_t sectionEnd = 64;
+        for (const auto range : {std::pair<uint32_t, uint32_t>{qvm.header.of_itable, qvm.header.sz_itable},
+                                {qvm.header.of_ivalue, qvm.header.sz_ivalue},
+                                {qvm.header.of_stable, qvm.header.sz_stable},
+                                {qvm.header.of_svalue, qvm.header.sz_svalue},
+                                {qvm.header.of_ctable, qvm.header.sz_ctable}})
+            sectionEnd = std::max(sectionEnd, uint64_t(range.first) + range.second);
+        qvm.trailerOffset = ReadU32(buf + 0x3c);
+        if (sectionEnd > buf_size || sectionEnd > UINT32_MAX ||
+            (qvm.trailerOffset && qvm.trailerOffset != sectionEnd))
+        {
+            qvm.error = "Unsupported QVM extended payload layout";
+            return qvm;
+        }
+        qvm.sectionEnd = static_cast<uint32_t>(sectionEnd);
+        qvm.trailer.assign(data.begin() + qvm.sectionEnd, data.end());
     }
 
     // Parse identifier values (ivalue)

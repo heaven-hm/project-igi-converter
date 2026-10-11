@@ -1,5 +1,6 @@
 #include "qvm_decompiler.h"
 #include "../logger.h"
+#include "../../native/asset_json.hpp"
 
 #include <algorithm>
 #include <charconv>
@@ -806,6 +807,18 @@ bool QVM_Decompile(const QVMFile &qvm, const std::string &outpath)
         }
     }
 
+    const auto layoutPath = gconv::fs::path(outpath + ".qvm-layout");
+    if (gconv::fs::exists(layoutPath)) {
+        try {
+            const auto previous = gconv::readJson(layoutPath);
+            if (previous.value("kind", "") != "igi2-qvm-layout" || previous.value("version", 0) != 1)
+                throw std::runtime_error("Unrelated QVM layout metadata");
+        } catch (const std::exception &error) {
+            Logger::Get().Log(LogLevel::ERR, error.what());
+            return false;
+        }
+    }
+
     std::ofstream out(outpath, std::ios::binary);
     if (!out.is_open())
     {
@@ -824,6 +837,17 @@ bool QVM_Decompile(const QVMFile &qvm, const std::string &outpath)
         version << "8." << qvm.header.ver_minor << "\n";
         version.close();
         if (!version) return false;
+    }
+
+    if (qvm.header.ver_minor >= 6 &&
+        (qvm.trailerOffset || !qvm.trailer.empty() || qvm.header.unknown_1 || qvm.header.unknown_2)) {
+        gconv::saveJson(layoutPath, {{"kind", "igi2-qvm-layout"}, {"version", 1},
+            {"minor", qvm.header.ver_minor}, {"section_end", qvm.sectionEnd},
+            {"trailer_offset", qvm.trailerOffset},
+            {"reserved", {qvm.header.unknown_1, qvm.header.unknown_2}},
+            {"trailer", gconv::encodeHex(qvm.trailer, 0, qvm.trailer.size())}});
+    } else if (gconv::fs::exists(layoutPath)) {
+        gconv::fs::remove(layoutPath);
     }
 
     Logger::Get().Log(LogLevel::INFO, "[QVM_Decompile] Written " +

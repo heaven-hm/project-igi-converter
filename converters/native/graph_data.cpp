@@ -30,6 +30,60 @@ void writeDouble(Bytes &bytes, size_t position, double value)
 
 Json exportGraphData(const Bytes &bytes, bool igi2)
 {
+    const bool legacy = !igi2 && !bytes.empty() && bytes[0] == 5;
+    if (legacy)
+    {
+        requireRange(bytes, 0, 15);
+        if (bytes[5] != 5 || bytes[10] != 5)
+            fail("Invalid legacy graph header");
+        const auto capacity = readU32(bytes, 6);
+        const uint64_t entries = uint64_t(capacity) * capacity;
+        if (!capacity || entries > (bytes.size() - 15) / 8 || readU32(bytes, 1) > capacity)
+            fail("Invalid legacy graph adjacency table size");
+        const size_t tableBytes = static_cast<size_t>(entries * 8);
+        const size_t tableStart = bytes.size() - tableBytes;
+        // The tagged stream terminates with 00, followed by an array marker
+        // (0a), an int32 length marker (05), and the adjacency byte count.
+        if (tableStart < 22)
+            fail("Truncated legacy graph adjacency header");
+        const size_t end = tableStart - 7;
+        if (bytes[end] != 0 || bytes[end + 1] != 10 || bytes[end + 2] != 5 ||
+            readU32(bytes, end + 3) != tableBytes)
+            fail("Invalid legacy graph adjacency header");
+        Json document = {{"kind", "graph"}, {"layout", "legacy-tagged"},
+            {"header", encodeHex(bytes, 0, 15)}, {"records", Json::array()},
+            {"adjacency", encodeHex(bytes, end, bytes.size() - end)}};
+        size_t position = 15;
+        while (position < end)
+        {
+            const auto tag = bytes[position++];
+            Json record = {{"header", encodeHex(bytes, position - 1, 1)}, {"type", tag * 257}};
+            size_t length = tag == 8 ? 24 : 4;
+            if (tag == 9)
+            {
+                if (position == end)
+                    fail("Truncated legacy graph string length");
+                requireRange(bytes, position, 1);
+                length = bytes[position++];
+            }
+            if (length > end - position)
+                fail("Truncated legacy graph property");
+            if (tag == 5)
+                record["value"] = static_cast<int32_t>(readU32(bytes, position));
+            else if (tag == 6)
+                record["value"] = readFloat(bytes, position);
+            else if (tag == 8)
+                record["value"] = Json::array({readDouble(bytes, position),
+                    readDouble(bytes, position + 8), readDouble(bytes, position + 16)});
+            else if (tag == 9)
+                record["value"] = encodeHex(bytes, position, length);
+            else
+                fail("Unsupported legacy graph property tag");
+            document["records"].push_back(std::move(record));
+            position += length;
+        }
+        return document;
+    }
     if (readU32(bytes, 0) != 0xffeeddcc)
         fail("Invalid graph signature");
     size_t position = 4;
@@ -89,13 +143,17 @@ Json exportGraphData(const Bytes &bytes, bool igi2)
 
 Bytes importGraphData(const Json &document)
 {
+    const bool legacy = document.value("layout", std::string()) == "legacy-tagged";
     auto bytes = decodeHex(document.at("header"));
+    if (legacy && (bytes.size() != 15 || bytes[0] != 5 || bytes[5] != 5 || bytes[10] != 5))
+        fail("Invalid legacy graph header");
     for (const auto &record : document.at("records"))
     {
         const auto header = decodeHex(record.at("header"));
-        if (header.size() != 8 || header[0] != 4)
+        if ((!legacy && (header.size() != 8 || header[0] != 4)) ||
+            (legacy && header.size() != 1))
             fail("Invalid graph record header");
-        const auto type = readU16(header, 6);
+        const auto type = legacy ? header[0] * 257 : readU16(header, 6);
         if (record.at("type") != type)
             fail("Graph property type cannot change");
         bytes.insert(bytes.end(), header.begin(), header.end());
@@ -103,7 +161,9 @@ Bytes importGraphData(const Json &document)
         if (type == 0x0505)
         {
             bytes.resize(position + 4);
-            writeUnsigned(bytes, position, jsonInteger<uint32_t>(record.at("value")));
+            writeUnsigned(bytes, position, legacy
+                ? static_cast<uint32_t>(jsonInteger<int32_t>(record.at("value")))
+                : jsonInteger<uint32_t>(record.at("value")));
         }
         else if (type == 0x0606)
         {
@@ -130,6 +190,12 @@ Bytes importGraphData(const Json &document)
         {
             fail("Unsupported graph property type");
         }
+    }
+    if (legacy)
+    {
+        const auto adjacency = decodeHex(document.at("adjacency"));
+        bytes.insert(bytes.end(), adjacency.begin(), adjacency.end());
+        exportGraphData(bytes, false);
     }
     return bytes;
 }

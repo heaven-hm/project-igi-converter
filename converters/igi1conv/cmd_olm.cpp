@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "cmd_olm.h"
+#include "../native/asset_json.hpp"
 #include "../../third_party/tinygltf/stb_image_write.h"
 #include <filesystem>
 #include <fstream>
@@ -39,17 +40,22 @@ OLMFile ParseOlm(const std::string& path) {
         return olm;
     }
 
-    file.read(reinterpret_cast<char*>(&olm.layer), sizeof(OlmLayerDescriptor));
-    if (file.gcount() != sizeof(OlmLayerDescriptor)) {
-        olm.error = "Failed to read layer descriptor";
-        return olm;
-    }
-
-    uint32_t numPixels = olm.layer.pixel_width * olm.layer.pixel_height;
-    olm.pixels.resize(numPixels);
-    file.read(reinterpret_cast<char*>(olm.pixels.data()), numPixels * sizeof(OlmPixel));
-    if (file.gcount() != numPixels * sizeof(OlmPixel)) {
-        olm.error = "Failed to read pixel data";
+    // Use the shared layout validator: all descriptors precede pixel data,
+    // and multilayer files can contain extra bytes between descriptors.
+    try {
+        const auto document = gconv::exportMetadata(fs::path(path), false);
+        const auto &layer = document.at("layers").at(0);
+        olm.layer = {};
+        olm.layer.pixel_width = layer.at("width").get<uint16_t>();
+        olm.layer.pixel_height = layer.at("height").get<uint16_t>();
+        const auto &rgba = layer.at("rgba");
+        olm.pixels.resize(rgba.size() / 4);
+        for (size_t i = 0; i < olm.pixels.size(); ++i) {
+            olm.pixels[i] = {rgba[i * 4].get<uint8_t>(), rgba[i * 4 + 1].get<uint8_t>(),
+                             rgba[i * 4 + 2].get<uint8_t>(), rgba[i * 4 + 3].get<uint8_t>()};
+        }
+    } catch (const std::exception &error) {
+        olm.error = error.what();
         return olm;
     }
 

@@ -205,23 +205,40 @@ int cmd_mtp(int argc, char** argv)
         DATFile dat;
         dat.valid = true;
 
-        // The first mtp.models.size() entries correspond to main models
-        for (size_t i = 0; i < mtp.models.size() && i < mtp.mappings.size(); ++i)
+        // INST can interleave multiple VNAM mappings for the same MODS entry.
+        // Select the first mapping of each physical model; retain the remaining
+        // mappings as aliases instead of assuming they occur at the end.
+        std::vector<bool> consumed(mtp.mappings.size(), false);
+        for (const auto &model : mtp.models)
         {
-            DATModelEntry e;
-            e.modelName = mtp.mappings[i].modelName;
-            e.textures  = mtp.mappings[i].textureNames;
-            dat.models.push_back(e);
+            size_t index = 0;
+            while (index < mtp.mappings.size() &&
+                   (consumed[index] || mtp.mappings[index].modelName != model))
+                ++index;
+            if (index == mtp.mappings.size())
+            {
+                std::cerr << "mtp to-dat: model has no INST mapping: " << model << "\n";
+                return 3;
+            }
+            consumed[index] = true;
+            DATModelEntry entry;
+            entry.modelName = model;
+            entry.textures = mtp.mappings[index].textureNames;
+            dat.models.push_back(std::move(entry));
         }
-
-        // The remaining entries correspond to VNAM models
-        for (size_t i = mtp.models.size(); i < mtp.mappings.size() && i < mtp.vnam_models.size(); ++i)
+        for (size_t i = 0; i < mtp.mappings.size(); ++i)
         {
-            DATVnamEntry ve;
-            ve.mainModelName = mtp.mappings[i].modelName;
-            ve.virModelName = mtp.vnam_models[i];
-            ve.textures = mtp.mappings[i].textureNames;
-            dat.vnam_models.push_back(ve);
+            if (consumed[i]) continue;
+            if (i >= mtp.vnam_models.size())
+            {
+                std::cerr << "mtp to-dat: alias has no VNAM name\n";
+                return 3;
+            }
+            DATVnamEntry entry;
+            entry.mainModelName = mtp.mappings[i].modelName;
+            entry.virModelName = mtp.vnam_models[i];
+            entry.textures = mtp.mappings[i].textureNames;
+            dat.vnam_models.push_back(std::move(entry));
         }
 
         dat.allTextures           = mtp.textures;

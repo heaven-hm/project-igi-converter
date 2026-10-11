@@ -511,8 +511,25 @@ ParsedGeometry ParseCollisionGeometry(const std::vector<uint8_t> &bytes,
 {
     ParsedGeometry geometry;
 
-    const ChunkInfo *xtvc = FindChunk(chunks, "XTVC");
-    const ChunkInfo *ecfc = FindChunk(chunks, "ECFC");
+    const ChunkInfo *xtvc = nullptr;
+    const ChunkInfo *ecfc = nullptr;
+    // Some collision-only MEFs store an empty primary XTVC/ECFC pair and
+    // the actual collision mesh in the second pair. Select the first
+    // complete, non-empty pair instead of silently exporting an empty OBJ.
+    for (size_t occurrence = 0;; ++occurrence)
+    {
+        const ChunkInfo *candidateVertices = FindChunk(chunks, "XTVC", occurrence);
+        const ChunkInfo *candidateFaces = FindChunk(chunks, "ECFC", occurrence);
+        if (!candidateVertices && !candidateFaces)
+            break;
+        if (candidateVertices && candidateFaces && candidateVertices->size >= 16 &&
+            candidateFaces->size >= 8)
+        {
+            xtvc = candidateVertices;
+            ecfc = candidateFaces;
+            break;
+        }
+    }
     if (!xtvc || !ecfc)
     {
         return geometry;
@@ -549,9 +566,12 @@ ParsedGeometry ParseCollisionGeometry(const std::vector<uint8_t> &bytes,
     for (size_t i = 0; i < faceCount; ++i)
     {
         const size_t base = ecfc->data + i * 8;
-        geometry.triangles.push_back({ReadValue<uint16_t>(bytes, base + 0),
-                                      ReadValue<uint16_t>(bytes, base + 2),
-                                      ReadValue<uint16_t>(bytes, base + 4)});
+        const uint16_t a = ReadValue<uint16_t>(bytes, base + 0);
+        const uint16_t b = ReadValue<uint16_t>(bytes, base + 2);
+        const uint16_t c = ReadValue<uint16_t>(bytes, base + 4);
+        if (a >= vertexCount || b >= vertexCount || c >= vertexCount)
+            return ParsedGeometry{};
+        geometry.triangles.push_back({a, b, c});
     }
 
     geometry.collisionVertexCount = vertexCount;
@@ -924,6 +944,138 @@ ParseIgi2RenderTriangles(const std::vector<uint8_t> &bytes, const ChunkInfo &dne
     return triangles;
 }
 
+// Shadow groups use local triangle indices; unknown face and edge fields stay raw.
+ParsedGeometry ParseShadowGeometry(const std::vector<uint8_t> &bytes,
+                                   const std::vector<ChunkInfo> &chunks)
+{
+    ParsedGeometry geometry;
+    const auto *groups = FindChunk(chunks, "SEMS");
+    const auto *vertices = FindChunk(chunks, "XTVS");
+    const auto *faces = FindChunk(chunks, "CAFS");
+    if (!groups || !vertices || !faces)
+        return geometry;
+    if (groups->size % 28 || vertices->size % 12 || faces->size % 28)
+        throw std::runtime_error("Invalid shadow mesh record size");
+    geometry.renderLayout = "shadow volume";
+    geometry.vertices.resize(vertices->size / 12);
+    for (size_t i = 0; i < geometry.vertices.size(); ++i)
+    {
+        auto &vertex = geometry.vertices[i];
+        const size_t base = vertices->data + i * 12;
+        vertex.rawPos = glm::vec3(ReadValue<float>(bytes, base),
+                                 ReadValue<float>(bytes, base + 4),
+                                 ReadValue<float>(bytes, base + 8));
+        if (!std::isfinite(vertex.rawPos.x) || !std::isfinite(vertex.rawPos.y) || !std::isfinite(vertex.rawPos.z))
+            throw std::runtime_error("Nonfinite shadow vertex");
+        vertex.pos = vertex.rawPos * kMefNativeScale;
+    }
+    for (size_t i = 0; i < groups->size / 28; ++i)
+    {
+        const size_t base = groups->data + i * 28;
+        const size_t firstFace = ReadValue<uint32_t>(bytes, base);
+        const size_t firstVertex = ReadValue<uint32_t>(bytes, base + 4);
+        const size_t faceCount = ReadValue<uint32_t>(bytes, base + 12);
+        const size_t vertexCount = ReadValue<uint32_t>(bytes, base + 16);
+        const uint32_t bone = ReadValue<uint32_t>(bytes, base + 24);
+        if (firstFace > faces->size / 28 || faceCount > faces->size / 28 - firstFace ||
+            firstVertex > geometry.vertices.size() || vertexCount > geometry.vertices.size() - firstVertex ||
+            (bone != std::numeric_limits<uint32_t>::max() && bone > std::numeric_limits<uint16_t>::max()))
+            throw std::runtime_error("Shadow group exceeds mesh bounds");
+        for (size_t v = firstVertex; v < firstVertex + vertexCount; ++v)
+            geometry.vertices[v].boneIndex = static_cast<uint16_t>(bone);
+        for (size_t f = firstFace; f < firstFace + faceCount; ++f)
+        {
+            std::array<uint32_t, 3> triangle{};
+            const size_t position = faces->data + f * 28;
+            const glm::vec3 normal(ReadValue<float>(bytes, position + 16),
+                                   ReadValue<float>(bytes, position + 20),
+                                   ReadValue<float>(bytes, position + 24));
+            if (!std::isfinite(normal.x) || !std::isfinite(normal.y) || !std::isfinite(normal.z))
+                throw std::runtime_error("Nonfinite shadow normal");
+            for (size_t c = 0; c < 3; ++c)
+            {
+                const uint32_t local = ReadValue<uint32_t>(bytes, position + c * 4);
+                if (local >= vertexCount)
+                    throw std::runtime_error("Shadow face index exceeds its group");
+                triangle[c] = static_cast<uint32_t>(firstVertex + local);
+                geometry.vertices[triangle[c]].normal += normal;
+            }
+            geometry.triangles.push_back(triangle);
+        }
+    }
+    for (auto &vertex : geometry.vertices)
+        if (glm::length(vertex.normal) > 0.f)
+            vertex.normal = glm::normalize(vertex.normal);
+    return geometry;
+}
+
+// Legacy menu models expose collision geometry separately from render primitives.
+ParsedGeometry ParseFormModel(const std::vector<uint8_t> &bytes)
+{
+    auto bigEndian = [&](size_t position) {
+        if (position > bytes.size() || bytes.size() - position < 4)
+            throw std::runtime_error("Truncated FORM model");
+        return (uint32_t(bytes[position]) << 24) | (uint32_t(bytes[position + 1]) << 16) |
+               (uint32_t(bytes[position + 2]) << 8) | uint32_t(bytes[position + 3]);
+    };
+    if (bytes.size() < 12 || std::memcmp(bytes.data() + 8, "TDOB", 4) || bigEndian(4) != bytes.size() - 8)
+        throw std::runtime_error("Invalid FORM TDOB model header");
+    ParsedGeometry geometry;
+    geometry.renderLayout = "FORM TDOB collision geometry";
+    size_t vertexData = 0, vertexSize = 0, faceData = 0, faceSize = 0;
+    for (size_t position = 12; position < bytes.size();)
+    {
+        if (bytes.size() - position < 8)
+            throw std::runtime_error("Truncated FORM chunk header");
+        const size_t size = bigEndian(position + 4);
+        const size_t padded = size + size % 2;
+        if (padded > bytes.size() - position - 8)
+            throw std::runtime_error("Truncated FORM chunk payload");
+        ParsedGeometry::RawChunk chunk;
+        std::memcpy(chunk.fourcc, bytes.data() + position, 4);
+        chunk.data.assign(bytes.begin() + position + 8, bytes.begin() + position + 8 + size);
+        geometry.rawChunks.push_back(std::move(chunk));
+        if (!std::memcmp(bytes.data() + position, "VPOS", 4))
+            vertexData = position + 8, vertexSize = size;
+        if (!std::memcmp(bytes.data() + position, "CFAC", 4))
+            faceData = position + 8, faceSize = size;
+        position += 8 + padded;
+    }
+    if (!vertexData || !faceData || vertexSize % 20 || faceSize % 16)
+        throw std::runtime_error("Unsupported FORM model collision layout");
+    geometry.vertices.resize(vertexSize / 20);
+    for (size_t i = 0; i < geometry.vertices.size(); ++i)
+    {
+        auto &vertex = geometry.vertices[i];
+        const size_t position = vertexData + i * 20;
+        vertex.rawPos = glm::vec3(ReadValue<float>(bytes, position), ReadValue<float>(bytes, position + 4), ReadValue<float>(bytes, position + 8));
+        if (!std::isfinite(vertex.rawPos.x) || !std::isfinite(vertex.rawPos.y) || !std::isfinite(vertex.rawPos.z))
+            throw std::runtime_error("Nonfinite FORM model vertex");
+        vertex.pos = vertex.rawPos * kMefNativeScale;
+    }
+    for (size_t i = 0; i < faceSize / 16; ++i)
+    {
+        std::array<uint32_t, 3> triangle{};
+        for (size_t c = 0; c < 3; ++c)
+        {
+            triangle[c] = ReadValue<uint16_t>(bytes, faceData + i * 16 + c * 2);
+            if (triangle[c] >= geometry.vertices.size())
+                throw std::runtime_error("FORM collision index exceeds vertex bounds");
+        }
+        const auto normal = glm::cross(geometry.vertices[triangle[1]].pos - geometry.vertices[triangle[0]].pos,
+                                       geometry.vertices[triangle[2]].pos - geometry.vertices[triangle[0]].pos);
+        for (auto index : triangle)
+            geometry.vertices[index].normal += normal;
+        geometry.triangles.push_back(triangle);
+    }
+    for (auto &vertex : geometry.vertices)
+        if (glm::length(vertex.normal) > 0.f)
+            vertex.normal = glm::normalize(vertex.normal);
+    geometry.collisionVertexCount = geometry.vertices.size();
+    geometry.collisionFaceCount = geometry.triangles.size();
+    return geometry;
+}
+
 ParsedGeometry ParseMefGeometry(const std::vector<uint8_t> &bytes,
                                 const std::vector<ChunkInfo> &chunks,
                                 const std::string &filepath = "")
@@ -1027,6 +1179,8 @@ ParsedGeometry ParseMefGeometry(const std::vector<uint8_t> &bytes,
     {
         geometry = ParseCollisionGeometry(bytes, chunks);
         geometry.renderLayout = "collision fallback";
+        if (geometry.vertices.empty() && geometry.triangles.empty())
+            geometry = ParseShadowGeometry(bytes, chunks);
     }
 
     // ---- Parse ASCII-export-specific chunks ----
@@ -1296,6 +1450,8 @@ std::vector<glm::vec3> ComputeBoneWorldPositions(const std::vector<BoneInfo> &bo
 ParsedGeometry ParseMefFile(const std::string &filepath)
 {
     const std::vector<uint8_t> bytes = ReadWholeFile(filepath);
+    if (bytes.size() >= 4 && std::memcmp(bytes.data(), "FORM", 4) == 0)
+        return ParseFormModel(bytes);
     const std::vector<ChunkInfo> chunks = ParseIlffChunks(bytes, filepath);
     ParsedGeometry geo = ParseMefGeometry(bytes, chunks, filepath);
 

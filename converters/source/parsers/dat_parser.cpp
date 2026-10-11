@@ -341,6 +341,30 @@ std::string DAT_FormatJSON(const DATFile& dat, const std::string& modelFilter) {
             out << JsonStr(dat.allTextures[i]);
         }
         out << "]";
+        out << ",\n  \"aliases\": [";
+        for (size_t i = 0; i < dat.vnam_models.size(); ++i) {
+            if (i) out << ", ";
+            const auto &alias = dat.vnam_models[i];
+            out << "{\"model\": " << JsonStr(alias.mainModelName)
+                << ", \"name\": " << JsonStr(alias.virModelName) << ", \"textures\": [";
+            for (size_t t = 0; t < alias.textures.size(); ++t) {
+                if (t) out << ", ";
+                out << JsonStr(alias.textures[t]);
+            }
+            out << "]}";
+        }
+        out << "]";
+        auto emitNames = [&](const char *name, const std::vector<std::string> &names) {
+            out << ",\n  \"" << name << "\": [";
+            for (size_t i = 0; i < names.size(); ++i) {
+                if (i) out << ", ";
+                out << JsonStr(names[i]);
+            }
+            out << "]";
+        };
+        emitNames("animations", dat.animations);
+        emitNames("sounds", dat.sounds);
+        emitNames("shadows", dat.shadows);
     }
 
     out << "\n}\n";

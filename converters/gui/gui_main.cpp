@@ -2157,7 +2157,8 @@ public:
         if (!currentPath.isEmpty() && !currentImage.isNull()) {
             bool isGameFormat = currentPath.endsWith(".tex", Qt::CaseInsensitive)
                              || currentPath.endsWith(".spr", Qt::CaseInsensitive)
-                             || currentPath.endsWith(".pic", Qt::CaseInsensitive);
+                             || currentPath.endsWith(".pic", Qt::CaseInsensitive)
+                             || currentPath.endsWith(".anm", Qt::CaseInsensitive);
             if (isGameFormat) {
                 if (saveAsTex(currentImage, currentPath))
                     QMessageBox::information(this, "Saved", "Saved to game format:\n" + currentPath);
@@ -2199,7 +2200,7 @@ public:
             }
         }
         const QString lower = outPath.toLower();
-        const bool gameFormat = lower.endsWith(".tex") || lower.endsWith(".spr") || lower.endsWith(".pic");
+        const bool gameFormat = lower.endsWith(".tex") || lower.endsWith(".spr") || lower.endsWith(".pic") || lower.endsWith(".anm");
         if (mode < 0 && gameFormat && QFileInfo::exists(outPath)) {
             try {
                 QTemporaryDir work;
@@ -2237,7 +2238,7 @@ public:
         }
         // Creating SPR/PIC layouts requires authoring metadata; never silently
         // write a single-image TEX container under those extensions.
-        if (lower.endsWith(".spr") || lower.endsWith(".pic")) return false;
+        if (lower.endsWith(".spr") || lower.endsWith(".pic") || lower.endsWith(".anm")) return false;
         if (mode < 0) mode = lower.contains("argb8888") ? 3 : 2;
         return TEX_WriteLOOP(outPath.toStdString(),
                              rgba.data(), texImg.width(), texImg.height(),
@@ -3042,6 +3043,7 @@ public:
                             if (ext == "mex") return "MEX Extended Model";
                             if (ext == "res") return "Resource Archive";
                             if (ext == "spr") return "Sprite Image";
+                            if (ext == "anm") return "Animated Sprite Images";
                             if (ext == "fnt") return "Font File";
                             if (ext == "pic") return "Picture Image";
                             if (ext == "tex") return "Texture Image";
@@ -3222,6 +3224,14 @@ public:
                             const quint32 minor = quint32(bytes[8]) | (quint32(bytes[9]) << 8) |
                                 (quint32(bytes[10]) << 16) | (quint32(bytes[11]) << 24);
                             arguments << "--qvm-version" << QString("8.%1").arg(minor);
+                            // Recreate optional layout metadata from the original binary;
+                            // the temporary viewer decompile directory is already gone.
+                            const QString originalSource = temporary.filePath("original.qsc");
+                            if (QProcess::execute(cmd, {"qvm", "decompile", currentFile, "-o", originalSource}) != 0)
+                                return;
+                            const QString layout = originalSource + ".qvm-layout";
+                            if (QFile::exists(layout) && !QFile::copy(layout, tempQscPath + ".qvm-layout"))
+                                return;
                         }
 #endif
                         QFile compiled(compiledPath);
@@ -6063,10 +6073,10 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
                         QMessageBox::information(this, "Batch Conversion", QString("Converted %1 file(s) to %2\n%3 succeeded, %4 failed").arg(done + failed).arg(newExt.toUpper()).arg(done).arg(failed));
                     });
                 };
-                addBatch("Convert", "tga",  {"tex", "spr", "pic"});
-                addBatch("Convert", "png",  {"tex", "spr", "pic"});
+                addBatch("Convert", "tga",  {"tex", "spr", "pic", "anm"});
+                addBatch("Convert", "png",  {"tex", "spr", "pic", "anm"});
                 addBatch("Convert", "spr",  {"tex", "spr", "pic", "png", "tga", "bmp", "jpg", "jpeg"});
-                addBatch("Convert", "tex",  {"png", "tga", "bmp", "jpg", "jpeg", "spr", "pic"});
+                addBatch("Convert", "tex",  {"png", "tga", "bmp", "jpg", "jpeg", "spr", "pic", "anm"});
                 addBatch("Convert", "obj",  {"mef", "mex"});
                 addBatch("Convert", "txt",  {"mef", "mex"});
                 addBatch("Convert", "wav",  {"wav"});
@@ -6417,7 +6427,7 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
                     convertIgiWavDir(path);
                 });
             }
-        } else if (ext == "tex" || ext == "spr" || ext == "pic") {
+        } else if (ext == "tex" || ext == "spr" || ext == "pic" || ext == "anm") {
             menu.addAction("Convert to PNG", [this, path]() { loadFile(path); executeCommand("tex to-png"); });
             menu.addAction("Convert to TGA", [this, path]() { loadFile(path); executeCommand("tex to-tga"); });
             menu.addAction("Replace Texture", [this, path]() {
@@ -6520,7 +6530,7 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
             QFile f(path);
             if (f.open(QIODevice::ReadOnly)) {
                 QByteArray magic = f.read(4);
-                if (magic != "ILFF") {
+                if (magic != "ILFF" && magic != "FORM") {
                     isBinary = false;
                 }
                 f.close();
@@ -6739,14 +6749,14 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
 
         int mode = overrideViewMode;
         if (mode == 0) {
-            if (currentExt == "png" || currentExt == "jpg" || currentExt == "jpeg" || currentExt == "bmp" || currentExt == "tex" || currentExt == "spr" || currentExt == "pic" || currentExt == "tga" || currentExt == "olm") {
+            if (currentExt == "png" || currentExt == "jpg" || currentExt == "jpeg" || currentExt == "bmp" || currentExt == "tex" || currentExt == "spr" || currentExt == "pic" || currentExt == "anm" || currentExt == "tga" || currentExt == "olm") {
                 mode = 3; // Image
             } else if (currentExt == "mef" || currentExt == "mex") {
                 bool isBinary = true;
                 QFile f(path);
                 if (f.open(QIODevice::ReadOnly)) {
                     QByteArray magic = f.read(4);
-                    if (magic != "ILFF") isBinary = false;
+                    if (magic != "ILFF" && magic != "FORM") isBinary = false;
                     f.close();
                 }
                 if (isBinary) {
@@ -6875,7 +6885,7 @@ animStatusLabel->setText(QString("Playing fallback clip 0 (anim %1 not found)")
                 } else {
                     imageEditor->clear();
                 }
-            } else if (currentExt == "tex" || currentExt == "spr" || currentExt == "pic") {
+            } else if (currentExt == "tex" || currentExt == "spr" || currentExt == "pic" || currentExt == "anm") {
                 TEXFile tex = TEX_Parse(path.toStdString());
                 if (tex.valid && !tex.images.empty()) {
                     const auto& img = tex.images[0];

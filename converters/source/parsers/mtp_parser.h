@@ -47,4 +47,5 @@ bool MTP_Generate(const std::string& outPath,
                   const std::vector<std::string>& animations = {},
                   const std::vector<std::string>& sounds = {},
                   const std::vector<std::string>& shadows = {},
-                  const std::vector<DATVnamEntry>& vnam_models = {});
+                  const std::vector<DATVnamEntry>& vnam_models = {},
+                  const std::vector<std::string>& textureManifest = {});

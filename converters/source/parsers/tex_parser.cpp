@@ -142,14 +142,46 @@ bool ParseV7or9(std::ifstream& f, uint32_t ver, TEXFile& tex) {
         return false;
     }
 
-    // Skip item table: Item07=40 B, Item09=32 B
+    // Each item points to its own bitmap and dimensions. Animated sprites
+    // can mix large and small frames; the header dimensions are not per-frame.
     const std::size_t itemBytes = count * (ver == 7 ? 40u : 32u);
-    f.seekg(static_cast<std::streamoff>(itemBytes), std::ios::cur);
+    std::vector<uint8_t> items(itemBytes);
+    if (!RdBytes(f, items.data(), itemBytes)) {
+        tex.error = "Truncated sprite item table"; return false;
+    }
+    f.seekg(0, std::ios::end);
+    const auto fileEnd = f.tellg();
+    if (fileEnd < 0) { tex.error = "Unable to size sprite file"; return false; }
 
     // Read raw bitmaps
-    const std::size_t bmpSz = static_cast<std::size_t>(width) * height * depth;
     tex.version = ver;
     for (uint32_t i = 0; i < count; ++i) {
+        const auto* item = items.data() + i * (ver == 7 ? 40u : 32u);
+        uint32_t offset;
+        std::memcpy(&offset, item, 4);
+        if (offset < 52 + itemBytes) {
+            tex.error = "Sprite bitmap overlaps its metadata table"; return false;
+        }
+        if (ver == 9) {
+            uint16_t frameWidth, frameHeight;
+            std::memcpy(&mode, item + 4, 4);
+            std::memcpy(&frameWidth, item + 10, 2);
+            std::memcpy(&frameHeight, item + 12, 2);
+            width = frameWidth; height = frameHeight;
+        } else {
+            std::memcpy(&width, item + 8, 4);
+            std::memcpy(&height, item + 12, 4);
+        }
+        const auto frameDepth = DepthForMode(mode);
+        if (!width || !height || width > 65535 || height > 65535 || !frameDepth) {
+            tex.error = "Invalid sprite bitmap dimensions or mode"; return false;
+        }
+        const std::size_t bmpSz = static_cast<std::size_t>(width) * height * frameDepth;
+        if (offset > static_cast<uint64_t>(fileEnd) ||
+            bmpSz > static_cast<uint64_t>(fileEnd) - offset) {
+            tex.error = "Truncated sprite bitmap"; return false;
+        }
+        f.seekg(offset, std::ios::beg);
         TEXImage img;
         img.width  = width;
         img.height = height;

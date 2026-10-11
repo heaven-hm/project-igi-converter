@@ -147,9 +147,9 @@ int cmd_dat(int argc, char** argv)
         for (const auto& m : dat.models)
             mappings.push_back({m.modelName, m.textures});
 
-        std::vector<std::string> extraTextures; // Vanilla compiler ignores unreferenced textures
+        std::vector<std::string> extraTextures;
         std::string merr;
-        if (!MTP_Generate(out_mtp, mappings, merr, extraTextures, dat.animations, dat.sounds, dat.shadows, dat.vnam_models))
+        if (!MTP_Generate(out_mtp, mappings, merr, extraTextures, dat.animations, dat.sounds, dat.shadows, dat.vnam_models, dat.allTextures))
         {
             std::cerr << "dat to-mtp: " << merr << "\n";
             return 4;

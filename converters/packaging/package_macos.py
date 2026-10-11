@@ -52,7 +52,7 @@ for game in (1, 2):
             'CFBundleName': name,
             'CFBundleDisplayName': f'IGI {game} Converter',
             'CFBundlePackageType': 'APPL',
-            'CFBundleVersion': '2026.10.10',
+            'CFBundleVersion': '2026.10.11',
             'NSHighResolutionCapable': True,
         }, target)
     qt_lib = pathlib.Path(args.macdeployqt).resolve().parent.parent / 'lib'

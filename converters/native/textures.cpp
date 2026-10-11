@@ -32,6 +32,7 @@ std::vector<Image> readTextureBitmaps(const fs::path &p)
         offset = 52 + count * (v == 9 ? 32 : 40);
         if (count > 100000)
             fail("Oversized sprite table");
+        requireRange(b, 52, count * (v == 9 ? 32 : 40));
     }
     else if (v == 2)
     {
@@ -51,14 +52,35 @@ std::vector<Image> readTextureBitmaps(const fs::path &p)
     {
         fail("Texture contains no bitmaps");
     }
-    uint16_t bits = mode == 2 ? 16 : (mode == 3 || mode == 67) ? 32 : 0;
-    if (!bits)
-        fail("Unsupported texture mode (VQ decoding is not implemented)");
     for (size_t n = 0; n < (v == 11 ? 16 : count); ++n)
     {
         uint32_t width = v == 11 ? w >> n : w, height = v == 11 ? h >> n : h;
+        if (v == 7 || v == 9)
+        {
+            const size_t record = 52 + n * (v == 9 ? 32 : 40);
+            const size_t tableEnd = 52 + count * (v == 9 ? 32 : 40);
+            offset = readU32(b, record);
+            if (offset < tableEnd)
+                fail("Sprite bitmap overlaps its metadata table");
+            if (v == 9)
+            {
+                mode = readU32(b, record + 4);
+                width = readU16(b, record + 10);
+                height = readU16(b, record + 12);
+            }
+            else
+            {
+                width = readU32(b, record + 8);
+                height = readU32(b, record + 12);
+            }
+            if (!width || !height || width > 65535 || height > 65535)
+                fail("Invalid sprite bitmap dimensions");
+        }
         if (!width || !height)
             break;
+        const uint16_t bits = mode == 2 ? 16 : (mode == 3 || mode == 67) ? 32 : 0;
+        if (!bits)
+            fail("Unsupported texture mode (VQ decoding is not implemented)");
         size_t bytes = size_t(width) * height * (bits / 8);
         if (n > 0 && offset == b.size() && v == 11)
             break;
@@ -134,6 +156,8 @@ void packTexture(const fs::path &src, const fs::path &directory, const fs::path 
     size_t offset = v == 11 ? 32 : v == 2 ? 24 : 52 + readU32(b, 32) * (v == 9 ? 32 : 40);
     for (size_t n = 0; n < images.size(); ++n)
     {
+        if (v == 7 || v == 9)
+            offset = readU32(b, 52 + n * (v == 9 ? 32 : 40));
         auto p = directory / (src.stem().string() + "." + std::to_string(n) + ".tga");
         requireDifferentFiles(p, dst, "Bitmap input and output must differ");
         auto i = loadImage(p);

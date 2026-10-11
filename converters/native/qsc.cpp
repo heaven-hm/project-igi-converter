@@ -1,4 +1,4 @@
-#include "common.hpp"
+#include "asset_json.hpp"
 #include "qsc/qvm_compiler.h"
 namespace gconv
 {
@@ -40,6 +40,25 @@ void compileScript(const fs::path &src, const fs::path &dst, int targetMinor)
     if (!result.ok)
         fail(result.error);
     writeUnsigned(result.binary, 8, minor);
+    const fs::path layoutPath = src.string() + ".qvm-layout";
+    if (fs::exists(layoutPath)) {
+        requireDifferentFiles(layoutPath, dst, "QVM output must differ from layout metadata");
+        const auto layout = readJson(layoutPath);
+        if (layout.value("kind", "") != "igi2-qvm-layout" || layout.value("version", 0) != 1 ||
+            jsonInteger<uint32_t>(layout.at("minor")) != minor || layout.at("reserved").size() != 2 ||
+            result.binary.size() < 64 || readU32(result.binary, 12) != 64)
+            fail("Invalid QVM layout metadata");
+        const auto offset = jsonInteger<uint32_t>(layout.at("trailer_offset"));
+        if (offset && offset != jsonInteger<uint32_t>(layout.at("section_end")))
+            fail("Unsupported QVM trailer offset");
+        const auto trailer = decodeHex(layout.at("trailer"));
+        if (result.binary.size() > UINT32_MAX || trailer.size() > UINT32_MAX - result.binary.size())
+            fail("QVM extended payload exceeds the format range");
+        writeUnsigned(result.binary, 52, jsonInteger<uint32_t>(layout.at("reserved")[0]));
+        writeUnsigned(result.binary, 56, jsonInteger<uint32_t>(layout.at("reserved")[1]));
+        writeUnsigned(result.binary, 60, offset ? static_cast<uint32_t>(result.binary.size()) : 0);
+        result.binary.insert(result.binary.end(), trailer.begin(), trailer.end());
+    }
     writeFile(dst, result.binary);
 }
 } // namespace gconv
