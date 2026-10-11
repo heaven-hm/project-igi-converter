@@ -452,3 +452,12 @@ and 118 warnings when its textures are genuinely unavailable. Native soldier
 015_01_1, soldier 000_01_1 and prop 236_01_1 also pass byte-preservation and
 missing-texture checks. Added check_mef_bundle_textures.py for reusable real
 fixture regression testing. Original GConv parity remains unfinished.
+
+## Bug: QA-WineCaptureAndCanonicalPaths (2026-10-11)
+
+Windows format checks could falsely time out because Wine helper processes held
+captured pipes open. The coverage harness now redirects child output to temporary
+files and supports a launcher while hashing the actual tested executable. The
+CrossOver launcher resolves fixture paths before mapping them onto Z: to avoid
+macOS /var symlink canonicalization failures. Fresh extracted Windows IGI1
+checks pass 33/33, matching native macOS. This changes test infrastructure only.

@@ -45,6 +45,7 @@ def resource_payloads(path):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--binary", required=True, type=Path)
+    parser.add_argument("--launcher", type=Path, help="Optional executable launcher for the tested binary")
     parser.add_argument("--samples", required=True, type=Path)
     parser.add_argument("--game", required=True, choices=("1", "2"))
     parser.add_argument("--report", required=True, type=Path)
@@ -58,12 +59,17 @@ def main():
         root = Path(temporary)
 
         def run(*command, expect=0):
-            result = subprocess.run(
-                [str(binary), *map(str, command)],
-                capture_output=True,
-                text=True,
-                timeout=90,
-            )
+            # File handles avoid Wine helper processes holding capture pipes open.
+            executable = args.launcher.resolve() if args.launcher else binary
+            with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as output, tempfile.TemporaryFile(mode="w+", encoding="utf-8") as errors:
+                result = subprocess.run(
+                    [str(executable), *map(str, command)],
+                    stdout=output, stderr=errors, text=True, timeout=90,
+                )
+                output.seek(0)
+                errors.seek(0)
+                result.stdout = output.read()
+                result.stderr = errors.read()
             if (expect == 0 and result.returncode != 0) or (
                 expect != 0 and result.returncode == 0
             ):
