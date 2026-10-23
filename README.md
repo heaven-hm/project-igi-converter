@@ -59,16 +59,59 @@ OBJ, MTL, JSON, PNG, TGA and text representations are editing/export intermediat
 
 Select the active level and texture/model folders in **Settings** before applying mapped textures. IGI1 animation selection uses `objects.qsc`, the ANIMS folder and the configured models folder, including nested extracted directories.
 
-<details>
-<summary>Interface screenshots</summary>
+## Interface screenshots
 
-These screenshots illustrate the desktop interface; individual controls vary by game and release.
+These are the existing project screenshots, restored to the README as a visible gallery instead of hiding most of the interface images inside a short, collapsed list. Individual controls vary by game and release.
 
-![Desktop workspace](assets/01_main_view.png)
-![Model wireframe](assets/04c_3d_wireframe.png)
-![Texture editor](assets/05a_tex_paint.png)
+### Main workspace and asset search
 
-</details>
+![Main View](assets/01_main_view.png)
+
+![Model Search](assets/02_model_search.png)
+
+### Texture viewing and editing
+
+![Texture Renderer](assets/03a_tex_000_01.png)
+
+![High-Resolution Texture Inspection](assets/03b_tex_000_04.png)
+
+![Texture Context Menu](assets/03c_tex_context_menu.png)
+
+<p align="center">
+  <img src="assets/05a_tex_paint.png" width="32%" alt="Texture paint tools" />
+  <img src="assets/05aa_tex_paint.png" width="32%" alt="Texture paint canvas" />
+  <img src="assets/05b_tex_paint.png" width="32%" alt="Texture paint brush" />
+</p>
+<p align="center">
+  <img src="assets/05c_tex_paint.png" width="49%" alt="Editing a texture asset" />
+  <img src="assets/05d_tex_paint.png" width="49%" alt="Saving a modified texture asset" />
+</p>
+
+### 3D model viewing
+
+![Raw 3D Mesh Viewer](assets/04a_mef_3d_raw.png)
+
+![3D Model Zoom Inspection](assets/04_mef_003_zoomed.png)
+
+![3D Wireframe Rendering](assets/04c_3d_wireframe.png)
+
+![Mesh Context Menu](assets/04c_mef_context_menu.png)
+
+### Script and binary inspection
+
+![Integrated QSC Text Editor](assets/07a_qvm_text_view.png)
+
+![Hexadecimal Inspector](assets/07a_qvm_hex_view.png)
+
+### Themes and application information
+
+<p align="center">
+  <img src="assets/08c_theme_dark.png" width="32%" alt="Dark theme" />
+  <img src="assets/08c_theme_military.png" width="32%" alt="Military theme" />
+  <img src="assets/08c_theme_solarized.png" width="32%" alt="Solarized theme" />
+</p>
+
+![About Dialog](assets/09b_about_dialog.png)
 
 ## Command-line examples
 
