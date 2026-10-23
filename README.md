@@ -1,69 +1,48 @@
 # Project IGI Converter
 
-**IGI1Conv and IGI2Conv provide desktop and command-line tools for Project I.G.I. and I.G.I. 2: Covert Strike assets.** Extract resources, convert textures, inspect models and animations, edit scripts and metadata, and rebuild supported native containers.
+**Project IGI Converter** provides desktop GUI and command-line tools for inspecting, extracting, converting, and editing assets from **Project I.G.I.** and **Project I.G.I. 2: Covert Strike**.
 
-The desktop distribution contains two separate applications built from shared C++ parsers, codecs and Qt interface code. Use **IGI1Conv** for IGI1 files and **IGI2Conv** for IGI2 files; formats with the same extension can have different layouts between games.
+- **IGI1Conv** — tools for Project IGI (2000).
+- **IGI2Conv** — tools for IGI 2: Covert Strike.
+- **[Download the latest release](https://github.com/heaven-hm/project-igi-converter/releases/latest)**
 
-[Download the latest release](https://github.com/heaven-hm/project-igi-converter/releases/latest) · [Desktop source](https://github.com/heaven-hm/project-igi-converter/tree/feature/unified-igi-desktop-qt/converters) · [Validation reports](https://github.com/heaven-hm/project-igi-converter/tree/feature/unified-igi-desktop-qt/converters/docs)
+The two games use some similarly named formats with different internal layouts. Choose the converter for the game the asset comes from.
 
-## Project background
+## What it can do
 
-**IGI1Conv** is a research-driven converter for Project I.G.I. assets. Its implementation is based on analysis of retail files, recovered format layouts and conversion round-trip tests. It provides inspection and editing workflows for the first game rather than relying on the original game editor.
+- Browse game files and inspect assets in the desktop interface.
+- Preview and edit textures; export supported images and rebuild native texture files.
+- View 3D models, inspect wireframes, and export supported geometry to OBJ/MTL.
+- Decompile QVM scripts to readable QSC source and compile supported edits back to QVM.
+- Inspect animation, navigation graphs, terrain, lightmaps, fonts, mappings, and audio.
+- Extract and repack resource archives, and export supported structured data to JSON or text for editing.
 
-**IGI2Conv** is a native C++ reimplementation of supported asset-conversion workflows from **GConv.exe**, the original IGI2 developer conversion tool. Work uses the original executable and `gconvapi.dll` as references, together with recovered file structures, the existing C++ GConv implementation and differential comparisons of original-tool output. The released converter runs its own native code; it does not require GConv.exe or the original Windows DLL at runtime.
+## Supported file formats
 
-This reconstruction is incremental. Supported conversions are documented and tested individually; complete equivalence with every original GConv recipe, option, callback and legacy output platform remains unfinished. Both applications now share common parsers, codecs and desktop components while retaining game-specific behavior.
-
-## Downloads
-
-| Application | macOS Apple Silicon | Windows x64 |
+| Format | Used for | What you can do |
 | --- | --- | --- |
-| IGI1Conv | `igi1conv-macos-arm64-qt.zip` | `igi1conv-windows-x64-qt.zip` |
-| IGI2Conv | `igi2conv-macos-arm64-qt.zip` | `igi2conv-windows-x64-qt.zip` |
+| `.res` | Resource archives | List contents, extract files, and repack supported resources. |
+| `.qvm`, `.qsc` | Game scripts and bytecode | Decompile scripts, edit QSC, and compile supported changes to QVM. |
+| `.tex`, `.spr`, `.pic`, `.anm` | Textures, sprites, pictures, and IGI2 animation/image data | Preview or export images, edit supported bitmaps, and rebuild supported containers. IGI1 supports TEX, SPR, and PIC. |
+| `.mef` | 3D models | Inspect model geometry, view wireframes, export OBJ/MTL, and use supported model rebuild workflows. |
+| `.iff`, `.bef` | Animation | Inspect supported animation data; IGI1 also converts between IFF and BEF text. IGI2 supports IFF animation layouts including ILFF/MINA. |
+| `.mtp`, `.dat` | Model/texture mappings and game data | Inspect mappings, export supported data, and rebuild supported structures. DAT use depends on the data type. |
+| Graph `.dat` | Navigation and graph data | View navigation graphs and edit supported graph fields; IGI2 also supports graph-cover and forest data. |
+| `.olm` | Object lightmaps | Extract image layers and rebuild supported lightmap data. |
+| `.hmp`, `.bit`, `.cmd`, `.ctr`, `.lmp` | IGI1 terrain | Export structured terrain data and rebuild supported assets. |
+| `.thm`, `.tlm`, `.tmm` | IGI2 terrain | Inspect, export, and rebuild supported terrain data. |
+| `.fnt` | Game fonts | Export font atlases as PNG/TGA and repack using the original font template. |
+| `.wav`, ILSF | Game audio | Extract audio data and rebuild supported audio templates. |
+| `.mp3` | IGI2 audio | Decode MP3 to WAV and perform supported audio conversion. |
+| `.syn` | IGI2 speech synchronization | Export and rebuild supported synchronization data. |
+| `.png`, `.tga`, `.bmp`, `.jpg` | Image interchange | Use supported image types for preview, conversion, and asset-editing workflows. |
+| `.avi`, `.afp` | IGI1 preserved media | Copy files unchanged; video transcoding and editing are not supported. |
 
-Each ZIP includes the **GUI and CLI**, Qt frameworks or DLLs, plugins and dependency notices. Extract the complete folder before running the app; moving only the executable can break its runtime dependencies. Verify downloads against the release's `SHA256SUMS.txt`.
+**Note:** Support varies by format and game. Some rebuild operations use an original file as a template to preserve data the converter does not edit. OBJ, MTL, JSON, PNG, TGA, and text files are commonly used as export or editing intermediates.
 
-On macOS, open the `.app` bundle or use the accompanying launcher from Terminal. On Windows, launch `igi1conv.exe` or `igi2conv.exe`; use the same executable in a terminal for CLI commands. Current desktop packages target macOS ARM64 and Windows x64. macOS bundles are ad-hoc signed, not notarized.
+## Screenshots
 
-## Supported formats
-
-Support describes the operations below, rather than unrestricted authoring of every possible format variant. Rebuild operations commonly use the original asset as a template to preserve its structure and unknown data.
-
-| Asset family | IGI1 formats | IGI2 formats | Available workflows |
-| --- | --- | --- | --- |
-| Resource archives | `.res` | `.res` | List, extract and repack resource names and payloads. |
-| Scripts | `.qvm`, `.qsc` | `.qvm`, `.qsc` | Decompile bytecode, edit source and compile back to QVM. |
-| Textures, sprites and pictures | `.tex`, `.spr`, `.pic` | `.tex`, `.spr`, `.pic`, `.anm` | Decode images, including sprite frames with different dimensions, edit bitmaps and rebuild supported existing containers. Create uncompressed TEX, including optional ARGB8888 mipmaps. |
-| Models | `.mef` | `.mef` | Inspect geometry, export OBJ/MTL and rebuild supported native metadata or text representations. IGI1 also bundles attached models and mapped textures. |
-| Animation | `.iff`, `.bef` | `.iff` (ILFF/MINA) | Inspect and rebuild supported animation data; IGI1 converts between IFF and text BEF. Desktop playback supports the validated skeletal layouts. |
-| Model and texture mappings | `.mtp`, `.dat` | `.mtp`, `.dat` | Convert mappings, export metadata and rebuild supported structures. |
-| Navigation data | graph `.dat` | graph and graph-cover `.dat` | Inspect graphs and edit supported JSON fields. IGI2 also supports forest `.dat` records. |
-| Object lightmaps | `.olm` | `.olm` | Extract image layers and rebuild edited lightmap data. |
-| Terrain | `.hmp`, `.bit`, `.cmd`, `.ctr`, `.lmp` | `.thm`, `.tlm`, `.tmm` | Export structured data and rebuild supported terrain assets; selected fields are editable. |
-| Fonts | `.fnt` | `.fnt` | Extract the atlas as PNG/TGA and repack it using the original font template. |
-| Audio | IGI `.wav` / ILSF | IGI `.wav` / ILSF, `.mp3` | Extract PCM, rebuild supported audio templates, normalize MP3 and decode MP3 to WAV. |
-| Speech synchronization | — | `.syn` | Export and rebuild synchronization data, including supported edited fields. |
-| Standard images | `.png`, `.tga` intermediates | `.png`, `.tga`, `.bmp`, `.jpg` | Decode and convert images for asset editing workflows. |
-| Preserved media | `.avi`, `.afp` | — | Copy files byte-for-byte; no AVI/AFP transcoding or editing is claimed. |
-
-OBJ, MTL, JSON, PNG, TGA and text representations are editing/export intermediates. Exporting an intermediate does not imply that every external edit can be compiled back into a game-ready asset.
-
-## Desktop workflows
-
-- Browse game folders and use file context menus to inspect, export or convert assets.
-- View MEF/OBJ models with rotation, zoom, wireframe and available texture mappings.
-- Preview and edit textures with painting, clipboard, flip and undo tools; save supported native containers.
-- View navigation graphs, script source and hexadecimal data.
-- Play supported animations and audio, with transport, seeking and volume controls.
-- Set editor text size through **Settings → Editor Font Size…**; preferences are saved independently for each app.
-
-Select the active level and texture/model folders in **Settings** before applying mapped textures. IGI1 animation selection uses `objects.qsc`, the ANIMS folder and the configured models folder, including nested extracted directories.
-
-## Interface screenshots
-
-These are the existing project screenshots, restored to the README as a visible gallery instead of hiding most of the interface images inside a short, collapsed list. Individual controls vary by game and release.
-
-### Main workspace and asset search
+### Main interface and model search
 
 ![Main View](assets/01_main_view.png)
 
@@ -87,7 +66,7 @@ These are the existing project screenshots, restored to the README as a visible 
   <img src="assets/05d_tex_paint.png" width="49%" alt="Saving a modified texture asset" />
 </p>
 
-### 3D model viewing
+### 3D model inspection
 
 ![Raw 3D Mesh Viewer](assets/04a_mef_3d_raw.png)
 
@@ -97,7 +76,7 @@ These are the existing project screenshots, restored to the README as a visible 
 
 ![Mesh Context Menu](assets/04c_mef_context_menu.png)
 
-### Script and binary inspection
+### Script and binary viewers
 
 ![Integrated QSC Text Editor](assets/07a_qvm_text_view.png)
 
@@ -113,91 +92,6 @@ These are the existing project screenshots, restored to the README as a visible 
 
 ![About Dialog](assets/09b_about_dialog.png)
 
-## Command-line examples
-
-Run `igi1conv --help` or `igi2conv --help` for the commands implemented by that executable. The examples use IGI2; shared operations are also available in IGI1Conv where appropriate.
-
-```sh
-# Extract a resource archive.
-igi2conv res extract level5.res extracted-assets
-
-# Decompile and rebuild a script.
-igi2conv qvm decompile objects.qvm -o objects.qsc
-igi2conv qsc compile objects.qsc rebuilt.qvm
-
-# Extract texture bitmaps and rebuild the original container.
-igi2conv tex extract watertex.tex watertex-bitmaps
-igi2conv tex pack watertex.tex watertex-bitmaps rebuilt-watertex.tex
-
-# Create an uncompressed texture with mipmaps from a power-of-two image.
-igi2conv tex make input.tga output.tex --mipmaps
-
-# Export native metadata, then rebuild from an edited JSON document.
-igi2conv asset to-json graph4.dat graph4.json
-igi2conv asset from-json graph4.json rebuilt-graph4.dat
-
-# Export model geometry and decode audio.
-igi2conv mef export model.mef -o model.obj
-igi2conv mp3 to-wav music.mp3 music.wav
-```
-
-IGI1 textured model bundle:
-
-```sh
-igi1conv mef bundle model.mef -o exported-models \
-  --dat LEVEL1.DAT --texdir TEXTURES
-```
-
-QVM decompilation produces **comment-free QSC**. IGI2 saves the original QVM version in a neighboring `.qsc.qvm-version` file; keep that file for CLI round trips. Alternatively, select a version explicitly:
-
-```sh
-igi2conv qsc compile objects.qsc rebuilt.qvm --qvm-version 8.6
-```
-
-IGI1 uses QVM 8.5; IGI2 supports the validated 8.6 and 8.7 layouts. GUI saves preserve the opened QVM's version. Work on copies of assets when preparing changes for a game installation.
-
-## Building from source
-
-The shared desktop implementation is on [`feature/unified-igi-desktop-qt`](https://github.com/heaven-hm/project-igi-converter/tree/feature/unified-igi-desktop-qt), tracked in [PR #21](https://github.com/heaven-hm/project-igi-converter/pull/21). Use that branch for the two-application build:
-
-```sh
-git clone --branch feature/unified-igi-desktop-qt \
-  https://github.com/heaven-hm/project-igi-converter.git
-cd project-igi-converter
-cmake -S converters -B build-unified \
-  -DCMAKE_BUILD_TYPE=Release -DIGICONV_BUILD_GUI=ON
-cmake --build build-unified --parallel
-./build-unified/bin/igi1conv --help
-./build-unified/bin/igi2conv --help
-```
-
-The GUI build requires Qt 6 Widgets, OpenGL and Multimedia, together with a C++17 toolchain and CMake. Set `-DIGICONV_BUILD_GUI=OFF` for a CLI-only build. The scripts in [`converters/packaging`](https://github.com/heaven-hm/project-igi-converter/tree/feature/unified-igi-desktop-qt/converters/packaging) deploy the desktop runtimes. The repository root retains the earlier IGI1 build configuration.
-
-## Diagnostics
-
-Verbose GUI logging is enabled by default on first launch or upgrade; subsequent user log preferences are respected. The startup message identifies the GUI log path.
-
-| Platform | GUI log | CLI log |
-| --- | --- | --- |
-| macOS | `~/Library/Preferences/igiNconv/igiNconv.log` | `~/Library/Logs/igiNconv/igiNconv-cli.log` |
-| Windows | `%LOCALAPPDATA%/igiNconv/igiNconv.log` | `%LOCALAPPDATA%/igiNconv/logs/igiNconv-cli.log` |
-
-Replace `N` with `1` or `2`. Set `IGICONV_LOG_DIR` to choose another CLI log folder, or `IGICONV_LOG_ENABLED=0` to disable CLI file logging. Normal terminal output remains available.
-
-## Validation and current limits
-
-Published Qt packages have been checked on **native macOS ARM64** and **Windows x64 through CrossOver on macOS**. Native Windows-host testing and Intel macOS desktop packages are not claimed. Format checks exercise representative extraction, conversion, rebuild, edited-value persistence and input-preservation paths; they do not cover every asset or every layout variant.
-
-The published r4 packages passed **33/33 IGI1 checks on both platforms** and **37 IGI2 checks**, with the IGI2 animation check blocked by an invalid fixture at that time. Subsequent testing uses an independently installed, licensed GOG retail copy of IGI2. Native macOS checks now pass **38/38 for IGI2**, including a valid MINA animation, and all **1,244 discovered IGI2 animation clips** pass lossless metadata round trips.
-
-The current development build passes **242 selected IGI1 format variants** and **1,149 selected IGI2 format variants** on both macOS and Windows through CrossOver. The Windows build also passes the extended retail QVM payload regression and all **76 IGI2 shadow and legacy FORM/TDOB menu models**. On macOS, all **1,244 discovered IGI2 animation clips** and the same 76 models pass, and the expanded IGI1 corpus round-trip passed for 35,527 of 35,533 unique assets before a targeted fix; all six affected collision models now pass on both platforms. Interactive testing has resumed: native IGI1 animation playback and its representative-format viewer sweep passed, and hidden retail-file discovery was fixed for both apps. Both native format viewer sweeps completed; IGI1 WAV and IGI2 MP3 playback advanced their transports. Windows IGI1 rendered graph/model previews, decompiled QVM source, and IFF skeleton animation. Windows IGI2 also rendered graph/model/MINA and retail QVM previews, and MP3 playback advanced. Retail QVM GUI saves passed in both apps on both platforms. Native texture painting/save and Windows texture flip/save in both apps passed with independently extracted pixel verification. A macOS Qt Cocoa accessibility crash discovered during saving was fixed with a matching rebuilt plugin; the package includes corresponding source and rebuild instructions. Remaining GUI controls and original-game acceptance are not fully certified. These results describe the development build, not the published r4 application bytes. See the [retail corpus report](converters/docs/validation-2026-10-11-retail-corpus.md) for scope and remaining checks.
-
-Detailed evidence and limitations are recorded in the [desktop validation reports](https://github.com/heaven-hm/project-igi-converter/tree/feature/unified-igi-desktop-qt/converters/docs). Proprietary game fixtures are not included in the release packages.
-
-Remaining work includes complete original GConv recipe/API equivalence, Dreamcast/VQ behavior, font creation/scanning, full skeleton and weight export, and unrestricted mesh topology authoring. Legacy FORM/TDOB menu models currently export collision geometry; textured render primitives are not reconstructed. Shadow meshes preserve their group and bone references but do not establish full skeleton export. Some native rebuilds require the original template and reject structural changes. The tools do not guarantee in-game acceptance of arbitrary edited assets or reproduction of a level's complete scene lighting.
-
 ## License
 
-Heaven-HM-owned material is **source-available** under the [Heaven-HM Community Modding License](LICENSE). It permits lawful, free, noncommercial modification and mod distribution under its terms; selling covered software or mods, or charging for access, requires separate written permission. Preserve attribution and follow third-party licenses.
-
-[License scope and prior permissions](LICENSE_SCOPE.md) document separately licensed material and rights retained for earlier versions. Game assets remain subject to their respective owners' rights.
+Heaven-HM-owned material is available under the [Heaven-HM Community Modding License](LICENSE). Review the license for noncommercial use, modification, redistribution, attribution, and permission requirements. Game assets remain subject to their respective owners' rights.
