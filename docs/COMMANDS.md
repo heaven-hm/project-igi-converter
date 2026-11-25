@@ -326,8 +326,15 @@ run otherwise produces an audible click at the start.
 ```powershell
 igi1conv terrain info       <file.lmp|.ctr>
 igi1conv terrain export-lmp <file.lmp> -o <output.pgm>   # 16-bit PGM(s)
+igi1conv terrain import-lmp <input.pgm> -o <output.lmp>  # write-back
 igi1conv terrain export-ctr <file.ctr> -o <output.json>
 ```
+
+`import-lmp` reads a binary P5 PGM (8- or 16-bit maxval, comments allowed)
+and writes one square LMP chunk. For multi-chunk LMP files, `export-lmp`
+emits `name_0.pgm`, `name_1.pgm`, ...; import each one back separately.
+Rows are mirrored on import so `export-lmp` followed by `import-lmp` is
+byte-identical to the source LMP (verified by corpus-free tests).
 
 ## `graph` — AI Navigation Graph
 
