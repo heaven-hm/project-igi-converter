@@ -61,7 +61,9 @@ static void print_help()
         "Run 'igi1conv <command> --help' for command-specific help.\n";
 }
 
+#ifdef IGI1CONV_WITH_GUI
 #include "gui_main.h"
+#endif
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -70,35 +72,9 @@ static void print_help()
 
 int main(int argc, char** argv)
 {
-    const game_selection_t selection = Game_Select(argc, argv);
-    if (!selection.error.empty())
+    if (argc < 2)
     {
-        std::cerr << "igi1conv: " << selection.error << "\n";
-        return 1;
-    }
-
-    const int cmd_idx = selection.command_index;
-
-    // No command: launch the GUI in the default IGI 1 mode; with an explicit
-    // --game flag, show the (game-specific) help instead.
-    if (cmd_idx >= argc)
-    {
-        if (!selection.explicit_flag)
-        {
-#ifdef _WIN32
-            HWND consoleWnd = GetConsoleWindow();
-            if (consoleWnd) {
-                ShowWindow(consoleWnd, SW_HIDE);
-            }
-#endif
-            return run_gui();
-        }
-        print_help();
-        return 0;
-    }
-
-    if (cmd_idx == 1 && argc == 2 && std::string(argv[1]) == "--gui")
-    {
+#ifdef IGI1CONV_WITH_GUI
 #ifdef _WIN32
         HWND consoleWnd = GetConsoleWindow();
         if (consoleWnd) {
@@ -106,7 +82,30 @@ int main(int argc, char** argv)
         }
 #endif
         return run_gui();
+#else
+        print_help();
+        return 1;
+#endif
     }
+
+    if (argc == 2 && std::string(argv[1]) == "--gui")
+    {
+#ifdef IGI1CONV_WITH_GUI
+        return run_gui();
+#else
+        std::cerr << "igi1conv: this build does not include the GUI\n";
+        return 1;
+#endif
+    }
+
+    const game_selection_t selection = Game_Select(argc, argv);
+    if (!selection.error.empty())
+    {
+        std::cerr << "igi1conv: " << selection.error << "\n";
+        return 1;
+    }
+    const int cmd_idx = selection.command_index;
+    (void)selection;
 
     std::string cmd = argv[cmd_idx];
 

@@ -130,8 +130,22 @@ texture detail when rotated, rather than the almost-black preview in the bug
 report. The scratch preview excludes sibling models, so this is a brightness
 regression check, not proof of complete assembled-building material coverage.
 Normal textured shutdown passed without the earlier GL texture destruction
-warning. GUI editing/save and original-game acceptance checks remain pending. No new release is
-certified or published by this report yet.
+warning. Native IGI1 and IGI2 image painting/save passed; independently extracted
+TEX bitmaps retain four painted pixels. IGI2 preserves all nine bitmap levels.
+Windows IGI1 and IGI2 Flip H/save passed with independently verified mirrored pixel
+positions. Both Windows GUI apps compiled and saved retail QVM successfully
+and exited normally.
+
+An additional native QVM-save test exposed Qt 6.11.2 Cocoa accessibility using
+a stale cell's negative row index after atomic file replacement. The app aborted
+with NSRangeException. The matching Cocoa plugin now guards absent tables and
+invalid row/column indices, including synthetic-cell parent lookup, while
+keeping accessibility enabled. The final r9 macOS bundles include the plugin
+and corresponding source, dependency headers, licenses and rebuild instructions.
+Both native apps passed a fresh accessibility scan, retail QVM save and normal
+exit with code 0. Both bundles pass strict deep signature verification.
+Remaining GUI controls and original-game acceptance checks are not fully
+certified. No new release is published by this report yet.
 
 Native Windows-host execution is not claimed. Full original GConv recipe/API
 parity, Dreamcast/VQ processing, skeleton and weight authoring, unrestricted

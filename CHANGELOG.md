@@ -2,49 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.11.0 desktop preview] - 2026-10-10
 
 ### Added
-- `igi1conv mef export-rigged` writes a rig-preserving `<stem>.rig.json`
-  sidecar (bone hierarchy + per-vertex weights) alongside the OBJ for IGI1
-  modelType 1 meshes, with optional explicit `--rig-archetype` mapping.
-- CLI game selector `--game=igi1|igi2` (IGI 1 remains the default); unported
-  IGI 2 commands are rejected instead of being routed to IGI 1 parsers.
-- IGI 2 DAT Forest (`forest_*.dat`) read/write with `info`, `export` (JSON)
-  and `compile` (binary) commands, byte-exact round trips and six portable
-  unit tests using spec-derived fixtures.
-- `docs/igi2/FORMAT_MATRIX.md`: design of the IGI 2 vertical slice, the full
-  format-by-format read/write matrix, and an honest issue #10 acceptance
-  status (real-game validation and the GUI selector remain open).
+- Shared `converters/` codebase builds separate IGI1Conv and IGI2Conv GUI/CLI apps for macOS and Windows.
+- Qt framework/DLL packaging and compiler runtime deployment for portable release folders.
+- IGI2 MINA hierarchy, root translation and quaternion-track animation viewing for validated layouts.
+- Shared MP3-to-PCM CLI decoding and per-player WinMM music transport under Wine/CrossOver.
 
 ### Fixed
-- Rigged MEFs are no longer silently exported as static meshes. `mef export`
-  and `mef bundle` fail closed for modelType 1 unless `--geometry-only` is
-  given. Unknown archetypes, out-of-range bone indices and invalid weights
-  also fail the rig export (issue #20).
+- Native macOS OpenGL context and legacy GLSL fallback for model/graph/animation rendering under CrossOver.
+- Wine DirectWrite glyph-cache crash while painting Qt controls.
+- DAT/QVM editor saves compile and validate temporary output before atomic replacement; failed compilation preserves the original.
+- Single-click pencil painting, model statistics refresh and graphcover DAT classification.
+- Configuration files live outside signed macOS bundles; animation transport uses readable controls.
 
-## [1.11.0] - 2026-10-12
+Windows verification uses CrossOver on macOS. Unknown MINA event layouts are rejected;
+complete original GConv behavioral parity is not claimed.
+
+## [1.10.1] - 2026-09-09
 
 ### Added
-- Separate IGI1Conv and IGI2Conv GUI/CLI packages for macOS and Windows,
-  including Qt runtimes, platform plugins, launchers, notices and checksums.
-- IGI2 native conversion workflows reimplemented from the original GConv.exe
-  and `gconvapi.dll` behavior, with the supported format matrix documented.
+- Native macOS CLI build support through `-DIGI1CONV_BUILD_GUI=OFF` (the default on non-Windows hosts).
 
 ### Fixed
-- Hidden retail assets are included in GUI browsing and asset discovery.
-- Animated textured-model shutdown releases OpenGL resources while a context is
-  current.
-- macOS Qt Cocoa accessibility rejects stale table-cell indices during atomic
-  QVM saves; the matching plugin source and rebuild instructions ship with the
-  macOS package.
-
-### Validation
-- Supported matrix: 142/142 checks passed across native macOS and Windows via
-  CrossOver (33 IGI1 and 38 IGI2 checks per platform).
-- GUI QVM saves and representative texture edits passed on both platforms.
-- Complete GUI-control coverage and original-game acceptance remain documented
-  release limitations.
+- Replaced Windows-only process and executable path lookups with portable macOS/Linux implementations.
+- Excluded the Windows multimedia GUI from CLI-only builds while preserving the existing Windows GUI default.
+- Made the process-level test harness portable across Windows and macOS, including native paths, timeouts, and SHA-256 checks.
 
 ## [1.10.0] - 2026-06-24
 

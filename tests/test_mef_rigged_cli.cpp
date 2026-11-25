@@ -58,13 +58,13 @@ TEST_F(IGI1ConvTest, MefExportRiggedWritesSkeletonAndWeights) {
 
     // Rig-preserving export writes OBJ + <stem>.rig.json.
     ASSERT_EQ(RunIGI1Conv("mef export-rigged " + Q(mef) + " -o " + Q(out)), 0);
-    std::string sidecar = out + "\\001_01_1.rig.json";
+    std::string sidecar = (std::filesystem::path(out) / "001_01_1.rig.json").string();
     ASSERT_TRUE(NonEmptyFile(sidecar)) << sidecar;
     const std::string json = Slurp(sidecar);
     EXPECT_NE(json.find("\"archetype\": \"StandardSoldier\""), std::string::npos);
     EXPECT_NE(json.find("\"boneIndex\": 7"), std::string::npos);
     EXPECT_NE(json.find("\"weight\": 0.75"), std::string::npos);
-    EXPECT_TRUE(NonEmptyFile(out + "\\001_01_1.obj"));
+    EXPECT_TRUE(NonEmptyFile((std::filesystem::path(out) / "001_01_1.obj").string()));
 }
 
 TEST_F(IGI1ConvTest, MefExportRiggedFailsClosedWithoutArchetype) {
@@ -76,12 +76,12 @@ TEST_F(IGI1ConvTest, MefExportRiggedFailsClosedWithoutArchetype) {
 
     const std::string out1 = tmp / "no_map";
     EXPECT_NE(RunIGI1Conv("mef export-rigged " + Q(mef) + " -o " + Q(out1)), 0);
-    EXPECT_FALSE(std::filesystem::exists(out1 + "\\mod_char.rig.json"));
+    EXPECT_FALSE(std::filesystem::exists((std::filesystem::path(out1) / "mod_char.rig.json").string()));
 
     // Explicit mapping is accepted and recorded.
     const std::string out2 = tmp / "mapped";
     ASSERT_EQ(RunIGI1Conv("mef export-rigged " + Q(mef) + " -o " + Q(out2) +
                           " --rig-archetype HeavySoldier"), 0);
-    const std::string json = Slurp(out2 + "\\mod_char.rig.json");
+    const std::string json = Slurp((std::filesystem::path(out2) / "mod_char.rig.json").string());
     EXPECT_NE(json.find("\"archetype\": \"HeavySoldier\""), std::string::npos);
 }
