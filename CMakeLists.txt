@@ -123,6 +123,12 @@ if (MSVC)
     set_target_properties(igi1conv PROPERTIES
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
     )
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    # GCC/Clang equivalent of MSVC /FI: the parsers include "pch.h" and rely
+    # on it for strnlen/std::memset (mef_exporter.cpp, mef_parser.cpp).
+    target_compile_options(igi1conv PRIVATE
+        -include "${PROJECT_SOURCE_DIR}/igi1conv/pch.h"
+    )
 endif()
 
 # Copy required runtime assets (JSON databases and autocomplete text) to target directory
@@ -194,6 +200,11 @@ if (IGI1CONV_BUILD_TESTS)
     endif()
 
     target_link_libraries(igi1conv_tests PRIVATE gtest igi1conv_test_parsers)
+
+    if (NOT WIN32)
+        find_package(Threads REQUIRED)
+        target_link_libraries(igi1conv_tests PRIVATE Threads::Threads)
+    endif()
 
     target_include_directories(igi1conv_tests PRIVATE
         ${PROJECT_SOURCE_DIR}/source

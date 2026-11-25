@@ -16,7 +16,7 @@ This document lists the supported file formats, their conversion targets, and wh
 | **.mtp** | Model-Texture Package | Info, dump to JSON, compile/sync to `.dat` | Supported |
 | **.dat** | Level Mapping / Asset List | Info, export to JSON, compile to `.mtp` / `.dat` | Supported |
 | **.fnt** | Font Format | Info, export font texture atlas to `.png` | Supported |
-| **.lmp** | Terrain Heightmap | Info, export to PGM (`.pgm`) | Supported |
+| **.lmp** | Terrain Heightmap | Info, export to PGM (`.pgm`), import from PGM (`.pgm`) | Supported (one chunk per PGM) |
 | **.ctr** | Terrain Cube properties | Info, export to JSON | Supported |
 | **graph*.dat** | AI Navigation Graph | Info, export to JSON | Supported |
 | **.IFF** | Skeletal Animation | Info, decompile to text, convert to `.BEF`, create from `.BEF` / decompile text, rebuild round trip, export animated GIF | Supported |
@@ -40,6 +40,6 @@ While several formats are supported for extraction or viewing, the write/compile
 1.  **3D Models (OBJ → MEF)**: Currently, we can only export `.mef` to `.obj`. Compiling modified `.obj` files back into the game's native `.mef` mesh format is not yet supported.
 2.  **Audio Encoding (WAV → IGI-ADPCM)**: Converting standard WAV files back into the game's custom compressed ADPCM sound files.
 3.  **Fonts (PNG → FNT)**: Recompiling edited font texture sheets back into the `.fnt` format.
-4.  **Terrain (PGM/JSON → LMP/CTR)**: Rebuilding terrain heightmaps and cube properties from standard formats.
+4.  **Terrain (JSON → CTR)**: Rebuilding cube properties from standard formats is still unimplemented. **PGM → LMP write-back is now supported** (`igi1conv terrain import-lmp`).
 5.  **AI Navigation (JSON → Graph)**: Recompiling JSON AI node graphs back into binary `graph*.dat` files.
 
