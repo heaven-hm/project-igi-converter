@@ -8,6 +8,7 @@ static void print_usage()
     std::cerr <<
         "Usage:\n"
         "  igi1conv terrain export-lmp <input.lmp> -o <output.pgm>\n"
+        "  igi1conv terrain import-lmp <input.pgm> -o <output.lmp>\n"
         "  igi1conv terrain export-ctr <input.ctr> -o <output.json>\n"
         "  igi1conv terrain info <input.lmp|.ctr>\n";
 }
@@ -95,6 +96,156 @@ static bool write_ctr_json(const char* out_path, const ctr_s& ctr)
     return ofs.good();
 }
 
+// Read a binary PGM (P5) into an 8-bit greyscale image.  Both 8-bit and
+// 16-bit maxval variants are accepted; comments between header tokens are
+// ignored as required by the PGM grammar.  LMP stores square lightmap
+// chunks, so the image must be square.
+static bool read_pgm8(const char* in_path, uint32_t& size, std::vector<uint8_t>& luma,
+                      std::string& err)
+{
+    std::ifstream ifs(in_path, std::ios::binary);
+    if (!ifs)
+    {
+        err = "cannot open input PGM";
+        return false;
+    }
+
+    auto skip_space_and_comments = [&ifs]() {
+        for (;;)
+        {
+            const int c = ifs.peek();
+            if (c == '#')
+            {
+                while (ifs.good() && ifs.get() != '\n') {}
+                continue;
+            }
+            if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+            {
+                ifs.get();
+                continue;
+            }
+            return;
+        }
+    };
+
+    auto read_token = [&ifs, &skip_space_and_comments](std::string& out) -> bool {
+        skip_space_and_comments();
+        out.clear();
+        for (;;)
+        {
+            const int c = ifs.peek();
+            if (!ifs.good()) return false;
+            if (c == ' ' || c == '\t' || c == '\r' || c == '\n') return !out.empty();
+            out.push_back(static_cast<char>(ifs.get()));
+        }
+    };
+
+    std::string magic, w_s, h_s, max_s;
+    if (!read_token(magic) || magic != "P5")
+    {
+        err = "not a binary PGM (expected P5 magic)";
+        return false;
+    }
+    if (!read_token(w_s) || !read_token(h_s) || !read_token(max_s))
+    {
+        err = "truncated PGM header";
+        return false;
+    }
+
+    auto parse_uint = [](const std::string& s, uint64_t& v) -> bool {
+        if (s.empty()) return false;
+        v = 0;
+        for (char ch : s)
+        {
+            if (ch < '0' || ch > '9') return false;
+            v = v * 10 + static_cast<uint64_t>(ch - '0');
+            if (v > 0xFFFFFFFFull) return false;
+        }
+        return true;
+    };
+
+    uint64_t w = 0, h = 0, maxval = 0;
+    if (!parse_uint(w_s, w) || !parse_uint(h_s, h) || !parse_uint(max_s, maxval))
+    {
+        err = "invalid PGM dimensions or maxval";
+        return false;
+    }
+    if (w == 0 || h == 0 || w > 0xFFFFu || w != h)
+    {
+        err = "LMP lightmaps must be square and non-empty";
+        return false;
+    }
+    if (maxval == 0 || maxval > 65535)
+    {
+        err = "unsupported PGM maxval (expected 1..65535)";
+        return false;
+    }
+
+    // Exactly one whitespace character separates the header from raster data.
+    if (ifs.get() == '\r' && ifs.peek() == '\n') ifs.get();
+    const bool two_bytes = maxval > 255;
+    const uint64_t count = w * h;
+    luma.clear();
+    luma.reserve(static_cast<size_t>(count));
+    for (uint64_t i = 0; i < count; ++i)
+    {
+        uint64_t v = 0;
+        if (two_bytes)
+        {
+            const int hi = ifs.get();
+            const int lo = ifs.get();
+            if (hi == std::char_traits<char>::eof() || lo == std::char_traits<char>::eof())
+            {
+                err = "truncated PGM raster data";
+                return false;
+            }
+            v = (static_cast<uint64_t>(hi) << 8) | static_cast<uint64_t>(lo);
+        }
+        else
+        {
+            const int c = ifs.get();
+            if (c == std::char_traits<char>::eof())
+            {
+                err = "truncated PGM raster data";
+                return false;
+            }
+            v = static_cast<uint64_t>(c);
+        }
+        if (v > maxval)
+        {
+            err = "PGM sample exceeds maxval";
+            return false;
+        }
+        luma.push_back(static_cast<uint8_t>((v * 255u + maxval / 2u) / maxval));
+    }
+
+    size = static_cast<uint32_t>(w);
+    return true;
+}
+
+// Write one square lightmap as an LMP chunk: uint32 LE size followed by
+// size*size luma bytes.  This is the exact layout LMP_Load() expects.
+static bool write_lmp(const char* out_path, uint32_t size, const std::vector<uint8_t>& luma)
+{
+    std::ofstream ofs(out_path, std::ios::binary);
+    if (!ofs) return false;
+    const uint8_t header[4] = {
+        static_cast<uint8_t>(size & 0xFF),
+        static_cast<uint8_t>((size >> 8) & 0xFF),
+        static_cast<uint8_t>((size >> 16) & 0xFF),
+        static_cast<uint8_t>((size >> 24) & 0xFF),
+    };
+    ofs.write(reinterpret_cast<const char*>(header), 4);
+    // LMP_Load() stores lightmap rows bottom-up, while P5 rasters are
+    // top-down. Mirror the rows so export-lmp -> import-lmp is byte-exact.
+    for (uint32_t row = size; row-- > 0; )
+    {
+        ofs.write(reinterpret_cast<const char*>(luma.data() + row * size),
+                  static_cast<std::streamsize>(size));
+    }
+    return ofs.good();
+}
+
 int cmd_terrain(int argc, char** argv)
 {
     if (argc < 2)
@@ -171,6 +322,44 @@ int cmd_terrain(int argc, char** argv)
 
         Pic_FreePics(pics);
         return any_fail ? 4 : 0;
+    }
+
+    // ── import-lmp ────────────────────────────────────────────────────────────
+    if (sub == "import-lmp")
+    {
+        if (argc < 3)
+        {
+            std::cerr << "terrain import-lmp: missing <input.pgm>\n";
+            return 1;
+        }
+        std::string path = argv[2];
+        const char* out_path = opt_val(argc, argv, "-o");
+        if (!out_path)
+        {
+            std::cerr << "terrain import-lmp: missing -o <output.lmp>\n";
+            return 1;
+        }
+        if (!std::filesystem::exists(path))
+        {
+            std::cerr << "terrain import-lmp: file not found: " << path << "\n";
+            return 2;
+        }
+
+        uint32_t size = 0;
+        std::vector<uint8_t> luma;
+        std::string err;
+        if (!read_pgm8(path.c_str(), size, luma, err))
+        {
+            std::cerr << "terrain import-lmp: " << err << ": " << path << "\n";
+            return 3;
+        }
+        if (!write_lmp(out_path, size, luma))
+        {
+            std::cerr << "terrain import-lmp: write failed: " << out_path << "\n";
+            return 4;
+        }
+        std::cout << "Wrote " << out_path << " (" << size << "x" << size << ")\n";
+        return 0;
     }
 
     // ── export-ctr ────────────────────────────────────────────────────────────

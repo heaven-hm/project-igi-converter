@@ -145,6 +145,9 @@ static mem_alloc_head_s* g_mem_alloc_chain = nullptr;
 void* Mem_Alloc(size_t sz, const char* file, int line) {
     std::lock_guard<std::mutex> lock(g_mtx_mem);
     size_t alloc_sz = sizeof(mem_alloc_head_s) + sz;
+    // C11 aligned_alloc() requires the size to be a multiple of alignment;
+    // Windows _aligned_malloc() does not. Round up so both paths behave alike.
+    alloc_sz = (alloc_sz + 15u) & ~size_t(15u);
     auto* m = (mem_alloc_head_s*)IGI1CONV_ALIGNED_ALLOC(alloc_sz, 16);
     if (!m) return nullptr;
     m->magic_ = MEM_ALLOC_MAGIC;
