@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QSplitter>
 #include <QFileSystemModel>
+#include <QDir>
+#include <QDirIterator>
 #include <QTreeView>
 #include <QCheckBox>
 #include <QTextEdit>
