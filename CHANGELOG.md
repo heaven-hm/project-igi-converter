@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- CLI game selector `--game=igi1|igi2` (IGI 1 remains the default); unported
+  IGI 2 commands are rejected instead of being routed to IGI 1 parsers.
+- IGI 2 DAT Forest (`forest_*.dat`) read/write with `info`, `export` (JSON)
+  and `compile` (binary) commands, byte-exact round trips and six portable
+  unit tests using spec-derived fixtures.
+- `docs/igi2/FORMAT_MATRIX.md`: design of the IGI 2 vertical slice, the full
+  format-by-format read/write matrix, and an honest issue #10 acceptance
+  status (real-game validation and the GUI selector remain open).
+
 ## [1.11.0] - 2026-10-12
 
 ### Added

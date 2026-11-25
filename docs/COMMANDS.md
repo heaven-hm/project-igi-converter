@@ -11,6 +11,31 @@ igi1conv <command> --help
 
 **Exit codes:** `0` success · `1` bad args · `2` file not found · `3` parse error · `4` write error
 
+## Game selection (IGI 1 / IGI 2)
+
+```powershell
+igi1conv --game=igi1 <command> ...   # default: all existing IGI 1 behaviour
+igi1conv --game=igi2 <command> ...   # route to the IGI 2 backend
+```
+
+`--game igi2` is accepted as an alias. Commands not yet ported to IGI 2 are
+rejected with a clear message rather than being silently handled by the IGI 1
+parser. See [IGI 2 format matrix](igi2/FORMAT_MATRIX.md).
+
+## `forest` — IGI 2 DAT Forest (`forest_*.dat`)
+
+Requires `--game=igi2`.
+
+```powershell
+igi1conv --game=igi2 forest info   <forest_*.dat>
+igi1conv --game=igi2 forest export <forest_*.dat> [-o <out.json>]
+igi1conv --game=igi2 forest compile <in.json> -o <out.dat>
+```
+
+`export` writes an `igi2-forest/1` JSON document (positions, rotations, scales
+and per-instance colours); `compile` rebuilds the native 14-byte-header /
+40-byte-record binary. The round trip is byte-exact.
+
 ## Test corpus location (v1.9.1+)
 
 The test suite (`igi1conv_tests.exe`) is driven against a real IGI corpus.
