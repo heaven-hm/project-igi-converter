@@ -190,14 +190,5 @@ int extract_ilff_chunk(const std::string& input_path, const std::string& fourcc,
     return 1;
 }
 
-        if (chunk.skip == 0) break;
-        offset += chunk.skip;
-        infile.seekg(offset);
-    }
-
-    fprintf(stderr, "Error: Chunk '%.4s' not found\n", fourcc.c_str());
-    infile.close();
-    return 1;
-}
 
 } // namespace igi

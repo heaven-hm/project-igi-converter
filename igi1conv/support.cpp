@@ -25,7 +25,10 @@ float WORLD_Z_NEAR  = 10.0f;
 // quit_exception (declared in common.h, defined in common.cpp)
 // ---------------------------------------------------------------------------
 quit_exception::quit_exception(const char* msg) {
-    strncpy_s(msg_, sizeof(msg_), msg, sizeof(msg_) - 1);
+    const char* source = msg ? msg : "";
+    const size_t count = std::min(std::strlen(source), sizeof(msg_) - 1);
+    std::memcpy(msg_, source, count);
+    msg_[count] = '\0';
 }
 const char* quit_exception::what() const noexcept { return msg_; }
 
@@ -33,7 +36,11 @@ const char* quit_exception::what() const noexcept { return msg_; }
 // Str helpers
 // ---------------------------------------------------------------------------
 void Str_Copy(char* dst, int dst_cap, const char* src) {
-    strncpy_s(dst, (size_t)dst_cap, src, (size_t)(dst_cap - 1));
+    if (!dst || dst_cap <= 0) return;
+    const char* source = src ? src : "";
+    const size_t count = std::min(std::strlen(source), static_cast<size_t>(dst_cap - 1));
+    std::memcpy(dst, source, count);
+    dst[count] = '\0';
 }
 void Str_VSPrintf(char* dst, int dst_cap, const char* fmt, va_list argptr) {
     vsnprintf(dst, (size_t)dst_cap, fmt, argptr);
@@ -138,6 +145,9 @@ static mem_alloc_head_s* g_mem_alloc_chain = nullptr;
 void* Mem_Alloc(size_t sz, const char* file, int line) {
     std::lock_guard<std::mutex> lock(g_mtx_mem);
     size_t alloc_sz = sizeof(mem_alloc_head_s) + sz;
+    // C11 aligned_alloc() requires the size to be a multiple of alignment;
+    // Windows _aligned_malloc() does not. Round up so both paths behave alike.
+    alloc_sz = (alloc_sz + 15u) & ~size_t(15u);
     auto* m = (mem_alloc_head_s*)IGI1CONV_ALIGNED_ALLOC(alloc_sz, 16);
     if (!m) return nullptr;
     m->magic_ = MEM_ALLOC_MAGIC;

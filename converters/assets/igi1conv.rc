@@ -1,0 +1,36 @@
+#include <windows.h>
+
+1 ICON "igi1conv.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     1,10,0,0
+PRODUCTVERSION  1,10,0,0
+FILEFLAGSMASK   0x3fL
+#ifdef _DEBUG
+FILEFLAGS       0x1L
+#else
+FILEFLAGS       0x0L
+#endif
+FILEOS          0x40004L
+FILETYPE        0x1L
+FILESUBTYPE     0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName",      "HeavenHM"
+            VALUE "FileDescription",  "IGI Game Convertor"
+            VALUE "FileVersion",      "1.10.0.0"
+            VALUE "InternalName",     "igi1conv.exe"
+            VALUE "LegalCopyright",   "Copyright (C) 2026"
+            VALUE "OriginalFilename", "igi1conv.exe"
+            VALUE "ProductName",      "Project IGI 1 Game Convertor"
+            VALUE "ProductVersion",   "1.10.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
