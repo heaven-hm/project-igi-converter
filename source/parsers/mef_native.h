@@ -14,7 +14,7 @@ struct RenderVertex {
     glm::vec3 rawPos{0.f};      // raw XTRV position (NOT scaled, NOT baked) — for ASCII export
     glm::vec3 normal{0.f};      // from XTRV bytes +12..+23
     glm::vec2 uv{0.f};
-    glm::vec2 uv2{0.f};         // lightmap UV (XTRV bytes +32..+39, modelType==3 only)
+    glm::vec2 uv2{0.f};         // lightmap UV (IGI1 type3 +32; IGI2 type3 28-byte +20)
     uint16_t boneIndex{0};
     uint16_t localVertexId{0};  // XTRV.vn @+36
     float    weight{1.0f};      // XTRV.w  @+32
@@ -114,11 +114,10 @@ struct ParsedGeometry {
     std::vector<RenderBlock> renderBlocks;
     bool fromRenderMesh = false;
     bool isIgi1 = false;
+    bool isIgi2 = false;
     uint32_t modelType = 0;
-    // True when a merged/bundled geometry swallowed a rigged (modelType 1)
-    // source. Used by exporters to fail closed instead of silently dropping
-    // the skeleton; does not change modelType (build-rigid still writes Type 0).
-    bool hasRiggedSource = false;
+    uint32_t xtrvStride = 0;
+    bool hasRiggedSource = false;  // modelType 1 rigged source; export must fail closed
     size_t renderBlockCount = 0;
     size_t collisionVertexCount = 0;
     size_t collisionFaceCount = 0;
@@ -157,6 +156,9 @@ struct ParsedGeometry {
 // Parse a binary MEF file and return all geometry + bone data.
 // Throws std::runtime_error on any fatal parse error.
 ParsedGeometry ParseMefFile(const std::string& filepath);
+
+// Same as ParseMefFile, from an already-loaded buffer (name is for errors).
+ParsedGeometry ParseMefBytes(const std::vector<uint8_t>& bytes, const std::string& name = "<mef>");
 
 // Compute world-space bone positions from a bone hierarchy (sums
 // pivots up the parent chain).  Used by the MEF parser to bake bone
