@@ -115,6 +115,10 @@ struct ParsedGeometry {
     bool fromRenderMesh = false;
     bool isIgi1 = false;
     uint32_t modelType = 0;
+    // True when a merged/bundled geometry swallowed a rigged (modelType 1)
+    // source. Used by exporters to fail closed instead of silently dropping
+    // the skeleton; does not change modelType (build-rigid still writes Type 0).
+    bool hasRiggedSource = false;
     size_t renderBlockCount = 0;
     size_t collisionVertexCount = 0;
     size_t collisionFaceCount = 0;

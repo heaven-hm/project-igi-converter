@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- `igi1conv mef export-rigged` writes a rig-preserving `<stem>.rig.json`
+  sidecar (bone hierarchy + per-vertex weights) alongside the OBJ for IGI1
+  modelType 1 meshes, with optional explicit `--rig-archetype` mapping.
+
+### Fixed
+- Rigged MEFs are no longer silently exported as static meshes. `mef export`
+  and `mef bundle` fail closed for modelType 1 unless `--geometry-only` is
+  given. Unknown archetypes, out-of-range bone indices and invalid weights
+  also fail the rig export (issue #20).
+
 ## [1.11.0] - 2026-10-12
 
 ### Added
