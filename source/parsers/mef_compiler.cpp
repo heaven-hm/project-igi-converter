@@ -406,86 +406,341 @@ static std::vector<uint8_t> BuildTamc(const std::vector<MEFMaterial>& mats,
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// Sidecar-aware compile: rebuilds XTRV+DNER from the text geometry, but
-// preserves every other chunk (HPSC, XTVC, ECFC, TAMC, HSMC …) verbatim
-// from the .extra sidecar written by `mef to-text`.
+// Sidecar-aware compile with custom topology support.
+//
+// A sidecar carries all opaque ILFF chunks (HPSC skinning, XTVC/ECFC collision,
+// TAMC materials, attachments …) that cannot be reconstructed from the ASCII
+// text.  When the text Face() list differs from the sidecar's original render
+// mesh we rebuild only the render geometry (D3DR / XTRV / DNER) from the text
+// and keep every other chunk verbatim.
+//
+// Everything in this path is fail-closed: if the sidecar is internally
+// inconsistent, uses a different model type, or the text refers to vertices
+// the sidecar cannot address, compilation fails instead of emitting a MEF
+// whose skinning/collision metadata no longer matches its geometry.
 // ---------------------------------------------------------------------------
-static uint32_t TryReadSidecarD3drFaceCount(const std::vector<ParsedGeometry::RawChunk>& sidecar, uint32_t modelType) {
-    for (const auto& rc : sidecar) {
-        if (rc.isTag("D3DR") && rc.data.size() >= 12) {
-            const size_t off = (modelType == 3) ? 8 : 4;
-            return static_cast<uint32_t>(rc.data[off]) |
-                  (static_cast<uint32_t>(rc.data[off+1]) << 8) |
-                  (static_cast<uint32_t>(rc.data[off+2]) << 16) |
-                  (static_cast<uint32_t>(rc.data[off+3]) << 24);
-        }
-    }
-    return 0;
+namespace {
+
+struct SidecarTopology {
+    ParsedGeometry::RawChunk* hsem = nullptr;
+    ParsedGeometry::RawChunk* d3dr = nullptr;
+    ParsedGeometry::RawChunk* dner = nullptr;
+    ParsedGeometry::RawChunk* xtrv = nullptr;
+    uint32_t faceCount = 0;
+    uint32_t renderVerts = 0;
+    uint32_t xtrvVerts = 0;
+};
+
+static uint32_t SidecarReadU32(const std::vector<uint8_t>& d, size_t off) {
+    if (off + 4 > d.size()) return 0;
+    return static_cast<uint32_t>(d[off]) |
+           (static_cast<uint32_t>(d[off+1]) << 8) |
+           (static_cast<uint32_t>(d[off+2]) << 16) |
+           (static_cast<uint32_t>(d[off+3]) << 24);
 }
+
+static uint16_t SidecarReadU16(const std::vector<uint8_t>& d, size_t off) {
+    if (off + 2 > d.size()) return 0;
+    return static_cast<uint16_t>(d[off]) |
+           (static_cast<uint16_t>(d[off+1]) << 8);
+}
+
+static void SidecarWriteU32(std::vector<uint8_t>& d, size_t off, uint32_t v) {
+    if (off + 4 > d.size()) return;
+    d[off]   = static_cast<uint8_t>(v & 0xFF);
+    d[off+1] = static_cast<uint8_t>((v >> 8) & 0xFF);
+    d[off+2] = static_cast<uint8_t>((v >> 16) & 0xFF);
+    d[off+3] = static_cast<uint8_t>((v >> 24) & 0xFF);
+}
+
+static void WriteFloatAt(std::vector<uint8_t>& d, size_t off, float f) {
+    uint32_t bits = 0;
+    std::memcpy(&bits, &f, sizeof(bits));
+    SidecarWriteU32(d, off, bits);
+}
+
+static bool SidecarFail(const std::string& msg) {
+    Logger::Get().Log(LogLevel::ERR,
+        "[MefCompiler] Sidecar validation failed: " + msg);
+    return false;
+}
+
+static bool ReadSidecarTopology(std::vector<ParsedGeometry::RawChunk>& sidecar,
+                                uint32_t modelType, SidecarTopology& out) {
+    for (auto& rc : sidecar) {
+        if      (rc.isTag("HSEM") && !out.hsem) out.hsem = &rc;
+        else if (rc.isTag("D3DR") && !out.d3dr) out.d3dr = &rc;
+        else if (rc.isTag("DNER") && !out.dner) out.dner = &rc;
+        else if (rc.isTag("XTRV") && !out.xtrv) out.xtrv = &rc;
+    }
+    if (!out.hsem || !out.d3dr || !out.dner || !out.xtrv)
+        return SidecarFail("sidecar is missing HSEM, D3DR, DNER or XTRV");
+
+    const size_t minD3dr = (modelType == 1) ? 24u : (modelType == 3) ? 20u : 16u;
+    if (out.hsem->data.size() < 156)
+        return SidecarFail("HSEM chunk is too short");
+    if (out.d3dr->data.size() < minD3dr)
+        return SidecarFail("D3DR chunk is too short for this model type");
+
+    if (SidecarReadU32(out.hsem->data, 32) != modelType)
+        return SidecarFail("sidecar model type does not match ModelType() in the text file");
+
+    const size_t faceOff = (modelType == 3) ? 8u : 4u;
+    out.faceCount = SidecarReadU32(out.d3dr->data, faceOff);
+
+    // Do not trust the D3DR vertex-count slots: retail IGI1 MEFs and this
+    // compiler's writer place render/skinning counts in different fields.
+    // XTRV size is authoritative for the total vertex count; DNER block
+    // extents are authoritative for the render (addressable) vertex count.
+    const uint32_t stride = (modelType == 1 || modelType == 3) ? 40u : 32u;
+    if (out.xtrv->data.size() % stride != 0)
+        return SidecarFail("XTRV chunk size is not a multiple of the vertex stride");
+    out.xtrvVerts = static_cast<uint32_t>(out.xtrv->data.size() / stride);
+    if (out.faceCount == 0 || out.xtrvVerts == 0)
+        return SidecarFail("sidecar has zero faces or vertices");
+    if (out.xtrvVerts > 65536u)
+        return SidecarFail("XTRV vertex count exceeds the 16-bit DNER index range");
+
+    if (SidecarReadU32(out.hsem->data, 96) != out.faceCount ||
+        SidecarReadU32(out.hsem->data, 100) != out.xtrvVerts)
+        return SidecarFail("HSEM render counts disagree with D3DR/XTRV");
+
+    return true;
+}
+
+// Walk the packed DNER blocks of the sidecar, verify they describe exactly the
+// face count advertised by D3DR, and derive the render vertex count from the
+// block extents (offVerts + numVerts).  This also guarantees that the block
+// header copy below never reads past the chunk.
+static bool ValidateSidecarDner(const std::vector<uint8_t>& dner,
+                                uint32_t headerSize, uint32_t expectedFaces,
+                                uint32_t totalVerts, uint32_t& outRenderVerts) {
+    size_t p = 0;
+    uint32_t faces = 0;
+    uint32_t maxVertex = 0;
+    const size_t offVertsOff = (headerSize == 32u) ? 20u : 18u;
+    const size_t numVertsOff = (headerSize == 32u) ? 22u : 20u;
+    while (p + headerSize <= dner.size()) {
+        const uint16_t indexCount = SidecarReadU16(dner, p + 12);
+        if (indexCount == 0 || indexCount % 3 != 0)
+            return SidecarFail("DNER block has a non-triangle index count");
+        const uint32_t stride = (headerSize + indexCount * 2u + 3u) & ~3u;
+        if (p + stride > dner.size())
+            return SidecarFail("DNER block extends past the end of the chunk");
+        int16_t next = 0;
+        std::memcpy(&next, dner.data() + p + 14, 2);
+        const uint32_t blockEnd = static_cast<uint32_t>(
+            SidecarReadU16(dner, p + offVertsOff)) +
+            SidecarReadU16(dner, p + numVertsOff);
+        maxVertex = std::max(maxVertex, blockEnd);
+        faces += indexCount / 3;
+        p += stride;
+        // Type 3 DNER has no linked-list sentinel; the chunk boundary ends the
+        // walk.  For types 0/1 -1 marks the final block.
+        if (next == int16_t(-1)) break;
+    }
+    if (faces != expectedFaces)
+        return SidecarFail("sidecar DNER has " + std::to_string(faces) +
+                           " faces but D3DR advertises " +
+                           std::to_string(expectedFaces));
+    if (maxVertex == 0 || maxVertex > totalVerts)
+        return SidecarFail("DNER vertex range is outside the XTRV vertex buffer");
+    outRenderVerts = maxVertex;
+    return true;
+}
+
+static bool ValidateTextTopology(const MEFObject& obj, uint32_t totalVerts) {
+    if (obj.faces.empty())
+        return SidecarFail("text file has no Face() entries");
+    if (obj.vertices.size() > totalVerts)
+        return SidecarFail("text vertices do not fit the sidecar vertex buffer");
+    std::map<int, uint32_t> facesPerMaterial;
+    for (size_t fi = 0; fi < obj.faces.size(); ++fi) {
+        const auto& f = obj.faces[fi];
+        if (f.v0 < 0 || f.v1 < 0 || f.v2 < 0 ||
+            f.v0 >= static_cast<int>(obj.vertices.size()) ||
+            f.v1 >= static_cast<int>(obj.vertices.size()) ||
+            f.v2 >= static_cast<int>(obj.vertices.size()))
+            return SidecarFail("Face " + std::to_string(fi) +
+                               " references a vertex outside the text Vertex() range");
+        if (f.material_index < 0 || f.material_index > 32767)
+            return SidecarFail("Face " + std::to_string(fi) +
+                               " has a material slot outside the DNER int16 range");
+        uint32_t& count = facesPerMaterial[f.material_index];
+        if (count >= 65535u / 3u)
+            return SidecarFail("material " + std::to_string(f.material_index) +
+                               " has too many faces for a 16-bit DNER index count");
+        ++count;
+    }
+    return true;
+}
+
+// Custom-topology XTRV: start from the sidecar buffer verbatim so that skinning
+// weights, lightmap UVs and skinning-only vertices survive, then overwrite the
+// first `obj.vertices.size()` entries with the text positions/normals/UVs.
+static std::vector<uint8_t> BuildTopologyXtrv(const MEFObject& obj,
+                                              const std::vector<uint8_t>& sidecarXtrv,
+                                              uint32_t modelType) {
+    const size_t stride = (modelType == 1 || modelType == 3) ? 40u : 32u;
+    std::vector<uint8_t> d = sidecarXtrv;
+    const size_t n = std::min(obj.vertices.size(), d.size() / stride);
+    for (size_t i = 0; i < n; ++i) {
+        const size_t base = i * stride;
+        WriteFloatAt(d, base + 0, obj.vertices[i][0]);
+        WriteFloatAt(d, base + 4, obj.vertices[i][1]);
+        WriteFloatAt(d, base + 8, obj.vertices[i][2]);
+        if (i < obj.normals.size()) {
+            WriteFloatAt(d, base + 12, obj.normals[i][0]);
+            WriteFloatAt(d, base + 16, obj.normals[i][1]);
+            WriteFloatAt(d, base + 20, obj.normals[i][2]);
+        }
+        if (i < obj.uvs.size() && obj.uvs[i].size() >= 2) {
+            WriteFloatAt(d, base + 24, obj.uvs[i][0]);
+            WriteFloatAt(d, base + 28, obj.uvs[i][1]);
+        }
+        // Bytes 32..39 (bone weight / local vertex id / bone index for type 1,
+        // lightmap UV1 for type 3) are deliberately left untouched.
+    }
+    while (d.size() % 4) d.push_back(0);
+    return d;
+}
+
+// Copy DNER block centers and material properties from the sidecar, matched by
+// td (material slot), so custom topology keeps the original shading metadata.
+static void PatchDnerProperties(const std::vector<uint8_t>& sidecarDner,
+                                std::vector<uint8_t>& newDner,
+                                uint32_t headerSize, uint32_t modelType) {
+    struct DnerHdr { uint8_t centers[12]; uint8_t matProps[6]; };
+    std::map<int16_t, DnerHdr> hdrs;
+    size_t p = 0;
+    while (p + headerSize <= sidecarDner.size()) {
+        DnerHdr h;
+        std::memcpy(h.centers,  sidecarDner.data() + p,      12);
+        // Type 3's 32-byte header uses bytes 22..27 for numVerts/opacity, so
+        // only the type 0/1 layout has material properties there.
+        if (modelType != 3)
+            std::memcpy(h.matProps, sidecarDner.data() + p + 22, 6);
+        else
+            std::memset(h.matProps, 0, sizeof(h.matProps));
+        const uint16_t ic = SidecarReadU16(sidecarDner, p + 12);
+        int16_t next = 0, td = 0;
+        std::memcpy(&next, sidecarDner.data() + p + 14, 2);
+        std::memcpy(&td,   sidecarDner.data() + p + 16, 2);
+        hdrs[td] = h;
+        p += (headerSize + ic * 2u + 3u) & ~3u;
+        if (next == int16_t(-1)) break;
+    }
+    p = 0;
+    while (p + headerSize <= newDner.size()) {
+        const uint16_t ic = SidecarReadU16(newDner, p + 12);
+        int16_t next = 0, td = 0;
+        std::memcpy(&next, newDner.data() + p + 14, 2);
+        std::memcpy(&td,   newDner.data() + p + 16, 2);
+        auto it = hdrs.find(td);
+        if (it != hdrs.end()) {
+            std::memcpy(newDner.data() + p, it->second.centers, 12);
+            if (modelType != 3)
+                std::memcpy(newDner.data() + p + 22, it->second.matProps, 6);
+        }
+        p += (headerSize + ic * 2u + 3u) & ~3u;
+        if (next == int16_t(-1)) break;
+    }
+}
+
+} // anonymous namespace
 
 static bool CompileWithSidecar(const MEFObject& obj,
                                const std::string& outBinaryPath,
                                std::vector<ParsedGeometry::RawChunk>& sidecar) {
 
     const uint32_t modelType = static_cast<uint32_t>(obj.model_type);
-    const uint32_t d3drFaces = TryReadSidecarD3drFaceCount(sidecar, modelType);
-    if (d3drFaces > 0 && obj.faces.size() != d3drFaces) {
-        Logger::Get().Log(LogLevel::ERR,
-            "[MefCompiler] Face() topology edits are not supported when compiling with sidecar. "
-            "Original sidecar has " + std::to_string(d3drFaces) + " D3DR faces, "
-            "but text file has " + std::to_string(obj.faces.size()) + " Face() entries. "
-            "Delete the sidecar to compile a raw geometry block.");
-        return false;
-    }
-
-    uint32_t expectedVerts = 0;
-    for (const auto& sc : sidecar) {
-        if (sc.isTag("XTRV")) {
-            const uint32_t vertStride = (obj.model_type == 1 || obj.model_type == 3) ? 40u : 32u;
-            expectedVerts = static_cast<uint32_t>(sc.data.size()) / vertStride;
-            break;
-        }
-    }
-    if (expectedVerts > 0 && obj.vertices.size() != expectedVerts) {
-        Logger::Get().Log(LogLevel::ERR,
-            "[MefCompiler] Vertex() count edits are not supported when compiling with sidecar. "
-            "Original sidecar has " + std::to_string(expectedVerts) + " XTRV vertices, "
-            "but text file has " + std::to_string(obj.vertices.size()) + " Vertex() entries.");
-        return false;
-    }
     const uint32_t dnerHeaderSize = (modelType == 3) ? 32u : 28u;
 
-    // For Type 0 (Rigid) and Type 3 (Lightmap), use sidecar XTRV and DNER
-    // verbatim. The text MEF doesn't preserve UV1 (lightmap) data or other
-    // per-vertex fields that can't be round-tripped through the text format.
-    // Only Type 1 (Bone) models have all their data exported to text
-    // (BoneVertex lines) so we can safely rebuild those.
-    bool useSidecarVerbatim = (modelType == 0 || modelType == 3);
+    SidecarTopology topo;
+    if (!ReadSidecarTopology(sidecar, modelType, topo)) return false;
+    if (!ValidateSidecarDner(topo.dner->data, dnerHeaderSize, topo.faceCount,
+                             topo.xtrvVerts, topo.renderVerts)) return false;
+    if (!ValidateTextTopology(obj, topo.xtrvVerts)) return false;
+
+    // The text Vertex() indices must stay in the sidecar's render-vertex space:
+    // HPSC skinning and the skinning-only XTRV tail are keyed by those indices.
+    if (obj.vertices.size() != topo.renderVerts) {
+        Logger::Get().Log(LogLevel::ERR,
+            "[MefCompiler] Vertex() count edits are not supported when compiling with sidecar. "
+            "Original sidecar has " + std::to_string(topo.renderVerts) +
+            " render vertices, but text file has " +
+            std::to_string(obj.vertices.size()) + " Vertex() entries.");
+        return false;
+    }
+
+    const bool topologyChanged = (obj.faces.size() != topo.faceCount);
+
+    // Without a topology change, type 0/3 keep their XTRV+DNER verbatim because
+    // the text format cannot express UV1/lightmap data.  Type 1 rebuilds them
+    // from text (BoneVertex lines carry the skinning fields).
+    bool useSidecarVerbatim = !topologyChanged && (modelType == 0 || modelType == 3);
 
     std::vector<uint8_t> newXtrv;
     std::vector<uint8_t> newDner;
+    std::vector<uint8_t> newD3dr = topo.d3dr->data;
     uint32_t numVerts = 0;
-    uint32_t numFaces = static_cast<uint32_t>(obj.faces.size());
+    const uint32_t numFaces = static_cast<uint32_t>(obj.faces.size());
 
     if (useSidecarVerbatim) {
-        // Use sidecar XTRV and DNER data as-is for lossless roundtrip
-        for (const auto& sc : sidecar) {
-            if (sc.isTag("XTRV")) {
-                newXtrv = sc.data;
-            } else if (sc.isTag("DNER")) {
-                newDner = sc.data;
-            }
-        }
+        newXtrv = topo.xtrv->data;
+        newDner = topo.dner->data;
         while (newXtrv.size() % 4) newXtrv.push_back(0);
         while (newDner.size() % 4) newDner.push_back(0);
+        numVerts = static_cast<uint32_t>(newXtrv.size()) /
+                   ((modelType == 1 || modelType == 3) ? 40u : 32u);
+    } else if (topologyChanged) {
+        // Custom topology: keep the sidecar vertex buffer (including its
+        // skinning tail and bone/lightmap fields) and rebuild only the face
+        // indices, using the text vertex indices directly so that every DNER
+        // index still addresses a valid sidecar vertex.
+        newXtrv = BuildTopologyXtrv(obj, topo.xtrv->data, modelType);
+        numVerts = static_cast<uint32_t>(newXtrv.size()) /
+                   ((modelType == 1 || modelType == 3) ? 40u : 32u);
 
-        const uint32_t vertStride = (modelType == 1 || modelType == 3) ? 40u : 32u;
-        numVerts = newXtrv.empty() ? 0 : static_cast<uint32_t>(newXtrv.size()) / vertStride;
+        std::map<int, bool> matSeen;
+        for (const auto& f : obj.faces) matSeen[f.material_index] = true;
+        const int numMatSlots = static_cast<int>(obj.materials.empty()
+                                    ? (matSeen.empty() ? 1 : matSeen.rbegin()->first + 1)
+                                    : obj.materials.size());
+        std::vector<uint32_t> remA, remB, remC;
+        remA.reserve(obj.faces.size());
+        remB.reserve(obj.faces.size());
+        remC.reserve(obj.faces.size());
+        for (const auto& f : obj.faces) {
+            remA.push_back(static_cast<uint32_t>(f.v0));
+            remB.push_back(static_cast<uint32_t>(f.v1));
+            remC.push_back(static_cast<uint32_t>(f.v2));
+        }
+        newDner = BuildDner(obj.faces, remA, remB, remC, numMatSlots, modelType);
+        while (newDner.size() % 4) newDner.push_back(0);
+
+        PatchDnerProperties(topo.dner->data, newDner, dnerHeaderSize, modelType);
+
+        // Only the face count is updated: retail and compiler-generated D3DR
+        // chunks disagree on which slot holds the render/skinning vertex
+        // counts, and the vertex count is unchanged on this path.
+        SidecarWriteU32(newD3dr, (modelType == 3) ? 8u : 4u, numFaces);
+
+        Logger::Get().Log(LogLevel::INFO,
+            "[MefCompiler] Custom topology: rebuilt D3DR/DNER for " +
+            std::to_string(numFaces) + " faces from text while preserving " +
+            std::to_string(sidecar.size()) + " sidecar chunks.");
     } else {
-        // Type 1 (Bone): rebuild XTRV + DNER from text geometry
+        // Type 1 with unchanged topology: rebuild XTRV + DNER from text.
         std::vector<uint32_t> remA, remB, remC;
         std::vector<BinaryVertex> verts = BuildVertices(obj, obj.faces, remA, remB, remC);
         numVerts = static_cast<uint32_t>(verts.size());
+
+        if (verts.size() > topo.xtrvVerts) {
+            return SidecarFail("rebuilt render vertices (" +
+                std::to_string(verts.size()) + ") exceed the sidecar XTRV count (" +
+                std::to_string(topo.xtrvVerts) + "); skinning data cannot be remapped");
+        }
 
         std::map<int, bool> matSeen;
         for (const auto& f : obj.faces) matSeen[f.material_index] = true;
@@ -498,95 +753,35 @@ static bool CompileWithSidecar(const MEFObject& obj,
         while (newXtrv.size() % 4) newXtrv.push_back(0);
         while (newDner.size() % 4) newDner.push_back(0);
 
-        // Append skinning-only verts from sidecar XTRV (indices beyond render mesh,
-        // referenced only by HPSC bone data — not by any DNER face).
-        for (const auto& sc : sidecar) {
-            if (sc.isTag("XTRV") && sc.data.size() > newXtrv.size()) {
-                newXtrv.insert(newXtrv.end(),
-                    sc.data.begin() + static_cast<ptrdiff_t>(newXtrv.size()),
-                    sc.data.end());
-                while (newXtrv.size() % 4) newXtrv.push_back(0);
-                break;
-            }
+        // Append skinning-only verts from sidecar XTRV (indices beyond render
+        // mesh, referenced only by HPSC bone data — not by any DNER face).
+        const size_t tailOffset = static_cast<size_t>(topo.renderVerts) *
+            ((modelType == 1 || modelType == 3) ? 40u : 32u);
+        if (topo.xtrv->data.size() > tailOffset) {
+            newXtrv.insert(newXtrv.end(),
+                topo.xtrv->data.begin() + static_cast<ptrdiff_t>(tailOffset),
+                topo.xtrv->data.end());
+            while (newXtrv.size() % 4) newXtrv.push_back(0);
         }
+        numVerts = static_cast<uint32_t>(newXtrv.size()) /
+                   ((modelType == 1 || modelType == 3) ? 40u : 32u);
 
-        // Copy block centers (px/py/pz) and material properties from sidecar DNER,
-        // matching by td (material slot).
-        {
-            for (const auto& sc : sidecar) {
-                if (!sc.isTag("DNER") || sc.data.empty()) continue;
-                struct DnerHdr { uint8_t centers[12]; uint8_t matProps[6]; };
-                std::map<int16_t, DnerHdr> hdrs;
-                size_t p = 0;
-                while (p + dnerHeaderSize <= sc.data.size()) {
-                    DnerHdr h;
-                    std::memcpy(h.centers,  sc.data.data() + p,      12);
-                    std::memcpy(h.matProps, sc.data.data() + p + 22,  6);
-                    uint16_t ic = sc.data[p+12] | (uint16_t(sc.data[p+13]) << 8);
-                    int16_t  no; std::memcpy(&no, sc.data.data() + p + 14, 2);
-                    int16_t  td; std::memcpy(&td, sc.data.data() + p + 16, 2);
-                    hdrs[td] = h;
-                    uint32_t stride = dnerHeaderSize + ic * 2u;
-                    if (stride % 4) stride += 4 - stride % 4;
-                    if (no == int16_t(-1)) break;
-                    p += stride;
-                }
-                // Patch centers and material properties in newDner
-                p = 0;
-                while (p + dnerHeaderSize <= newDner.size()) {
-                    uint16_t ic = newDner[p+12] | (uint16_t(newDner[p+13]) << 8);
-                    int16_t  no; std::memcpy(&no, newDner.data() + p + 14, 2);
-                    int16_t  td; std::memcpy(&td, newDner.data() + p + 16, 2);
-                    auto it = hdrs.find(td);
-                    if (it != hdrs.end()) {
-                        std::memcpy(newDner.data() + p,      it->second.centers,  12);
-                        std::memcpy(newDner.data() + p + 22, it->second.matProps,  6);
-                    }
-                    uint32_t stride = dnerHeaderSize + ic * 2u;
-                    if (stride % 4) stride += 4 - stride % 4;
-                    if (no == int16_t(-1)) break;
-                    p += stride;
-                }
-                break;
-            }
-        }
+        PatchDnerProperties(topo.dner->data, newDner, dnerHeaderSize, modelType);
     }
 
-    // Update HSEM in sidecar: refresh geometry counts that change with topology edits.
+    // Refresh HSEM geometry counts whenever the render geometry was rebuilt.
     // Verified offsets (156-byte IGI1 HSEM):
-    //   96  = num_r_faces
-    //   100 = num_r_verts  ← total XTRV vertex count (render + skinning-only)
-    //   104 = render buffer size (D3DR_data + XTRV_data + DNER_data, in bytes)
-    //   108 = num_c_faces  (unchanged — collision data preserved verbatim)
-    //   112 = num_c_verts  (unchanged)
-    //   116 = collision buffer size (unchanged)
-    //   120 = model_radius (NOT updated here — sidecar has original value)
+    //   96  = num_r_faces, 100 = num_r_verts, 104 = render buffer size.
+    // Collision counts at 108/112/116 stay untouched (collision is verbatim).
     if (!useSidecarVerbatim) {
-        const uint32_t vertStride  = (modelType == 1 || modelType == 3) ? 40u : 32u;
-        const uint32_t totalVerts  = static_cast<uint32_t>(newXtrv.size()) / vertStride;
-
-        uint32_t d3drDataSize = 0;
-        for (const auto& sc : sidecar) {
-            if (sc.isTag("D3DR")) { d3drDataSize = static_cast<uint32_t>(sc.data.size()); break; }
-        }
-        const uint32_t renderBufSize = d3drDataSize
-                                     + static_cast<uint32_t>(newXtrv.size())
-                                     + static_cast<uint32_t>(newDner.size());
-
-        for (auto& rc : sidecar) {
-            if (rc.isTag("HSEM") && rc.data.size() >= 156) {
-                auto wU32 = [&](size_t off, uint32_t v) {
-                    rc.data[off]   =  v        & 0xFF;
-                    rc.data[off+1] = (v >>  8) & 0xFF;
-                    rc.data[off+2] = (v >> 16) & 0xFF;
-                    rc.data[off+3] = (v >> 24) & 0xFF;
-                };
-                wU32( 96, numFaces);       // num_r_faces
-                wU32(100, totalVerts);     // num_r_verts = total XTRV entries
-                wU32(104, renderBufSize);  // render buffer size
-                break;
-            }
-        }
+        const uint32_t totalVerts = static_cast<uint32_t>(newXtrv.size()) /
+            ((modelType == 1 || modelType == 3) ? 40u : 32u);
+        const uint32_t renderBufSize = static_cast<uint32_t>(newD3dr.size()) +
+                                       static_cast<uint32_t>(newXtrv.size()) +
+                                       static_cast<uint32_t>(newDner.size());
+        SidecarWriteU32(topo.hsem->data,  96, numFaces);
+        SidecarWriteU32(topo.hsem->data, 100, totalVerts);
+        SidecarWriteU32(topo.hsem->data, 104, renderBufSize);
     }
 
     std::vector<uint8_t> newAtta;
@@ -596,7 +791,7 @@ static bool CompileWithSidecar(const MEFObject& obj,
         std::memcpy(&newAtta[i * attaStride], &obj.attachments[i], attaStride);
     }
 
-    // Build output chunk list in sidecar order, replacing XTRV, DNER, and ATTA.
+    // Build output chunk list in sidecar order, replacing the geometry chunks.
     struct OutChunk { char fourcc[4]; const std::vector<uint8_t>* data; };
     std::vector<OutChunk> outChunks;
     outChunks.reserve(sidecar.size());
@@ -608,10 +803,11 @@ static bool CompileWithSidecar(const MEFObject& obj,
             oc.data = &newXtrv;
         else if (rc.isTag("DNER"))
             oc.data = &newDner;
-        else if (rc.isTag("ATTA")) {
-            if (newAtta.empty()) continue;
-            oc.data = &newAtta;
-        } else
+        else if (rc.isTag("D3DR"))
+            oc.data = &newD3dr;
+        else if (rc.isTag("ATTA"))
+            oc.data = newAtta.empty() ? &rc.data : &newAtta;
+        else
             oc.data = &rc.data;
         outChunks.push_back(oc);
     }
@@ -623,7 +819,6 @@ static bool CompileWithSidecar(const MEFObject& obj,
         fileSize += 16 + aligned;
     }
 
-    // Assemble binary
     std::vector<uint8_t> out;
     out.reserve(fileSize);
     WriteTag(out, "ILFF");

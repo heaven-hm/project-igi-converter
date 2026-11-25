@@ -286,6 +286,15 @@ enum class BoneRigType {
 * **HeavySoldier (Type 6):** An adjusted 32-bone rig with wider shoulder and elbow structures designed to prevent heavy armor plates from clipping on special guards (`012_01_1`, `015_01_1`, `028_01_1`).
 * **AdvancedFingerRig (Type 48):** Selected automatically when `maxBoneIdx` matches `48`, mapping a highly articulate 48-bone hand and attachment skeleton.
 
+**Exporter note (issue #20):** `igi1conv mef export-rigged` reproduces this
+runtime archetype resolution explicitly and writes a `*.rig.json` sidecar
+(`format: igi1-rig-v1`) with the bone names/parents/pivots and per-vertex
+`boneIndex`/`weight`/`localVertexId`. Resolution is fail-closed: only the
+filename matches above, a canonical `NNN_NN_N` character stem (default
+`StandardSoldier`), `maxBoneIdx == 48`, or an explicit `--rig-archetype` are
+accepted. Plain OBJ/MTL output cannot represent this data and is refused for
+modelType 1 unless `--geometry-only` is passed.
+
 ### 2.6 ECAF Chunk -- Face Index Buffer
 
 A flat array of `uint16` triangle indices, used by Type 1 (bone) models with split DNER parsing. Total index count: `ECAF.size / 2`.

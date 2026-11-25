@@ -162,6 +162,15 @@ if (IGI1CONV_BUILD_TESTS)
         )
     endif()
 
+    add_library(igi1conv_test_parsers STATIC ${SOURCES_PARSERS})
+    target_include_directories(igi1conv_test_parsers PRIVATE
+        ${PROJECT_SOURCE_DIR}/igi1conv
+        ${PROJECT_SOURCE_DIR}/source
+        ${PROJECT_SOURCE_DIR}/source/parsers
+        ${PROJECT_SOURCE_DIR}/third_party/glm-1.0.1
+        ${PROJECT_SOURCE_DIR}/third_party
+    )
+
     add_dependencies(igi1conv_tests igi1conv)
 
     if (MSVC)
@@ -184,7 +193,7 @@ if (IGI1CONV_BUILD_TESTS)
         )
     endif()
 
-    target_link_libraries(igi1conv_tests PRIVATE gtest)
+    target_link_libraries(igi1conv_tests PRIVATE gtest igi1conv_test_parsers)
 
     target_include_directories(igi1conv_tests PRIVATE
         ${PROJECT_SOURCE_DIR}/source

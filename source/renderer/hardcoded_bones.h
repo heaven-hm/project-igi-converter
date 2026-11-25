@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <cctype>
+#include <optional>
 #include "parsers/mef_native.h"
 
 struct HardcodedBoneRef {
@@ -18,36 +19,94 @@ enum class BoneRigType {
     AdvancedFingerRig = 48 // Type 48: Character models with advanced hand rig
 };
 
-inline std::vector<BoneInfo> GetIgi1HardcodedBones(const std::string& modelName, uint32_t maxBoneIdx) {
-    // Normalize modelName to lowercase
+// Canonical names used by the CLI (--rig-archetype) and the rig sidecar.
+inline const char* BoneRigTypeName(BoneRigType type) {
+    switch (type) {
+        case BoneRigType::JonesCinematic:   return "JonesCinematic";
+        case BoneRigType::StandardSoldier:  return "StandardSoldier";
+        case BoneRigType::HeavySoldier:     return "HeavySoldier";
+        case BoneRigType::AdvancedFingerRig: return "AdvancedFingerRig";
+    }
+    return "Unknown";
+}
+
+// Parse a user-supplied archetype name.  Case-insensitive; unknown names
+// return nullopt so callers can fail closed instead of guessing a skeleton.
+inline std::optional<BoneRigType> ParseBoneRigTypeName(const std::string& name) {
+    std::string n = name;
+    std::transform(n.begin(), n.end(), n.begin(), [](unsigned char c) { return std::tolower(c); });
+    if (n == "jonescinematic" || n == "jones" || n == "0")  return BoneRigType::JonesCinematic;
+    if (n == "standardsoldier" || n == "soldier" || n == "standard" || n == "1")
+        return BoneRigType::StandardSoldier;
+    if (n == "heavysoldier" || n == "heavy" || n == "6")    return BoneRigType::HeavySoldier;
+    if (n == "advancedfingerrig" || n == "fingers" || n == "48")
+        return BoneRigType::AdvancedFingerRig;
+    return std::nullopt;
+}
+
+// Normalise a MEF model stem for archetype matching: lowercase, and map a
+// companion part ("012_01_2") onto its main model ("012_01_1").
+inline std::string NormalizeIgi1ModelName(const std::string& modelName) {
     std::string normName = modelName;
     std::transform(normName.begin(), normName.end(), normName.begin(), [](unsigned char c) {
         return std::tolower(c);
     });
+    size_t lastUnder = normName.rfind('_');
+    if (lastUnder != std::string::npos && lastUnder + 2 == normName.size()
+        && normName.back() >= '2' && normName.back() <= '9') {
+        normName = normName.substr(0, lastUnder + 1) + "1";
+    }
+    return normName;
+}
 
-    // Companion parts (e.g. "012_01_2") must inherit the archetype of their
-    // main model ("012_01_1"). Strip the trailing part digit and replace with
-    // "1" so that the match below sees the base model name.
-    std::string baseName = normName;
-    {
-        size_t lastUnder = baseName.rfind('_');
-        if (lastUnder != std::string::npos && lastUnder + 2 == baseName.size()
-            && baseName.back() >= '2' && baseName.back() <= '9') {
-            baseName = baseName.substr(0, lastUnder + 1) + "1";
+// True for canonical IGI1 model stems of the form NNN_NN_N (e.g. 001_01_1).
+// A type-1 model with this naming convention is a character model and can
+// safely use the default 32-bone soldier archetype when no special match
+// applies.  Names outside this convention are NOT guessed.
+inline bool IsIgi1CharacterStem(const std::string& normalizedName) {
+    if (normalizedName.size() != 8) return false;
+    for (size_t i = 0; i < normalizedName.size(); ++i) {
+        const char c = normalizedName[i];
+        if (i == 3 || i == 6) {
+            if (c != '_') return false;
+        } else if (c < '0' || c > '9') {
+            return false;
         }
     }
+    return true;
+}
 
-    BoneRigType type = BoneRigType::StandardSoldier; // Default: StandardSoldier
-    if (maxBoneIdx == static_cast<uint32_t>(BoneRigType::AdvancedFingerRig)) {
-        type = BoneRigType::AdvancedFingerRig;
-    } else {
-        if (baseName == "000_01_1" || baseName == "009_02_1" || baseName == "008_01_1") {
-            type = BoneRigType::JonesCinematic;
-        } else if (baseName == "012_01_1" || baseName == "015_01_1" || baseName == "028_01_1") {
-            type = BoneRigType::HeavySoldier;
-        }
-    }
+// Strict archetype resolution used by the rig-preserving exporter.
+// Unlike GetIgi1HardcodedBones() (used by the viewer, which deliberately
+// defaults to StandardSoldier), this never guesses: if neither an explicit
+// filename match nor the bone-count heuristic identifies an archetype, the
+// caller gets nullopt and MUST fail the export rather than emit a static mesh.
+inline std::optional<BoneRigType> SelectIgi1BoneRigTypeStrict(const std::string& modelName,
+                                                             uint32_t maxBoneIdx) {
+    const std::string baseName = NormalizeIgi1ModelName(modelName);
 
+    if (maxBoneIdx == static_cast<uint32_t>(BoneRigType::AdvancedFingerRig))
+        return BoneRigType::AdvancedFingerRig;
+    if (baseName == "000_01_1" || baseName == "009_02_1" || baseName == "008_01_1")
+        return BoneRigType::JonesCinematic;
+    if (baseName == "012_01_1" || baseName == "015_01_1" || baseName == "028_01_1")
+        return BoneRigType::HeavySoldier;
+    if (IsIgi1CharacterStem(baseName))
+        return BoneRigType::StandardSoldier;
+    return std::nullopt;
+}
+
+inline std::vector<BoneInfo> GetIgi1HardcodedBonesForRig(BoneRigType type);
+
+// Fail-open helper retained for the in-game viewer/skinning path: historically
+// every IGI1 bone model falls back to the standard soldier rig.
+inline std::vector<BoneInfo> GetIgi1HardcodedBones(const std::string& modelName, uint32_t maxBoneIdx) {
+    auto type = SelectIgi1BoneRigTypeStrict(modelName, maxBoneIdx);
+    if (!type) type = BoneRigType::StandardSoldier; // viewer fallback (not used by exporter)
+    return GetIgi1HardcodedBonesForRig(*type);
+}
+
+inline std::vector<BoneInfo> GetIgi1HardcodedBonesForRig(BoneRigType type) {
     std::vector<HardcodedBoneRef> refs;
 
     if (type == BoneRigType::JonesCinematic) {
