@@ -34,7 +34,7 @@ Converters:
 cmake -S converters -B build-conv-native -G Ninja -DCMAKE_BUILD_TYPE=Release -DIGICONV_BUILD_GUI=OFF
 cmake --build build-conv-native --parallel 4
 ```
-Result: `igi1conv` and `igi2conv` built (see final verification comment on #22).
+Result: `113/113` steps linked; `bin/igi1conv` and `bin/igi2conv` both produced.
 
 ## GitHub Actions (workflow added by this change)
 
