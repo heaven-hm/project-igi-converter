@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "game_selector.h"
 #include "cmd_tex.h"
 #include "cmd_mef.h"
 #include "cmd_qsc.h"
@@ -14,6 +15,7 @@
 #include "cmd_wav.h"
 #include "cmd_olm.h"
 #include "cmd_lightmap.h"
+#include "cmd_igi2_forest.h"
 //   0 = success
 //   1 = bad args
 //   2 = file not found
@@ -29,7 +31,11 @@ static void print_help()
     std::cout <<
         "igi1conv v" IGI1CONV_VERSION " \xe2\x80\x94 IGI Game Converter\n"
         "\n"
-        "Usage: igi1conv <command> [options]\n"
+        "Usage: igi1conv [--game=igi1|igi2] <command> [options]\n"
+        "\n"
+        "Game selection (default: igi1):\n"
+        "  --game=igi1     Route to the IGI 1 backends (current behaviour)\n"
+        "  --game=igi2     Route to the IGI 2 backends\n"
         "\n"
         "Commands:\n"
         "  tex      TEX/SPR/PIC texture operations (decode, info, to-png, to-tga)\n"
@@ -47,6 +53,10 @@ static void print_help()
         "  olm      OLM lightmap operations (info, to-png, to-tga)\n"
         "  lightmap Lightmap binding resolution (list, resolve by task-id/position)\n"
         "  test     Run advanced test suite on game directory\n"
+        "\n"
+        "IGI 2 commands (require --game=igi2):\n"
+        "  forest   DAT Forest placement data (info, export, compile)\n"
+        "           See docs/igi2/FORMAT_MATRIX.md for the full format status matrix.\n"
         "\n"
         "Run 'igi1conv <command> --help' for command-specific help.\n";
 }
@@ -88,7 +98,16 @@ int main(int argc, char** argv)
 #endif
     }
 
-    std::string cmd = argv[1];
+    const game_selection_t selection = Game_Select(argc, argv);
+    if (!selection.error.empty())
+    {
+        std::cerr << "igi1conv: " << selection.error << "\n";
+        return 1;
+    }
+    const int cmd_idx = selection.command_index;
+    (void)selection;
+
+    std::string cmd = argv[cmd_idx];
 
     if (cmd == "--help" || cmd == "-h")
     {
@@ -102,10 +121,31 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    // Shift argv so each handler receives its own argc/argv starting at argv[0] = command name
-    int sub_argc = argc - 1;
-    char** sub_argv = argv + 1;
+    // Each handler sees argv[0] = command name, as before.
+    const int sub_argc = argc - cmd_idx;
+    char** sub_argv = argv + cmd_idx;
 
+    // ---- IGI 2 backend (issue #10 vertical slice) ----
+    if (cmd == "forest")
+    {
+        if (selection.game != igi_game_t::IGI2)
+        {
+            std::cerr << "igi1conv: 'forest' is an IGI 2 format; pass --game=igi2 before the command.\n";
+            return 1;
+        }
+        return cmd_igi2_forest(sub_argc, sub_argv);
+    }
+
+    // Never silently feed IGI 1 assets to an IGI 2 request (or vice versa).
+    if (selection.game == igi_game_t::IGI2)
+    {
+        std::cerr << "igi1conv: command '" << cmd << "' is not implemented for IGI 2 yet.\n"
+                  << "Available IGI 2 commands: forest\n"
+                  << "See docs/igi2/FORMAT_MATRIX.md for the format status matrix.\n";
+        return 1;
+    }
+
+    // ---- IGI 1 backend (unchanged) ----
     if (cmd == "tex")     return cmd_tex(sub_argc, sub_argv);
     if (cmd == "mef")     return cmd_mef(sub_argc, sub_argv);
     if (cmd == "mex")     return cmd_mef(sub_argc, sub_argv);
