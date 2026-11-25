@@ -86,16 +86,25 @@ else()
 endif()
 
 # --- GUI Dependencies (Qt5/Qt6) ---
-if (IGI1CONV_BUILD_GUI AND CMAKE_SIZEOF_VOID_P EQUAL 4)
-    message("Configuring 32-bit (Win32) build using local Qt 5.15.2")
-    set(CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/5.15.2/msvc2019")
-    find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
-    target_link_libraries(igi1conv PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-elseif (IGI1CONV_BUILD_GUI)
-    message("Configuring 64-bit (x64) build using system Qt 6.5.3")
-    set(CMAKE_PREFIX_PATH "D:/Qt/6.5.3/msvc2019_64")
-    find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets REQUIRED)
-    target_link_libraries(igi1conv PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets)
+# Qt is located through CMAKE_PREFIX_PATH (CI, system installs, Qt toolchain
+# actions).  The legacy local Windows paths stay as a fallback *only when they
+# exist*, so the historical D:/Qt builds keep working unchanged.
+if (IGI1CONV_BUILD_GUI)
+    if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4 AND EXISTS "${PROJECT_SOURCE_DIR}/5.15.2/msvc2019")
+        list(APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/5.15.2/msvc2019")
+        message("Qt prefix fallback (32-bit): ${PROJECT_SOURCE_DIR}/5.15.2/msvc2019")
+    elseif (WIN32 AND EXISTS "D:/Qt/6.5.3/msvc2019_64")
+        list(APPEND CMAKE_PREFIX_PATH "D:/Qt/6.5.3/msvc2019_64")
+        message("Qt prefix fallback (64-bit): D:/Qt/6.5.3/msvc2019_64")
+    endif()
+
+    if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+        find_package(Qt5 COMPONENTS Core Gui Widgets OpenGL REQUIRED)
+        target_link_libraries(igi1conv PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
+    else()
+        find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets REQUIRED)
+        target_link_libraries(igi1conv PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets)
+    endif()
 endif()
 # ---------------------------------------
 
@@ -122,6 +131,12 @@ if (MSVC)
     )
     set_target_properties(igi1conv PROPERTIES
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL"
+    )
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    # GCC/Clang equivalent of MSVC /FI: the parsers include "pch.h" and rely
+    # on it for strnlen/std::memset (mef_exporter.cpp, mef_parser.cpp).
+    target_compile_options(igi1conv PRIVATE
+        -include "${PROJECT_SOURCE_DIR}/igi1conv/pch.h"
     )
 endif()
 
@@ -180,6 +195,11 @@ if (IGI1CONV_BUILD_TESTS)
     endif()
 
     target_link_libraries(igi1conv_tests PRIVATE gtest)
+
+    if (NOT WIN32)
+        find_package(Threads REQUIRED)
+        target_link_libraries(igi1conv_tests PRIVATE Threads::Threads)
+    endif()
 
     target_include_directories(igi1conv_tests PRIVATE
         ${PROJECT_SOURCE_DIR}/source

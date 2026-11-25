@@ -1,0 +1,64 @@
+name: build-and-test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  unix-cli:
+    name: ${{ matrix.os }} - CLI, tests and converter CLIs (no Qt)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure igi1conv CLI + tests (GUI off)
+        run: cmake -S . -B build-cli -G Ninja -DCMAKE_BUILD_TYPE=Release -DIGI1CONV_BUILD_GUI=OFF
+
+      - name: Build igi1conv CLI + tests
+        run: cmake --build build-cli --parallel
+
+      - name: Run tests (retail-file cases skip without IGI_GAME_PATH)
+        run: ctest --test-dir build-cli --output-on-failure
+
+      - name: Configure converters CLIs (GUI off)
+        run: cmake -S converters -B build-converters -G Ninja -DCMAKE_BUILD_TYPE=Release -DIGICONV_BUILD_GUI=OFF
+
+      - name: Build igi1conv and igi2conv CLIs
+        run: cmake --build build-converters --parallel
+
+  windows-qt:
+    name: Windows - Qt GUI and converter GUIs
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt 6.5.3 (MSVC 2019 64-bit, Multimedia)
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.5.3
+          host: windows
+          target: desktop
+          arch: win64_msvc2019_64
+          modules: qtmultimedia
+          cache: true
+
+      - name: Configure and build Qt GUI
+        shell: pwsh
+        run: |
+          $prefix = (Resolve-Path (Join-Path $env:Qt6_DIR '../../..')).Path
+          cmake -S . -B build-gui -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=$prefix
+          cmake --build build-gui --config Release --parallel
+
+      - name: Configure and build converter GUIs
+        shell: pwsh
+        run: |
+          $prefix = (Resolve-Path (Join-Path $env:Qt6_DIR '../../..')).Path
+          cmake -S converters -B build-converters-gui -G "Visual Studio 17 2022" -A x64 -DCMAKE_PREFIX_PATH=$prefix -DIGICONV_BUILD_GUI=ON
+          cmake --build build-converters-gui --config Release --parallel
