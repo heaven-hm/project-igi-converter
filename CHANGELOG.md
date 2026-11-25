@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- `igi1conv mef export-rigged` writes a rig-preserving `<stem>.rig.json`
+  sidecar (bone hierarchy + per-vertex weights) alongside the OBJ for IGI1
+  modelType 1 meshes, with optional explicit `--rig-archetype` mapping.
 - CLI game selector `--game=igi1|igi2` (IGI 1 remains the default); unported
   IGI 2 commands are rejected instead of being routed to IGI 1 parsers.
 - IGI 2 DAT Forest (`forest_*.dat`) read/write with `info`, `export` (JSON)
@@ -13,6 +16,12 @@ All notable changes to this project will be documented in this file.
 - `docs/igi2/FORMAT_MATRIX.md`: design of the IGI 2 vertical slice, the full
   format-by-format read/write matrix, and an honest issue #10 acceptance
   status (real-game validation and the GUI selector remain open).
+
+### Fixed
+- Rigged MEFs are no longer silently exported as static meshes. `mef export`
+  and `mef bundle` fail closed for modelType 1 unless `--geometry-only` is
+  given. Unknown archetypes, out-of-range bone indices and invalid weights
+  also fail the rig export (issue #20).
 
 ## [1.11.0] - 2026-10-12
 

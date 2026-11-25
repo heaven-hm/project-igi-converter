@@ -160,7 +160,7 @@ TEST_F(IGI1ConvTest, MefExport) {
     IGI1CONV_NEED(f, "\\.mef$");
     TempDir tmp;
     std::string out = tmp / "model.obj";
-    EXPECT_EQ(RunIGI1Conv("mef export " + Q(f) + " -o " + Q(out)), 0);
+    EXPECT_EQ(RunIGI1Conv("mef export " + Q(f) + " -o " + Q(out) + " --geometry-only"), 0);
     EXPECT_TRUE(NonEmptyFile(out));
 }
 TEST_F(IGI1ConvTest, MefDump) {
@@ -183,7 +183,7 @@ TEST_F(IGI1ConvTest, MefExportObjHasRealUvs) {
     if (f.empty()) GTEST_SKIP() << "no Type 0 or Type 1 MEF in corpus";
     TempDir tmp;
     std::string out = tmp / "model.obj";
-    EXPECT_EQ(RunIGI1Conv("mef export " + Q(f) + " -o " + Q(out)), 0);
+    EXPECT_EQ(RunIGI1Conv("mef export " + Q(f) + " -o " + Q(out) + " --geometry-only"), 0);
     std::ifstream in(out);
     ASSERT_TRUE(in.is_open()) << "OBJ not written: " << out;
     int vtCount = 0, nonzero = 0;
@@ -219,9 +219,9 @@ TEST_F(IGI1ConvTest, MefExportBinaryAndTextObjUvsMatch) {
     std::string binObj = tmp / "bin.obj";
     std::string txt    = tmp / "model.txt";
     std::string txtObj = tmp / "text.obj";
-    ASSERT_EQ(RunIGI1Conv("mef export "  + Q(f)  + " -o " + Q(binObj)), 0);
+    ASSERT_EQ(RunIGI1Conv("mef export " + Q(f) + " -o " + Q(binObj) + " --geometry-only"), 0);
     ASSERT_EQ(RunIGI1Conv("mef to-text " + Q(f)  + " -o " + Q(txt)),    0);
-    ASSERT_EQ(RunIGI1Conv("mef export "  + Q(txt)+ " -o " + Q(txtObj)), 0);
+    ASSERT_EQ(RunIGI1Conv("mef export " + Q(txt) + " -o " + Q(txtObj) + " --geometry-only"), 0);
     auto collectVts = [](const std::string& obj) {
         std::ifstream in(obj);
         std::vector<std::pair<float,float>> vts;
@@ -262,7 +262,7 @@ TEST_F(IGI1ConvTest, MefExportVFlipMatchesModelType) {
     if (f.empty()) GTEST_SKIP() << "no Type 0 or Type 1 MEF in corpus";
     TempDir tmp;
     std::string out = tmp / "model.obj";
-    EXPECT_EQ(RunIGI1Conv("mef export " + Q(f) + " -o " + Q(out)), 0);
+    EXPECT_EQ(RunIGI1Conv("mef export " + Q(f) + " -o " + Q(out) + " --geometry-only"), 0);
     std::string infoOut;
     ASSERT_EQ(RunIGI1Conv("mef info " + Q(f), &infoOut), 0);
     // Parse model_type from the mef info output ("model_type: <N>").
@@ -380,7 +380,7 @@ TEST_F(IGI1ConvTest, MefExportVFlip_Type0_Rigid_DoesNotFlipV) {
     if (f.empty()) GTEST_SKIP() << "no Type 0 (rigid) MEF in corpus";
     TempDir tmp;
     std::string out = tmp / "rigid.obj";
-    ASSERT_EQ(RunIGI1Conv("mef export \"" + f + "\" -o \"" + out + "\""), 0);
+    ASSERT_EQ(RunIGI1Conv("mef export \"" + f + "\" -o \"" + out + "\" --geometry-only"), 0);
     float rawV = 0.f, objV = 0.f;
     ASSERT_TRUE(FirstMefRawV(f, rawV)) << "could not parse raw MEF UV: " << f;
     objV = FirstObjV(out);
@@ -401,7 +401,7 @@ TEST_F(IGI1ConvTest, MefExportVFlip_Type1_Bone_DoesNotFlipV) {
     if (f.empty()) GTEST_SKIP() << "no Type 1 (bone) MEF in corpus";
     TempDir tmp;
     std::string out = tmp / "bone.obj";
-    ASSERT_EQ(RunIGI1Conv("mef export \"" + f + "\" -o \"" + out + "\""), 0);
+    ASSERT_EQ(RunIGI1Conv("mef export \"" + f + "\" -o \"" + out + "\" --geometry-only"), 0);
     float rawV = 0.f, objV = 0.f;
     ASSERT_TRUE(FirstMefRawV(f, rawV)) << "could not parse raw MEF UV: " << f;
     objV = FirstObjV(out);
@@ -418,7 +418,7 @@ TEST_F(IGI1ConvTest, MefExportVFlip_Type3_Lightmap_DoesNotFlipV) {
     if (f.empty()) GTEST_SKIP() << "no Type 3 (lightmap) MEF in corpus";
     TempDir tmp;
     std::string out = tmp / "lmp.obj";
-    ASSERT_EQ(RunIGI1Conv("mef export \"" + f + "\" -o \"" + out + "\""), 0);
+    ASSERT_EQ(RunIGI1Conv("mef export \"" + f + "\" -o \"" + out + "\" --geometry-only"), 0);
     float rawV = 0.f, objV = 0.f;
     ASSERT_TRUE(FirstMefRawV(f, rawV)) << "could not parse raw MEF UV: " << f;
     objV = FirstObjV(out);
@@ -462,7 +462,7 @@ TEST_F(IGI1ConvTest, MefExportVFlip_AllTypesRespectRule) {
         TempDir tmp;
         std::string out = tmp / "allt.obj";
         if (RunIGI1Conv("mef export \"" + it->path().string() +
-                        "\" -o \"" + out + "\"") != 0) continue;
+                        "\" -o \"" + out + "\" --geometry-only") != 0) continue;
         float objV = FirstObjV(out);
         if (!std::isfinite(objV)) continue;
         byType[mt].push_back({mt, rawV, objV, it->path().string()});
@@ -515,9 +515,9 @@ TEST_F(IGI1ConvTest, MefExportVFlip_BinaryAndTextPathsAgree) {
         std::string binObj = tmp / "bin.obj";
         std::string txt    = tmp / "model.txt";
         std::string txtObj = tmp / "text.obj";
-        ASSERT_EQ(RunIGI1Conv("mef export \""  + f + "\" -o \"" + binObj + "\""), 0);
+        ASSERT_EQ(RunIGI1Conv("mef export \"" + f + "\" -o \"" + binObj + "\" --geometry-only"), 0);
         ASSERT_EQ(RunIGI1Conv("mef to-text \"" + f + "\" -o \"" + txt    + "\""), 0);
-        ASSERT_EQ(RunIGI1Conv("mef export \""  + txt + "\" -o \"" + txtObj + "\""), 0);
+        ASSERT_EQ(RunIGI1Conv("mef export \"" + txt + "\" -o \"" + txtObj + "\" --geometry-only"), 0);
         float binV = FirstObjV(binObj);
         float txtV = FirstObjV(txtObj);
         EXPECT_NEAR(binV, txtV, 1e-4f)

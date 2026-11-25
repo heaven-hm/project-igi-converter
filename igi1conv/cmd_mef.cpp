@@ -16,11 +16,12 @@ static void print_mef_help()
         "Usage: igi1conv mef <subcommand> [options]\n"
         "\n"
         "Subcommands:\n"
-        "  export  <input.mef|mex> -o <output.obj> [--dat <file.dat> --texdir <dir>]\n"
-        "  export  <folder/> -o <output_dir> --batch [--dat <file.dat> --texdir <dir>]\n"
+        "  export  <input.mef|mex> -o <output.obj> [--dat <file.dat> --texdir <dir>] [--geometry-only]\n"
+        "  export  <folder/> -o <output_dir> --batch [--dat <file.dat> --texdir <dir>] [--geometry-only]\n"
+        "  export-rigged <input.mef> -o <outdir> [--rig-archetype <name>] [--skip-obj]\n"
         "  dump    <input.mef> [-o <output.txt>]\n"
         "  info    <input.mef>\n"
-        "  bundle  <input.mef> -o <outdir> --dat <file.dat> --texdir <dir>\n"
+        "  bundle  <input.mef> -o <outdir> --dat <file.dat> --texdir <dir> [--geometry-only]\n"
         "  to-text <input.mef> -o <output.txt>   (binary MEF -> text MEF)\n"
         "  compile <input.txt> -o <output.mef>   (text MEF -> binary MEF)\n"
         "  build-rigid <input.mef> [-o <output.mef>] (merge all ATTA into rigid model)\n"
@@ -29,7 +30,8 @@ static void print_mef_help()
 }
 
 static int do_mef_export(const std::string& input, const std::string& outpath,
-                         const std::string& datPath = {}, const std::string& texDir = {})
+                         const std::string& datPath = {}, const std::string& texDir = {},
+                         bool geometryOnly = false)
 {
     if (!fs::exists(input))
     {
@@ -55,8 +57,11 @@ static int do_mef_export(const std::string& input, const std::string& outpath,
             return 3;
         }
 
-        if (!MefExporter::ExportToObj(geo, outpath, datPath)) {
+        if (!MefExporter::ExportToObj(geo, outpath, datPath, geometryOnly)) {
             std::cerr << "mef: failed to write OBJ: " << outpath << "\n";
+            std::cerr << "mef: rigged modelType 1 meshes cannot be exported "
+                         "as static OBJ without --geometry-only; use "
+                         "'mef export-rigged' to preserve skeleton/weights.\n";
             return 4;
         }
     }
@@ -73,13 +78,49 @@ static int do_mef_export(const std::string& input, const std::string& outpath,
             std::cerr << "mef: text MEF has no geometry\n";
             return 3;
         }
-        if (!MefExporter::ExportTextMefToObj(objects, outpath)) {
+        if (!MefExporter::ExportTextMefToObj(objects, outpath, geometryOnly)) {
             std::cerr << "mef: failed to write OBJ: " << outpath << "\n";
+            std::cerr << "mef: text MEF with BoneVertex data cannot be "
+                         "exported as static OBJ without --geometry-only.\n";
             return 4;
         }
     }
 
     std::cout << "mef: exported to " << outpath << "\n";
+    return 0;
+}
+
+// Fail-closed rig-preserving export: OBJ geometry + <stem>.rig.json sidecar.
+static int do_mef_export_rigged(const std::string& input, const std::string& outDir,
+                                const std::string& archetype, bool skipObj)
+{
+    if (!fs::exists(input)) {
+        std::cerr << "mef export-rigged: file not found: " << input << "\n";
+        return 2;
+    }
+
+    ParsedGeometry geo;
+    try { geo = ParseMefFile(input); }
+    catch (const std::exception& e) {
+        std::cerr << "mef export-rigged: parse error: " << e.what() << "\n";
+        return 3;
+    }
+
+    const std::string stem = fs::path(input).stem().string();
+    MefExporter::RigExportOptions options;
+    options.archetype = archetype;
+    options.writeObj = !skipObj;
+
+    MefExporter::RigExportResult result =
+        MefExporter::ExportRiggedMef(geo, stem, outDir, options);
+    if (!result.ok) {
+        std::cerr << "mef export-rigged: " << result.error << "\n";
+        return 4;
+    }
+
+    std::cout << "mef export-rigged: " << stem << " -> " << result.archetype
+              << " (" << result.boneCount << " bones, " << result.weightCount
+              << " weighted vertices) -> " << result.sidecarPath << "\n";
     return 0;
 }
 
@@ -381,6 +422,12 @@ static void MergeGeometryRecursive(ParsedGeometry& baseGeo, const std::string& c
     ParsedGeometry child;
     try { child = ParseMefFile(currentPath); } catch (...) { return; }
 
+    // A bundle that swallows a rigged child drops its skeleton/weights. Record
+    // that on the merged geometry so the OBJ exporter fails closed unless the
+    // caller explicitly opts in with --geometry-only. modelType is left alone
+    // so `mef build-rigid` still emits a Type 0 model.
+    if (child.modelType == 1) baseGeo.hasRiggedSource = true;
+
     uint32_t vOffset = static_cast<uint32_t>(baseGeo.vertices.size());
     uint32_t fOffset = static_cast<uint32_t>(baseGeo.triangles.size());
     uint32_t mOffset = static_cast<uint32_t>(baseGeo.tamcRecords.size());
@@ -543,12 +590,14 @@ int cmd_mef(int argc, char** argv)
         }
 
         std::string outpath, datPath, texDir;
-        for (int i = 3; i < argc - 1; ++i)
+        bool geometryOnly = false;
+        for (int i = 3; i < argc; ++i)
         {
             std::string a = argv[i];
-            if (a == "-o")        { outpath = argv[i + 1]; ++i; }
-            else if (a == "--dat")    { datPath = argv[i + 1]; ++i; }
-            else if (a == "--texdir") { texDir  = argv[i + 1]; ++i; }
+            if (a == "-o" && i + 1 < argc)          { outpath = argv[++i]; }
+            else if (a == "--dat" && i + 1 < argc)  { datPath = argv[++i]; }
+            else if (a == "--texdir" && i + 1 < argc) { texDir  = argv[++i]; }
+            else if (a == "--geometry-only") { geometryOnly = true; }
         }
         if (outpath.empty())
         {
@@ -594,7 +643,7 @@ int cmd_mef(int argc, char** argv)
                 std::string stem = entry.path().stem().string();
                 std::string obj_out = (fs::path(outpath) / (stem + ".obj")).string();
 
-                int rc = do_mef_export(entry.path().string(), obj_out, datPath, texDir);
+                int rc = do_mef_export(entry.path().string(), obj_out, datPath, texDir, geometryOnly);
                 if (rc != 0)
                 {
                     std::cerr << "mef: error processing " << entry.path().filename().string() << " (rc=" << rc << ")\n";
@@ -605,8 +654,32 @@ int cmd_mef(int argc, char** argv)
         }
         else
         {
-            return do_mef_export(input, outpath, datPath, texDir);
+            return do_mef_export(input, outpath, datPath, texDir, geometryOnly);
         }
+    }
+
+    if (subcmd == "export-rigged")
+    {
+        if (argc < 3)
+        {
+            std::cerr << "mef export-rigged: missing input file\n";
+            return 1;
+        }
+        std::string outDir, archetype;
+        bool skipObj = false;
+        for (int i = 3; i < argc; ++i)
+        {
+            std::string a = argv[i];
+            if (a == "-o" && i + 1 < argc) outDir = argv[++i];
+            else if (a == "--rig-archetype" && i + 1 < argc) archetype = argv[++i];
+            else if (a == "--skip-obj") skipObj = true;
+        }
+        if (outDir.empty())
+        {
+            std::cerr << "mef export-rigged: missing -o <outdir>\n";
+            return 1;
+        }
+        return do_mef_export_rigged(argv[2], outDir, archetype, skipObj);
     }
 
     if (subcmd == "bundle")
@@ -620,6 +693,7 @@ int cmd_mef(int argc, char** argv)
 
         std::string outdir, dat_path, tex_dir;
         bool skipObj = false;
+        bool geometryOnly = false;
         for (int i = 3; i < argc; ++i)
         {
             std::string a = argv[i];
@@ -627,6 +701,7 @@ int cmd_mef(int argc, char** argv)
             else if (a == "--dat"    && i + 1 < argc) { dat_path = argv[++i]; }
             else if (a == "--texdir" && i + 1 < argc) { tex_dir  = argv[++i]; }
             else if (a == "--no-obj") { skipObj = true; }
+            else if (a == "--geometry-only") { geometryOnly = true; }
         }
 
         if (outdir.empty())
@@ -661,7 +736,8 @@ int cmd_mef(int argc, char** argv)
             std::vector<std::string> texNames =
                 ResolveAndExportTextures(sources, dat_path, tex_dir, bundleDir.string(), totalSlots);
 
-            if (!MefExporter::ExportMergedToObjBundle(mergedGeo, stem, outdir, texNames, skipObj)) {
+            if (!MefExporter::ExportMergedToObjBundle(mergedGeo, stem, outdir, texNames,
+                                                      skipObj, geometryOnly)) {
                 std::cerr << "mef bundle: export failed for " << stem << "\n";
                 return false;
             }
