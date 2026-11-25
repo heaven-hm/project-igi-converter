@@ -1,0 +1,43 @@
+--- a/src/plugins/platforms/cocoa/qcocoaaccessibilityelement.mm
++++ b/src/plugins/platforms/cocoa/qcocoaaccessibilityelement.mm
+@@ -131,7 +131,8 @@
+                     m_rowIndex = cell->rowIndex();
+                     m_columnIndex = cell->columnIndex();
+                     QAccessibleInterface *table = cell->table();
+-                    Q_ASSERT(table);
++                    if (!table || m_rowIndex < 0 || m_columnIndex < 0)
++                        return self;
+                     QAccessibleTableInterface *tableInterface = table->tableInterface();
+                     if (tableInterface) {
+                         auto *tableElement = [QMacAccessibilityElement elementWithInterface:table];
+@@ -148,7 +149,8 @@
+                         }
+ 
+                         Q_ASSERT(tableElement->rows);
+-                        Q_ASSERT(int(tableElement->rows.count) > m_rowIndex);
++                        if (int(tableElement->rows.count) <= m_rowIndex)
++                            return self;
+ 
+                         auto *rowElement = tableElement->rows[m_rowIndex];
+                         if (!rowElement->columns || int(rowElement->columns.count) != tableInterface->columnCount()) {
+@@ -169,6 +171,8 @@
+                                                       << tableElement->rows.count << "rows and"
+                                                       << rowElement->columns.count << "columns";
+ 
++                        if (int(rowElement->columns.count) <= m_columnIndex)
++                            return self;
+                         rowElement->columns[m_columnIndex] = self;
+                     }
+                 }
+@@ -610,8 +614,9 @@
+         // a synthetic cell without interface - shortcut to the row
+         QMacAccessibilityElement *tableElement =
+                     [QMacAccessibilityElement elementWithId:axid];
+-        Q_ASSERT(tableElement && tableElement->rows);
+-        Q_ASSERT(int(tableElement->rows.count) > m_rowIndex);
++        if (!tableElement || !tableElement->rows || m_rowIndex < 0
++            || int(tableElement->rows.count) <= m_rowIndex)
++            return nil;
+         QMacAccessibilityElement *rowElement = tableElement->rows[m_rowIndex];
+         return rowElement;
+     }

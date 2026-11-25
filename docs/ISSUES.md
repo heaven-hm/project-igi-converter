@@ -10,4 +10,6 @@ This document tracks unimplemented features, formats, and missing reverse-engine
 - [ ] **WAV (Audio) - encode (WAV → IGI-ADPCM)**: Compiling standard PCM WAV files back into the game's compressed ADPCM `.wav` is still unimplemented.
 - [ ] **QAS (AI Scripts)**: Decompile binary AI pathing and action script structures (`.qas`) to human-readable text and compile them back.
 - [ ] **ILFF (Containers)**: Implement direct standalone CLI options to extract/pack the InnerLoop File Format (ILFF) container structure.
+- [ ] **WAV encode / QAS / ILFF status**: C++ parsers for these three items are proposed in open PR #16 (`cpp-parsers`) and are **not merged here**; this repository does not claim them as shipped.
+- [x] **Terrain (PGM → LMP write-back)**: `igi1conv terrain import-lmp <input.pgm> -o <output.lmp>` rebuilds a square LMP chunk from a binary P5 PGM (8- or 16-bit maxval). Round-trip against `terrain export-lmp` is byte-exact and covered by 4 corpus-free tests (`tests/test_igi1conv_terrain_import.cpp`). JSON → CTR remains unimplemented.
 

@@ -11,6 +11,31 @@ igi1conv <command> --help
 
 **Exit codes:** `0` success · `1` bad args · `2` file not found · `3` parse error · `4` write error
 
+## Game selection (IGI 1 / IGI 2)
+
+```powershell
+igi1conv --game=igi1 <command> ...   # default: all existing IGI 1 behaviour
+igi1conv --game=igi2 <command> ...   # route to the IGI 2 backend
+```
+
+`--game igi2` is accepted as an alias. Commands not yet ported to IGI 2 are
+rejected with a clear message rather than being silently handled by the IGI 1
+parser. See [IGI 2 format matrix](igi2/FORMAT_MATRIX.md).
+
+## `forest` — IGI 2 DAT Forest (`forest_*.dat`)
+
+Requires `--game=igi2`.
+
+```powershell
+igi1conv --game=igi2 forest info   <forest_*.dat>
+igi1conv --game=igi2 forest export <forest_*.dat> [-o <out.json>]
+igi1conv --game=igi2 forest compile <in.json> -o <out.dat>
+```
+
+`export` writes an `igi2-forest/1` JSON document (positions, rotations, scales
+and per-instance colours); `compile` rebuilds the native 14-byte-header /
+40-byte-record binary. The round trip is byte-exact.
+
 ## Test corpus location (v1.9.1+)
 
 The test suite (`igi1conv_tests.exe`) is driven against a real IGI corpus.
@@ -47,13 +72,32 @@ igi1conv tex to-spr <input> [-o <out.spr]                    # PNG/TGA/BMP/JPG -
 ```powershell
 igi1conv mef info   <input.mef>
 igi1conv mef dump   <input.mef> [-o <output.txt>]
-igi1conv mef export <input.mef> -o <output.obj>
-igi1conv mef export <folder/> -o <output_dir> --batch
-igi1conv mef bundle <input.mef> -o <outdir> --dat <file.dat> --texdir <dir>
+igi1conv mef export <input.mef> -o <output.obj> [--geometry-only]
+igi1conv mef export <folder/> -o <output_dir> --batch [--geometry-only]
+igi1conv mef export-rigged <input.mef> -o <outdir> [--rig-archetype <name>] [--skip-obj]
+igi1conv mef bundle <input.mef> -o <outdir> --dat <file.dat> --texdir <dir> [--geometry-only]
 igi1conv mef to-text <input.mef> -o <output.txt>
 igi1conv mef compile <input.txt> -o <output.mef>
 igi1conv mef build-rigid <input.mef> [-o <output.mef>]
 ```
+
+### Rigged (modelType 1) exports
+
+OBJ cannot store a skeleton, per-vertex weights or keyframes.  `mef export`
+and `mef bundle` therefore **fail closed** for rigged MEFs: they refuse to
+silently turn a character into a static mesh.  Pass `--geometry-only` when a
+static mesh is genuinely what you want.
+
+`mef export-rigged` is the lossless path.  It writes the geometry OBJ/MTL plus
+`<outdir>/<stem>.rig.json` (format `igi1-rig-v1`) containing the restored bone
+hierarchy (`name`, `parent`, `pivot`) and every vertex's `boneIndex`, `weight`
+and `localVertexId`.  IGI1 binary MEFs omit the skeleton hierarchy entirely;
+the converter restores it from the hardcoded skeletal archetypes
+(`JonesCinematic`, `StandardSoldier`, `HeavySoldier`, `AdvancedFingerRig`) by
+matching the model stem and maximum bone index, exactly like the level editor.
+If no archetype can be identified, the export fails: supply one explicitly with
+`--rig-archetype <name>` (or `--rig-archetype 48`).  Bone indices outside the
+selected archetype, or non-finite/out-of-range weights, also fail the export.
 
 ## `qsc` — Q Script (source)
 
@@ -282,8 +326,15 @@ run otherwise produces an audible click at the start.
 ```powershell
 igi1conv terrain info       <file.lmp|.ctr>
 igi1conv terrain export-lmp <file.lmp> -o <output.pgm>   # 16-bit PGM(s)
+igi1conv terrain import-lmp <input.pgm> -o <output.lmp>  # write-back
 igi1conv terrain export-ctr <file.ctr> -o <output.json>
 ```
+
+`import-lmp` reads a binary P5 PGM (8- or 16-bit maxval, comments allowed)
+and writes one square LMP chunk. For multi-chunk LMP files, `export-lmp`
+emits `name_0.pgm`, `name_1.pgm`, ...; import each one back separately.
+Rows are mirrored on import so `export-lmp` followed by `import-lmp` is
+byte-identical to the source LMP (verified by corpus-free tests).
 
 ## `graph` — AI Navigation Graph
 

@@ -117,6 +117,7 @@ struct ParsedGeometry {
     bool isIgi2 = false;
     uint32_t modelType = 0;
     uint32_t xtrvStride = 0;
+    bool hasRiggedSource = false;  // modelType 1 rigged source; export must fail closed
     size_t renderBlockCount = 0;
     size_t collisionVertexCount = 0;
     size_t collisionFaceCount = 0;

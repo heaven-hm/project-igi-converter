@@ -1,6 +1,7 @@
 #include "mef_exporter.h"
 #include "dat_parser.h"
 #include "tex_parser.h"
+#include "renderer/hardcoded_bones.h"
 #include "../logger.h"
 #include <fstream>
 #include <iomanip>
@@ -8,8 +9,54 @@
 #include <set>
 #include <vector>
 #include <utility>
+#include <cmath>
+#include <cctype>
 
 namespace {
+
+// OBJ has no concept of bones, weights or keyframes. Refusing rigged input is
+// the only safe default: an OBJ made from a Type 1 MEF is a static mesh.
+bool IsRiggedBinary(const ParsedGeometry &geometry) {
+  return geometry.modelType == 1 && !geometry.vertices.empty();
+}
+
+bool HasTextBoneWeights(const std::vector<MEFObject> &objects) {
+  for (const auto &obj : objects) {
+    if (obj.model_type == 1 || !obj.bone_vertices.empty()) return true;
+  }
+  return false;
+}
+
+std::string LowerAscii(std::string s) {
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
+  return s;
+}
+
+std::string JsonEscape(const std::string &s) {
+  std::string out;
+  out.reserve(s.size() + 2);
+  for (unsigned char c : s) {
+    switch (c) {
+      case '"': out += "\\\""; break;
+      case '\\': out += "\\\\"; break;
+      case '\n': out += "\\n"; break;
+      case '\r': out += "\\r"; break;
+      case '\t': out += "\\t"; break;
+      default:
+        if (c < 0x20) {
+          static const char hex[] = "0123456789abcdef";
+          out += "\\u00";
+          out += hex[(c >> 4) & 0xF];
+          out += hex[c & 0xF];
+        } else {
+          out += static_cast<char>(c);
+        }
+    }
+  }
+  return out;
+}
 
 // Collect unique renderBlock material slots in first-encounter order.
 std::vector<int> CollectMaterialSlots(const ParsedGeometry &geometry) {
@@ -122,7 +169,8 @@ void WriteMtlBody(std::ostream &m, const ParsedGeometry &geometry,
 
 namespace MefExporter {
 
-bool ExportToObj(const ParsedGeometry &geometry, const std::string &outpath, const std::string &datPath) {
+static bool WriteObjImpl(const ParsedGeometry &geometry, const std::string &outpath,
+                         const std::string &datPath) {
   // Derive MTL filename (same stem as OBJ)
   auto sepPos = outpath.find_last_of("/\\");
   std::string filename =
@@ -169,12 +217,51 @@ bool ExportToObj(const ParsedGeometry &geometry, const std::string &outpath, con
   return true;
 }
 
+bool ExportToObj(const ParsedGeometry &geometry, const std::string &outpath,
+                 const std::string &datPath, bool allowGeometryOnly) {
+  if (!allowGeometryOnly && IsRiggedBinary(geometry)) {
+    Logger::Get().Log(LogLevel::ERR,
+        "[MefExporter] Refusing to export rigged MEF (modelType 1) to OBJ: "
+        "OBJ cannot store bones/weights/keyframes. Use 'mef export-rigged' "
+        "or pass --geometry-only to drop the rig intentionally.");
+    return false;
+  }
+  if (IsRiggedBinary(geometry))
+    Logger::Get().Log(LogLevel::WARNING,
+        "[MefExporter] Geometry-only OBJ export: skeleton and bone weights "
+        "are intentionally dropped.");
+  return WriteObjImpl(geometry, outpath, datPath);
+}
+
+bool ExportToObjGeometryOnly(const ParsedGeometry &geometry, const std::string &outpath,
+                             const std::string &datPath) {
+  if (IsRiggedBinary(geometry))
+    Logger::Get().Log(LogLevel::WARNING,
+        "[MefExporter] Geometry-only OBJ export: skeleton and bone weights "
+        "are intentionally dropped.");
+  return WriteObjImpl(geometry, outpath, datPath);
+}
+
+bool FormatSupportsRigging(const std::string &outputPath) {
+  const std::string ext = LowerAscii(std::filesystem::path(outputPath).extension().string());
+  // Binary MEF and text MEF both carry BoneVertex data (text) / boneIndex +
+  // weight + localVertexId (binary).  .rig.json is our explicit rig sidecar.
+  return ext == ".mef" || ext == ".mex" || ext == ".json";
+}
+
 bool ExportToObjBundle(const ParsedGeometry &geometry,
                        const std::string &modelStem,
                        const std::string &outDir,
                        const std::string &datPath,
                        const std::string &texDir,
-                       bool skipObj) {
+                       bool skipObj, bool allowGeometryOnly) {
+  if (!allowGeometryOnly && (IsRiggedBinary(geometry) || geometry.hasRiggedSource)) {
+    Logger::Get().Log(LogLevel::ERR,
+        "[MefExporter] Refusing to bundle rigged MEF (modelType 1) as OBJ: "
+        "skeleton and bone weights would be dropped. Use 'mef export-rigged' "
+        "or pass --geometry-only.");
+    return false;
+  }
   namespace fs = std::filesystem;
 
   // 1. Create bundle folder: outDir/modelStem/
@@ -268,7 +355,14 @@ bool ExportMergedToObjBundle(const ParsedGeometry &geometry,
                               const std::string &modelStem,
                               const std::string &outDir,
                               const std::vector<std::string> &texNames,
-                              bool skipObj) {
+                              bool skipObj, bool allowGeometryOnly) {
+  if (!allowGeometryOnly && (IsRiggedBinary(geometry) || geometry.hasRiggedSource)) {
+    Logger::Get().Log(LogLevel::ERR,
+        "[MefExporter] Refusing to bundle rigged merged geometry as OBJ: "
+        "skeleton and bone weights would be dropped. Use 'mef export-rigged' "
+        "or pass --geometry-only.");
+    return false;
+  }
   namespace fs = std::filesystem;
   fs::path bundleDir = fs::path(outDir) / modelStem;
   std::error_code ec;
@@ -498,8 +592,8 @@ std::vector<ParsedGeometry::RawChunk> ReadMefSidecar(const std::string& sidecarP
 }
 
 
-bool ExportTextMefToObj(const std::vector<MEFObject>& objects,
-                        const std::string& outpath) {
+static bool WriteTextObjImpl(const std::vector<MEFObject>& objects,
+                             const std::string& outpath) {
   namespace fs = std::filesystem;
 
   if (objects.empty()) return false;
@@ -634,6 +728,161 @@ bool ExportTextMefToObj(const std::vector<MEFObject>& objects,
   Logger::Get().Log(LogLevel::INFO,
                     "[MefExporter] Text MEF -> OBJ exported to: " + outpath);
   return true;
+}
+
+bool ExportTextMefToObj(const std::vector<MEFObject>& objects,
+                        const std::string& outpath, bool allowGeometryOnly) {
+  if (!allowGeometryOnly && HasTextBoneWeights(objects)) {
+    Logger::Get().Log(LogLevel::ERR,
+        "[MefExporter] Refusing to export text MEF with BoneVertex data to "
+        "OBJ: OBJ cannot store skeletons or weights. Use 'mef to-text' to "
+        "retain BoneVertex lines, or pass --geometry-only explicitly.");
+    return false;
+  }
+  return WriteTextObjImpl(objects, outpath);
+}
+
+// ---------------------------------------------------------------------------
+// Rig-preserving export (fail closed)
+//
+// IGI1 modelType 1 binary MEFs store only per-vertex bone indices/weights;
+// the skeleton hierarchy is NOT in the file. The level editor restores it by
+// matching model names / maxBoneIdx to hardcoded BoneRigType archetypes. We
+// reproduce that explicitly here and record the result in a .rig.json
+// sidecar. If no archetype can be identified (and none was supplied), the
+// export fails instead of silently producing a static mesh.
+// ---------------------------------------------------------------------------
+RigExportResult ExportRiggedMef(const ParsedGeometry &geometry,
+                                const std::string &modelStem,
+                                const std::string &outDir,
+                                const RigExportOptions &options) {
+  RigExportResult result;
+  const auto fail = [&](const std::string &msg) -> RigExportResult {
+    result.ok = false;
+    result.error = msg;
+    Logger::Get().Log(LogLevel::ERR, "[MefExporter] Rig export failed: " + msg);
+    return result;
+  };
+
+  if (geometry.modelType != 1)
+    return fail("not a rigged MEF (modelType != 1)");
+  if (geometry.vertices.empty())
+    return fail("rigged MEF has no vertices");
+
+  uint32_t maxBoneIdx = 0;
+  for (const auto &v : geometry.vertices)
+    maxBoneIdx = std::max(maxBoneIdx, static_cast<uint32_t>(v.boneIndex));
+
+  std::vector<BoneInfo> bones;
+  if (!options.archetype.empty()) {
+    const auto explicitType = ParseBoneRigTypeName(options.archetype);
+    if (!explicitType)
+      return fail("unknown --rig-archetype '" + options.archetype +
+                  "' (expected JonesCinematic, StandardSoldier, HeavySoldier, "
+                  "AdvancedFingerRig)");
+    bones = GetIgi1HardcodedBonesForRig(*explicitType);
+    result.archetype = BoneRigTypeName(*explicitType);
+  } else if (!geometry.isIgi1 && !geometry.bones.empty()) {
+    // IGI2-style binary MEF carries REIH/MANB: use the embedded skeleton.
+    bones = geometry.bones;
+    result.archetype = "embedded-reih-manb";
+  } else if (geometry.isIgi1) {
+    const auto type = SelectIgi1BoneRigTypeStrict(modelStem, maxBoneIdx);
+    if (!type)
+      return fail("no known skeletal archetype for model '" + modelStem +
+                  "' (maxBoneIdx=" + std::to_string(maxBoneIdx) +
+                  "); pass --rig-archetype explicitly");
+    bones = GetIgi1HardcodedBonesForRig(*type);
+    result.archetype = BoneRigTypeName(*type);
+  } else {
+    return fail("unsupported source format: expected IGI1 modelType 1 "
+                "(HSEM 156) or a MEF with embedded REIH/MANB bones");
+  }
+
+  if (bones.empty())
+    return fail("resolved archetype '" + result.archetype + "' has no bones");
+
+  // Fail closed on any weight/bone reference the resolved skeleton can't
+  // represent - never emit a partial rig.
+  for (size_t i = 0; i < geometry.vertices.size(); ++i) {
+    const auto &v = geometry.vertices[i];
+    if (v.boneIndex >= bones.size())
+      return fail("vertex " + std::to_string(i) + " references bone " +
+                  std::to_string(v.boneIndex) + " outside archetype '" +
+                  result.archetype + "' (" + std::to_string(bones.size()) +
+                  " bones)");
+    if (!std::isfinite(v.weight) || v.weight < -1.0e-3f || v.weight > 1.0f + 1.0e-3f)
+      return fail("vertex " + std::to_string(i) + " has invalid bone weight " +
+                  std::to_string(v.weight));
+  }
+
+  namespace fs = std::filesystem;
+  std::error_code ec;
+  fs::create_directories(outDir, ec);
+  if (ec)
+    return fail("cannot create output directory '" + outDir + "': " + ec.message());
+
+  const fs::path dir(outDir);
+  const std::string sidecarPath = (dir / (modelStem + ".rig.json")).string();
+  std::ofstream f(sidecarPath, std::ios::trunc);
+  if (!f.is_open())
+    return fail("cannot write rig sidecar: " + sidecarPath);
+
+  f << std::setprecision(9);
+  f << "{\n";
+  f << "  \"format\": \"igi1-rig-v1\",\n";
+  f << "  \"sourceModel\": \"" << JsonEscape(modelStem) << "\",\n";
+  f << "  \"modelType\": 1,\n";
+  f << "  \"archetype\": \"" << JsonEscape(result.archetype) << "\",\n";
+  f << "  \"boneCount\": " << bones.size() << ",\n";
+  f << "  \"vertexCount\": " << geometry.vertices.size() << ",\n";
+  f << "  \"weightsArePerVertex\": true,\n";
+  f << "  \"notes\": \"OBJ companion contains geometry only; skeleton and weights are in this sidecar.\",\n";
+  f << "  \"bones\": [\n";
+  for (size_t i = 0; i < bones.size(); ++i) {
+    const auto &b = bones[i];
+    f << "    {\"index\": " << i << ", \"name\": \"" << JsonEscape(b.name)
+      << "\", \"parent\": " << b.parent << ", \"pivot\": ["
+      << b.pivot.x << ", " << b.pivot.y << ", " << b.pivot.z << "]}"
+      << (i + 1 < bones.size() ? "," : "") << "\n";
+  }
+  f << "  ],\n";
+  f << "  \"weights\": [\n";
+  for (size_t i = 0; i < geometry.vertices.size(); ++i) {
+    const auto &v = geometry.vertices[i];
+    f << "    {\"vertex\": " << i << ", \"boneIndex\": " << v.boneIndex
+      << ", \"weight\": " << v.weight << ", \"localVertexId\": "
+      << v.localVertexId << "}"
+      << (i + 1 < geometry.vertices.size() ? "," : "") << "\n";
+  }
+  f << "  ]\n";
+  f << "}\n";
+  f.close();
+  if (!f) {
+    std::filesystem::remove(sidecarPath, ec);
+    return fail("failed while writing rig sidecar: " + sidecarPath);
+  }
+
+  result.ok = true;
+  result.sidecarPath = sidecarPath;
+  result.boneCount = bones.size();
+  result.weightCount = geometry.vertices.size();
+
+  if (options.writeObj) {
+    const std::string objPath = (dir / (modelStem + ".obj")).string();
+    if (!WriteObjImpl(geometry, objPath, "")) {
+      std::filesystem::remove(sidecarPath, ec);
+      result.ok = false;
+      result.sidecarPath.clear();
+      return fail("rig sidecar written but companion OBJ failed: " + objPath);
+    }
+  }
+
+  Logger::Get().Log(LogLevel::INFO,
+      "[MefExporter] Rig export OK: " + result.archetype + ", " +
+      std::to_string(result.boneCount) + " bones, " +
+      std::to_string(result.weightCount) + " weights -> " + sidecarPath);
+  return result;
 }
 
 } // namespace MefExporter
