@@ -6,7 +6,15 @@
 - **IGI2Conv** — tools for IGI 2: Covert Strike.
 - **[Download the latest release](https://github.com/heaven-hm/project-igi-converter/releases/latest)**
 
-The two games use some similarly named formats with different internal layouts. Choose the converter for the game the asset comes from.
+The two games use some similarly named formats with different internal layouts. Choose the converter for the game the asset comes from. The CLI selects a backend with `--game=igi1` (default) or `--game=igi2`; unported IGI 2 commands are rejected rather than being routed to the IGI 1 parser. The first implemented IGI 2 path is DAT Forest (`forest_*.dat`) read/write:
+
+```powershell
+igi1conv --game=igi2 forest info   forest_2540.dat
+igi1conv --game=igi2 forest export forest_2540.dat -o forest_2540.json
+igi1conv --game=igi2 forest compile forest_2540.json -o forest_2540.dat
+```
+
+See [IGI 2 format matrix and slice design](docs/igi2/FORMAT_MATRIX.md) for the full supported/TODO matrix (issue #10).
 
 ## What it can do
 

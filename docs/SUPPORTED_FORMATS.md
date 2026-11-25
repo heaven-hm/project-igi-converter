@@ -21,6 +21,9 @@ This document lists the supported file formats, their conversion targets, and wh
 | **graph*.dat** | AI Navigation Graph | Info, export to JSON | Supported |
 | **.IFF** | Skeletal Animation | Info, decompile to text, convert to `.BEF`, create from `.BEF` / decompile text, rebuild round trip, export animated GIF | Supported |
 | **.wav** (IGI) | ILSF audio container | Info, convert RAW / RAW_RESIDENT / ADPCM / ADPCM_RESIDENT to standard `.wav` (no external deps, single binary), batch convert-dir | Supported (all four methods) |
+| **IGI 2 `forest_*.dat`** | Vegetation instance placement | `igi1conv --game=igi2 forest info/export/compile`: binary ⇄ JSON, byte-exact round trip | Supported (spec-derived tests; retail-data validation pending) |
+
+The IGI 2 game selector (`--game=igi1|igi2`) and the full per-format IGI 1 / IGI 2 read/write matrix are documented in [IGI 2 format matrix and slice design](igi2/FORMAT_MATRIX.md).
 
 ---
 

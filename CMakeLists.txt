@@ -119,6 +119,11 @@ if (IGI1CONV_BUILD_TESTS)
     enable_testing()
 
     file(GLOB IGI1CONV_TEST_SOURCES "tests/*.cpp")
+    # The IGI 2 DAT Forest slice is a standalone parser (no Qt/GL dependency).
+    # Compile it into the test target directly so these tests can be built and
+    # run without the GUI-enabled CLI.
+    list(APPEND IGI1CONV_TEST_SOURCES
+        "${PROJECT_SOURCE_DIR}/source/parsers/igi2_forest_parser.cpp")
     add_executable(igi1conv_tests ${IGI1CONV_TEST_SOURCES})
 
     add_dependencies(igi1conv_tests igi1conv)
