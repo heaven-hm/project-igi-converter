@@ -232,6 +232,18 @@ if (IGI1CONV_BUILD_TESTS)
         ${PROJECT_SOURCE_DIR}/third_party/glm-1.0.1
         ${PROJECT_SOURCE_DIR}/third_party
     )
+    # This target compiles the same parsers as igi1conv, so it needs the same
+    # force-included pch.h (strnlen/std::memset/strncpy on GCC/Clang).
+    if (MSVC)
+        target_compile_options(igi1conv_test_parsers PRIVATE
+            "/bigobj" "/FS"
+            "/FI${PROJECT_SOURCE_DIR}/igi1conv/pch.h"
+        )
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(igi1conv_test_parsers PRIVATE
+            -include "${PROJECT_SOURCE_DIR}/igi1conv/pch.h"
+        )
+    endif()
 
     add_dependencies(igi1conv_tests igi1conv)
 
@@ -256,6 +268,17 @@ if (IGI1CONV_BUILD_TESTS)
     endif()
 
     target_link_libraries(igi1conv_tests PRIVATE gtest igi1conv_test_parsers)
+
+    # The MCP tests are compiled into igi1conv_tests for Qt/GUI builds, so
+    # their implementation units must be linked into this target too (the CLI
+    # executable's sources are not linked into the test binary).
+    if (IGI1CONV_BUILD_GUI)
+        target_sources(igi1conv_tests PRIVATE
+            "${PROJECT_SOURCE_DIR}/igi1conv/mcp_operations.cpp"
+            "${PROJECT_SOURCE_DIR}/igi1conv/mcp_protocol.cpp"
+            "${PROJECT_SOURCE_DIR}/igi1conv/mcp_transport.cpp"
+        )
+    endif()
 
     if (NOT WIN32)
         find_package(Threads REQUIRED)
