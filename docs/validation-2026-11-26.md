@@ -38,13 +38,16 @@ Result: `113/113` steps linked; `bin/igi1conv` and `bin/igi2conv` both produced.
 
 ## GitHub Actions (workflow added by this change)
 
-Run: https://github.com/heaven-hm/project-igi-converter/actions/runs/45722245355
+Final green run: https://github.com/heaven-hm/project-igi-converter/actions/runs/45724101461
 
-* `ubuntu-latest`: success — `100% tests passed out of 118`; both converter CLIs linked.
-* `macos-latest`: success — `100% tests passed out of 118`; both converter CLIs linked.
-* `windows-qt`: first attempt failed because `Qt6_DIR` was null with
-  `install-qt-action@v4`; fixed to use `QT_ROOT_DIR`. Rerun status is recorded
-  in the evidence comment on issue #22.
+* `ubuntu-latest`: **success** — `100% tests passed out of 118`; both converter CLIs linked.
+* `macos-latest`: **success** — `100% tests passed out of 118`; both converter CLIs linked.
+* `windows-qt`: **success** — Qt GUI and both converter GUIs built.
+
+Three real Windows CI failures were found and fixed in the workflow/source:
+`Qt6_DIR` → `QT_ROOT_DIR`; Qt 6.5.3 `msvc2019_64` → 6.8.3 `msvc2022_64`
+(`stdext` removed from current MSVC); explicit `#include <QDirIterator>` in
+`igi1conv/gui_main.cpp` (Qt 6.8 no longer includes it transitively).
 
 ## Pure-Python BEF format layer
 
