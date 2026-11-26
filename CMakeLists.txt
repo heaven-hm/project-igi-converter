@@ -269,6 +269,17 @@ if (IGI1CONV_BUILD_TESTS)
 
     target_link_libraries(igi1conv_tests PRIVATE gtest igi1conv_test_parsers)
 
+    # The MCP tests are compiled into igi1conv_tests for Qt/GUI builds, so
+    # their implementation units must be linked into this target too (the CLI
+    # executable's sources are not linked into the test binary).
+    if (IGI1CONV_BUILD_GUI)
+        target_sources(igi1conv_tests PRIVATE
+            "${PROJECT_SOURCE_DIR}/igi1conv/mcp_operations.cpp"
+            "${PROJECT_SOURCE_DIR}/igi1conv/mcp_protocol.cpp"
+            "${PROJECT_SOURCE_DIR}/igi1conv/mcp_transport.cpp"
+        )
+    endif()
+
     if (NOT WIN32)
         find_package(Threads REQUIRED)
         target_link_libraries(igi1conv_tests PRIVATE Threads::Threads)
