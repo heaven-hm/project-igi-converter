@@ -232,6 +232,18 @@ if (IGI1CONV_BUILD_TESTS)
         ${PROJECT_SOURCE_DIR}/third_party/glm-1.0.1
         ${PROJECT_SOURCE_DIR}/third_party
     )
+    # This target compiles the same parsers as igi1conv, so it needs the same
+    # force-included pch.h (strnlen/std::memset/strncpy on GCC/Clang).
+    if (MSVC)
+        target_compile_options(igi1conv_test_parsers PRIVATE
+            "/bigobj" "/FS"
+            "/FI${PROJECT_SOURCE_DIR}/igi1conv/pch.h"
+        )
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(igi1conv_test_parsers PRIVATE
+            -include "${PROJECT_SOURCE_DIR}/igi1conv/pch.h"
+        )
+    endif()
 
     add_dependencies(igi1conv_tests igi1conv)
 
