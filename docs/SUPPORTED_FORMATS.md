@@ -6,9 +6,9 @@ This document lists the supported file formats, their conversion targets, and wh
 
 | Format | Description | Conversion / Operations | Status |
 | :--- | :--- | :--- | :--- |
-| **.res** | Resource Archive | List, extract, compile, pack, unpack, append | Supported |
+| **.res** | Resource Archive | List, extract, compile, pack, unpack, append, name-preserving repack | Supported |
 | **.qvm** | Script Bytecode | Decompile to `.qsc`, disassemble, info | Supported |
-| **.qsc** | Script Source Code | Validate, compile back to `.qvm` | Supported |
+| **.qsc** | Script Source Code | Validate, compile back to `.qvm`, list/edit game `Task_New` objects | Supported |
 | **.tex** | Texture Format | Decode, info, convert to `.png` / `.tga`, resize | Supported |
 | **.spr** | Sprite Format | Decode, info, convert to `.png` / `.tga`, resize | Supported |
 | **.pic** | Image Format | Decode, info, convert to `.png` / `.tga`, resize | Supported |
@@ -24,6 +24,17 @@ This document lists the supported file formats, their conversion targets, and wh
 | **IGI 2 `forest_*.dat`** | Vegetation instance placement | `igi1conv --game=igi2 forest info/export/compile`: binary ⇄ JSON, byte-exact round trip | Supported (spec-derived tests; retail-data validation pending) |
 
 The IGI 2 game selector (`--game=igi1|igi2`) and the full per-format IGI 1 / IGI 2 read/write matrix are documented in [IGI 2 format matrix and slice design](igi2/FORMAT_MATRIX.md).
+
+## MCP exposure
+
+The MCP server exposes a subset of the registered game-affecting CLI operations in this matrix,
+including read-only inspection needed to select or verify a game edit. The
+inherently in-place CLI operations `lightmap.recalc`, `mtp.repair`, and
+`mtp.sync` remain CLI-only until they have distinct-output modes; the
+editor-only `iff.export-gif` preview is also not exposed. MCP does not expose
+GUI settings, themes, cache paths, viewer/camera state, playback, layout, or
+other editor-only behavior. See [mcp.md](mcp.md) for the complete registry and
+tool schemas.
 
 ---
 
