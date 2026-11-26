@@ -4,8 +4,16 @@
 #include "../../third_party/tinygltf/stb_image.h"
 #include <filesystem>
 #include <fstream>
+#include <chrono>
 #include <vector>
 #include <cstring>
+#include <limits>
+#include <new>
+
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 namespace fs = std::filesystem;
 
@@ -52,10 +60,40 @@ OLMFile ParseOlm(const std::string& path) {
         return olm;
     }
 
-    uint32_t numPixels = olm.layer.pixel_width * olm.layer.pixel_height;
-    olm.pixels.resize(numPixels);
-    file.read(reinterpret_cast<char*>(olm.pixels.data()), numPixels * sizeof(OlmPixel));
-    if (file.gcount() != numPixels * sizeof(OlmPixel)) {
+    if (olm.layer.pixel_width == 0 || olm.layer.pixel_height == 0) {
+        olm.error = "Invalid zero-sized lightmap";
+        return olm;
+    }
+
+    const uint64_t numPixels = static_cast<uint64_t>(olm.layer.pixel_width)
+        * static_cast<uint64_t>(olm.layer.pixel_height);
+    const uint64_t pixelBytes = numPixels * sizeof(OlmPixel);
+    constexpr uint64_t kMaxPixelBytes = 256ull * 1024ull * 1024ull;
+    if (pixelBytes > kMaxPixelBytes
+        || numPixels > std::numeric_limits<size_t>::max()
+        || pixelBytes > static_cast<uint64_t>(std::numeric_limits<std::streamsize>::max())) {
+        olm.error = "Lightmap pixel payload is too large";
+        return olm;
+    }
+
+    const std::streampos payloadStart = file.tellg();
+    std::error_code fileSizeError;
+    const uintmax_t fileSize = fs::file_size(path, fileSizeError);
+    if (payloadStart < 0 || fileSizeError
+        || static_cast<uintmax_t>(payloadStart) > fileSize
+        || pixelBytes > fileSize - static_cast<uintmax_t>(payloadStart)) {
+        olm.error = "Truncated lightmap pixel data";
+        return olm;
+    }
+
+    try {
+        olm.pixels.resize(static_cast<size_t>(numPixels));
+    } catch (const std::bad_alloc&) {
+        olm.error = "Unable to allocate lightmap pixel data";
+        return olm;
+    }
+    file.read(reinterpret_cast<char*>(olm.pixels.data()), static_cast<std::streamsize>(pixelBytes));
+    if (file.gcount() != static_cast<std::streamsize>(pixelBytes)) {
         olm.error = "Failed to read pixel data";
         return olm;
     }
@@ -110,14 +148,47 @@ bool WriteOlm(const std::string& path, const OLMFile& olm, std::string& err) {
               std::to_string(olm.layer.pixel_height) + " (" + std::to_string(expected) + ")";
         return false;
     }
-    std::ofstream f(path, std::ios::binary | std::ios::trunc);
-    if (!f.is_open()) { err = "cannot open output for writing: " + path; return false; }
+    const fs::path target(path);
+    const fs::path temporary = target.string() + ".tmp-"
+        + std::to_string(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+    std::ofstream f(temporary, std::ios::binary | std::ios::trunc);
+    if (!f.is_open()) { err = "cannot open temporary output for writing: " + temporary.string(); return false; }
 
     f.write(reinterpret_cast<const char*>(&olm.header), sizeof(OlmMainHeader));
     f.write(reinterpret_cast<const char*>(&olm.layer), sizeof(OlmLayerDescriptor));
     f.write(reinterpret_cast<const char*>(olm.pixels.data()),
             static_cast<std::streamsize>(olm.pixels.size() * sizeof(OlmPixel)));
-    if (!f.good()) { err = "write error on: " + path; return false; }
+    f.flush();
+    if (!f.good()) {
+        err = "write error on: " + temporary.string();
+        f.close();
+        std::error_code ignored;
+        fs::remove(temporary, ignored);
+        return false;
+    }
+    f.close();
+    if (f.fail()) {
+        err = "close/flush error on: " + temporary.string();
+        std::error_code ignored;
+        fs::remove(temporary, ignored);
+        return false;
+    }
+
+    bool replaced = false;
+#ifdef _WIN32
+    replaced = MoveFileExW(temporary.wstring().c_str(), target.wstring().c_str(),
+                           MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
+#else
+    std::error_code renameError;
+    fs::rename(temporary, target, renameError);
+    replaced = !renameError;
+#endif
+    if (!replaced) {
+        err = "cannot replace output atomically: " + path;
+        std::error_code ignored;
+        fs::remove(temporary, ignored);
+        return false;
+    }
     return true;
 }
 
@@ -182,13 +253,22 @@ static int do_olm_from_png(const std::string& input, const std::string& outpath,
         std::cerr << "olm: failed to read PNG: " << input << " (" << stbi_failure_reason() << ")\n";
         return 3;
     }
+    if (w <= 0 || h <= 0
+        || w > static_cast<int>(std::numeric_limits<uint16_t>::max())
+        || h > static_cast<int>(std::numeric_limits<uint16_t>::max())) {
+        std::cerr << "olm: PNG dimensions must be between 1 and 65535 pixels: "
+                  << w << "x" << h << "\n";
+        stbi_image_free(pixels);
+        return 3;
+    }
 
     OLMFile templateOlm;
     if (!templatePath.empty()) {
         templateOlm = ParseOlm(templatePath);
         if (!templateOlm.valid) {
-            std::cerr << "olm: warning: template parse failed (" << templateOlm.error
-                       << "), using default header\n";
+            std::cerr << "olm: template parse failed: " << templateOlm.error << "\n";
+            stbi_image_free(pixels);
+            return 3;
         }
     }
 

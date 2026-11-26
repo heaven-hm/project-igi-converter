@@ -6,7 +6,13 @@
 #include "cmd_olm.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <charconv>
+#include <cctype>
+#include <cerrno>
 #include <cmath>
+#include <chrono>
+#include <cstdlib>
+#include <unordered_set>
 
 namespace fs = std::filesystem;
 using igi1conv::LightmapBinding;
@@ -40,7 +46,8 @@ static void print_lightmap_help()
         "          sun (L(N_new)/L(N_orig)), preserving the original shadow detail\n"
         "          while approximating the new orientation. Overwrites the .olm\n"
         "          files in lightmaps_unpacked; repack lightmaps.res separately\n"
-        "          (res pack) for the game to pick them up.\n"
+        "          (res repack <orig.res> <dir> -o <out.res>) for the game to\n"
+        "          pick them up.\n"
         "\n"
         "Options:\n"
         "  --model <id>     Model id / .mef filename stem (e.g. 435_01_1)\n"
@@ -69,6 +76,8 @@ struct LightmapArgs {
     double x = 0, y = 0, z = 0;
 };
 
+static bool ParseInt32(const std::string& text, int32_t& out);
+
 // Parses "--model <id> --qsc <path> [--task-id <id> | --pos X,Y,Z]" style
 // args shared by both subcommands. Returns false (with a message on
 // stderr) on a malformed --pos or missing required flags.
@@ -81,7 +90,10 @@ bool ParseLightmapArgs(int argc, char** argv, int startIdx, LightmapArgs& out) {
             out.qscPath = argv[++i];
         } else if (arg == "--task-id" && i + 1 < argc) {
             out.hasTaskId = true;
-            out.taskId = std::atoi(argv[++i]);
+            if (!ParseInt32(argv[++i], out.taskId)) {
+                std::cerr << "lightmap: --task-id expects a signed 32-bit integer\n";
+                return false;
+            }
         } else if (arg == "--pos" && i + 1 < argc) {
             std::string posArg = argv[++i];
             std::istringstream iss(posArg);
@@ -99,6 +111,9 @@ bool ParseLightmapArgs(int argc, char** argv, int startIdx, LightmapArgs& out) {
                 return false;
             }
             out.hasPos = true;
+        } else {
+            std::cerr << "lightmap: unknown option '" << arg << "'\n";
+            return false;
         }
     }
     if (out.model.empty()) {
@@ -216,14 +231,41 @@ struct RecalcArgs {
 };
 
 // Parse "X,Y,Z" (radians or colors) into a vec3. Returns false on malformed input.
+static bool ParseFiniteFloat(const std::string& text, float& out) {
+    const char* begin = text.c_str();
+    char* end = nullptr;
+    errno = 0;
+    const float value = std::strtof(begin, &end);
+    if (errno == ERANGE || end == begin || !std::isfinite(value)) return false;
+    while (*end != '\0' && std::isspace(static_cast<unsigned char>(*end))) ++end;
+    if (*end != '\0') return false;
+    out = value;
+    return true;
+}
+
+static bool ParseInt32(const std::string& text, int32_t& out) {
+    if (text.empty()) return false;
+    const char* begin = text.data();
+    const char* end = begin + text.size();
+    const auto parsed = std::from_chars(begin, end, out);
+    return parsed.ec == std::errc() && parsed.ptr == end;
+}
+
+static bool IsUnitColor(const glm::vec3& value) {
+    return value.x >= 0.0f && value.x <= 1.0f
+        && value.y >= 0.0f && value.y <= 1.0f
+        && value.z >= 0.0f && value.z <= 1.0f;
+}
+
 static bool ParseVec3(const std::string& s, glm::vec3& out) {
     std::istringstream iss(s);
     std::string xs, ys, zs;
     if (!std::getline(iss, xs, ',') || !std::getline(iss, ys, ',') || !std::getline(iss, zs, ',')) return false;
-    try {
-        out.x = std::stof(xs); out.y = std::stof(ys); out.z = std::stof(zs);
-    } catch (...) { return false; }
-    return true;
+    std::string extra;
+    if (std::getline(iss, extra, ',')) return false;
+    return ParseFiniteFloat(xs, out.x)
+        && ParseFiniteFloat(ys, out.y)
+        && ParseFiniteFloat(zs, out.z);
 }
 
 // Build the same Rz * Rx * Ry rotation the editor applies to objects
@@ -296,8 +338,25 @@ int do_lightmap_recalc(const RecalcArgs& args) {
         return args.ambient + args.sunColor * ndl;
     };
 
-    size_t blockCount = std::min(geo.renderBlocks.size(), olmFiles.size());
-    size_t written = 0;
+    if (geo.renderBlocks.size() != olmFiles.size()) {
+        std::cerr << "lightmap: refusing recalc because render-block count ("
+                  << geo.renderBlocks.size() << ") does not match .olm count ("
+                  << olmFiles.size() << "); no lightmap files were changed\n";
+        return 3;
+    }
+    const size_t blockCount = geo.renderBlocks.size();
+    struct PendingWrite {
+        fs::path target;
+        fs::path temporary;
+        fs::path backup;
+        OLMFile olm;
+        glm::vec3 factor;
+    };
+    std::vector<PendingWrite> pending;
+    pending.reserve(blockCount);
+
+    // Prepare every output before touching any original file.  A malformed
+    // later lightmap must not leave an earlier block permanently rewritten.
     for (size_t i = 0; i < blockCount; ++i) {
         const auto& block = geo.renderBlocks[i];
 
@@ -325,32 +384,124 @@ int do_lightmap_recalc(const RecalcArgs& args) {
         // surface that was fully shadowed before (lOrig≈0) can't blow up to white.
         const float eps = 1e-3f, maxF = 4.0f;
         glm::vec3 factor(
-            std::min(lNew.x / std::max(lOrig.x, eps), maxF),
-            std::min(lNew.y / std::max(lOrig.y, eps), maxF),
-            std::min(lNew.z / std::max(lOrig.z, eps), maxF));
+            std::clamp(lNew.x / std::max(lOrig.x, eps), 0.0f, maxF),
+            std::clamp(lNew.y / std::max(lOrig.y, eps), 0.0f, maxF),
+            std::clamp(lNew.z / std::max(lOrig.z, eps), 0.0f, maxF));
 
         OLMFile olm = ParseOlm(olmFiles[i]);
         if (!olm.valid) {
-            std::cerr << "lightmap: skip (parse failed): " << olmFiles[i] << " (" << olm.error << ")\n";
-            continue;
+            std::cerr << "lightmap: aborting (parse failed): " << olmFiles[i] << " (" << olm.error
+                      << "); no lightmap files were changed\n";
+            return 3;
         }
         for (auto& px : olm.pixels) {
             px.r = static_cast<uint8_t>(std::min(255.0f, std::round(px.r * factor.x)));
             px.g = static_cast<uint8_t>(std::min(255.0f, std::round(px.g * factor.y)));
             px.b = static_cast<uint8_t>(std::min(255.0f, std::round(px.b * factor.z)));
         }
-        std::string werr;
-        if (!WriteOlm(olmFiles[i], olm, werr)) {
-            std::cerr << "lightmap: write failed: " << olmFiles[i] << " (" << werr << ")\n";
-            continue;
-        }
-        ++written;
-        std::cout << "  block " << i << " factor=(" << factor.x << "," << factor.y << "," << factor.z << ") -> "
-                   << fs::path(olmFiles[i]).filename().string() << "\n";
+        pending.push_back({fs::path(olmFiles[i]), {}, {}, std::move(olm), factor});
     }
 
-    std::cout << "lightmap: recalc wrote " << written << "/" << blockCount << " .olm file(s)\n";
-    return written > 0 ? 0 : 3;
+    if (pending.empty()) {
+        std::cerr << "lightmap: recalc produced no writable blocks; no lightmap files were changed\n";
+        return 3;
+    }
+
+    const auto transactionId = std::to_string(
+        std::chrono::steady_clock::now().time_since_epoch().count());
+    for (size_t i = 0; i < pending.size(); ++i) {
+        pending[i].temporary = pending[i].target;
+        pending[i].temporary += ".mcp-recalc-" + transactionId + "-" + std::to_string(i) + ".tmp";
+        pending[i].backup = pending[i].target;
+        pending[i].backup += ".mcp-recalc-" + transactionId + "-" + std::to_string(i) + ".bak";
+
+        std::error_code existsError;
+        if (fs::exists(pending[i].temporary, existsError) || existsError) {
+            std::cerr << "lightmap: temporary output already exists: " << pending[i].temporary << "\n";
+            return 3;
+        }
+        existsError.clear();
+        if (fs::exists(pending[i].backup, existsError) || existsError) {
+            std::cerr << "lightmap: backup output already exists: " << pending[i].backup << "\n";
+            return 3;
+        }
+    }
+
+    auto removeTemporaryFiles = [&]() {
+        for (const auto& item : pending) {
+            std::error_code ignored;
+            fs::remove(item.temporary, ignored);
+        }
+    };
+
+    for (const auto& item : pending) {
+        std::string writeError;
+        if (!WriteOlm(item.temporary.string(), item.olm, writeError)) {
+            removeTemporaryFiles();
+            std::cerr << "lightmap: temporary write failed: " << item.target << " (" << writeError
+                      << "); no lightmap files were changed\n";
+            return 3;
+        }
+    }
+
+    struct CommittedWrite { fs::path target; fs::path backup; };
+    std::vector<CommittedWrite> committed;
+    committed.reserve(pending.size());
+    auto restoreBackup = [](const CommittedWrite& item) {
+        std::error_code error;
+        fs::remove(item.target, error);
+        if (error) return false;
+        error.clear();
+        fs::rename(item.backup, item.target, error);
+        return !error;
+    };
+    auto rollback = [&]() {
+        bool restored = true;
+        for (auto it = committed.rbegin(); it != committed.rend(); ++it) {
+            if (!restoreBackup(*it)) restored = false;
+        }
+        return restored;
+    };
+
+    for (const auto& item : pending) {
+        std::error_code renameError;
+        fs::rename(item.target, item.backup, renameError);
+        if (renameError) {
+            const bool rolledBack = rollback();
+            removeTemporaryFiles();
+            std::cerr << "lightmap: cannot stage " << item.target << " (" << renameError.message()
+                      << "); rollback " << (rolledBack ? "completed" : "failed") << "\n";
+            return 3;
+        }
+
+        renameError.clear();
+        fs::rename(item.temporary, item.target, renameError);
+        if (renameError) {
+            const bool currentRestored = restoreBackup({item.target, item.backup});
+            const bool priorRolledBack = rollback();
+            removeTemporaryFiles();
+            std::cerr << "lightmap: cannot commit " << item.target << " (" << renameError.message()
+                      << "); rollback " << (currentRestored && priorRolledBack ? "completed" : "failed") << "\n";
+            return 3;
+        }
+        committed.push_back({item.target, item.backup});
+    }
+
+    for (const auto& item : committed) {
+        std::error_code cleanupError;
+        fs::remove(item.backup, cleanupError);
+        if (cleanupError)
+            std::cerr << "lightmap: warning: could not remove backup " << item.backup << " ("
+                      << cleanupError.message() << ")\n";
+    }
+
+    for (size_t i = 0; i < pending.size(); ++i) {
+        const auto& item = pending[i];
+        std::cout << "  block " << i << " factor=(" << item.factor.x << "," << item.factor.y << ","
+                   << item.factor.z << ") -> " << item.target.filename().string() << "\n";
+    }
+    std::cout << "lightmap: recalc wrote " << pending.size() << "/" << blockCount << " .olm file(s)\n";
+    return 0;
 }
 
 } // namespace
@@ -384,24 +535,65 @@ int cmd_lightmap(int argc, char** argv)
     else if (subcmd == "recalc")
     {
         RecalcArgs ra;
+        std::unordered_set<std::string> seen;
+        auto nextValue = [&](int& index, const std::string& option, std::string& value) {
+            if (!seen.insert(option).second) {
+                std::cerr << "lightmap: duplicate option '" << option << "'\n";
+                return false;
+            }
+            if (index + 1 >= argc) {
+                std::cerr << "lightmap: " << option << " requires a value\n";
+                return false;
+            }
+            value = argv[++index];
+            return true;
+        };
         for (int i = 2; i < argc; ++i) {
             std::string arg = argv[i];
-            auto next = [&](const char* flag) -> std::string {
-                return (i + 1 < argc) ? std::string(argv[++i]) : std::string();
-            };
-            if (arg == "--model")          ra.model = next(arg.c_str());
-            else if (arg == "--qsc")       ra.qscPath = next(arg.c_str());
-            else if (arg == "--mef")       ra.mefPath = next(arg.c_str());
-            else if (arg == "--task-id") { ra.taskId = std::atoi(next(arg.c_str()).c_str()); ra.hasTaskId = true; }
-            else if (arg == "--rot-orig") { if (!ParseVec3(next(arg.c_str()), ra.rotOrig)) { std::cerr << "lightmap: bad --rot-orig\n"; return 1; } }
-            else if (arg == "--rot-new")  { if (!ParseVec3(next(arg.c_str()), ra.rotNew))  { std::cerr << "lightmap: bad --rot-new\n"; return 1; } }
-            else if (arg == "--sun-dir")  { if (!ParseVec3(next(arg.c_str()), ra.sunDir))  { std::cerr << "lightmap: bad --sun-dir\n"; return 1; } ra.hasSunDir = true; }
-            else if (arg == "--sun-color"){ if (!ParseVec3(next(arg.c_str()), ra.sunColor)){ std::cerr << "lightmap: bad --sun-color\n"; return 1; } }
-            else if (arg == "--ambient")  { if (!ParseVec3(next(arg.c_str()), ra.ambient)) { std::cerr << "lightmap: bad --ambient\n"; return 1; } }
+            std::string value;
+            if (arg == "--model") {
+                if (!nextValue(i, arg, value)) return 1;
+                ra.model = value;
+            } else if (arg == "--qsc") {
+                if (!nextValue(i, arg, value)) return 1;
+                ra.qscPath = value;
+            } else if (arg == "--mef") {
+                if (!nextValue(i, arg, value)) return 1;
+                ra.mefPath = value;
+            } else if (arg == "--task-id") {
+                if (!nextValue(i, arg, value) || !ParseInt32(value, ra.taskId)) {
+                    std::cerr << "lightmap: --task-id expects a signed 32-bit integer\n";
+                    return 1;
+                }
+                ra.hasTaskId = true;
+            } else if (arg == "--rot-orig" || arg == "--rot-new" || arg == "--sun-dir"
+                       || arg == "--sun-color" || arg == "--ambient") {
+                if (!nextValue(i, arg, value)) return 1;
+                glm::vec3 parsed;
+                if (!ParseVec3(value, parsed)) {
+                    std::cerr << "lightmap: bad " << arg << "\n";
+                    return 1;
+                }
+                if (arg == "--rot-orig") ra.rotOrig = parsed;
+                else if (arg == "--rot-new") ra.rotNew = parsed;
+                else if (arg == "--sun-dir") { ra.sunDir = parsed; ra.hasSunDir = true; }
+                else if (!IsUnitColor(parsed)) {
+                    std::cerr << "lightmap: " << arg << " values must be in the range 0..1\n";
+                    return 1;
+                } else if (arg == "--sun-color") ra.sunColor = parsed;
+                else ra.ambient = parsed;
+            } else {
+                std::cerr << "lightmap: unknown option '" << arg << "'\n";
+                return 1;
+            }
         }
         if (ra.model.empty() || ra.qscPath.empty()) {
             std::cerr << "lightmap: recalc requires --model and --qsc\n";
             print_lightmap_help();
+            return 1;
+        }
+        if (ra.hasSunDir && glm::length(ra.sunDir) <= 1e-6f) {
+            std::cerr << "lightmap: --sun-dir must not be zero-length\n";
             return 1;
         }
         return do_lightmap_recalc(ra);
